@@ -22,3 +22,19 @@ type UpdateUserRequest struct {
 	Password string `json:"password" validate:"omitempty,min=6"`
 	Name     string `json:"name" validate:"omitempty"`
 }
+
+type RegisterRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=6"`
+	Name     string `json:"name" validate:"required"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+type AuthResponse struct {
+	Token string `json:"token"`
+	User  User   `json:"user"`
+}

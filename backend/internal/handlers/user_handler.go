@@ -29,6 +29,11 @@ func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
 
 	user, err := h.service.CreateUser(&req)
 	if err != nil {
+		if err.Error() == "email already exists" {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "Email already exists",
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})

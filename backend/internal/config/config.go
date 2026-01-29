@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -23,6 +24,11 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	DBName   string
+}
+
+type JWTConfig struct {
+	Secret     string
+	Expiration string
 }
 
 func Load() (*Config, error) {
@@ -40,6 +46,10 @@ func Load() (*Config, error) {
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", "root"),
 			DBName:   getEnv("DB_NAME", "mini_meeting"),
+		},
+		JWT: JWTConfig{
+			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-this-in-production"),
+			Expiration: getEnv("JWT_EXPIRATION", "24h"),
 		},
 	}
 

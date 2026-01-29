@@ -18,15 +18,19 @@ func NewUserService(repo *repositories.UserRepository) *UserService {
 }
 
 func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
+	// Check if email already exists
+	existingUser, err := s.repo.FindByEmail(req.Email)
+	if err == nil && existingUser != nil {
+		return nil, errors.New("email already exists")
+	}
+	// Ignore error if it's just "not found"
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, err
 	}
 
 	user := &models.User{
 		Email:    req.Email,
-		Password: string(hashedPassword),
+		Password: req.Password, // Password should already be hashed by caller
 		Name:     req.Name,
 	}
 
@@ -39,6 +43,17 @@ func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, e
 
 func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 	user, err := s.repo.FindByID(id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
+	user, err := s.repo.FindByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("user not found")

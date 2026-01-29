@@ -60,9 +60,10 @@ func main() {
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
+	authHandler := handlers.NewAuthHandler(userService, cfg)
 
 	// Setup routes
-	routes.SetupRoutes(app, userHandler)
+	routes.SetupRoutes(app, userHandler, authHandler, cfg)
 
 	// Health check route
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {
