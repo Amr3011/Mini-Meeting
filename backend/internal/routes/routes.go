@@ -24,11 +24,13 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 
 	// User routes (protected)
 	users := api.Group("/users", middleware.AuthMiddleware(cfg))
-	users.Post("/", userHandler.CreateUser)
-	users.Get("/", userHandler.GetAllUsers)
-	users.Get("/me", userHandler.GetMe)
-	users.Patch("/me", userHandler.UpdateMe)
-	users.Get("/:id", userHandler.GetUser)
-	users.Patch("/:id", userHandler.UpdateUser)
-	users.Delete("/:id", userHandler.DeleteUser)
+	users.Get("/me", userHandler.GetMe)      // Get current user
+	users.Patch("/me", userHandler.UpdateMe) // Update current user
+
+	// Admin-only routes
+	users.Post("/", middleware.AdminMiddleware(), userHandler.CreateUser)      // Admin only
+	users.Get("/", middleware.AdminMiddleware(), userHandler.GetAllUsers)      // Admin only
+	users.Get("/:id", middleware.AdminMiddleware(), userHandler.GetUser)       // Admin only
+	users.Patch("/:id", middleware.AdminMiddleware(), userHandler.UpdateUser)  // Admin only
+	users.Delete("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser) // Admin only
 }

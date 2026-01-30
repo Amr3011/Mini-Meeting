@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	Email    EmailConfig
+	Admin    AdminConfig
 }
 
 type ServerConfig struct {
@@ -41,6 +42,11 @@ type EmailConfig struct {
 	Support  string
 }
 
+type AdminConfig struct {
+	Email    string
+	Password string
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -68,6 +74,10 @@ func Load() (*Config, error) {
 			Password: getEnv("EMAIL_PASSWORD", ""),
 			From:     getEnv("EMAIL_FROM", ""),
 			Support:  getEnv("EMAIL_SUPPORT", ""),
+		},
+		Admin: AdminConfig{
+			Email:    getEnv("ADMIN_EMAIL"),
+			Password: getEnv("ADMIN_PASSWORD"),
 		},
 	}
 

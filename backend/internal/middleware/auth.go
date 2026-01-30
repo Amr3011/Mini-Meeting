@@ -40,6 +40,29 @@ func AuthMiddleware(cfg *config.Config) fiber.Handler {
 		// Add user info to context
 		c.Locals("userID", claims.UserID)
 		c.Locals("email", claims.Email)
+		c.Locals("role", claims.Role)
+
+		return c.Next()
+	}
+}
+
+// AdminMiddleware checks if the authenticated user is an admin
+func AdminMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Get role from context (set by AuthMiddleware)
+		role, ok := c.Locals("role").(string)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Unauthorized",
+			})
+		}
+
+		// Check if user is admin
+		if role != "admin" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Admin access required",
+			})
+		}
 
 		return c.Next()
 	}

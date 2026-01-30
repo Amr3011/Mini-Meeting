@@ -35,6 +35,7 @@ func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, e
 		Email:    email,
 		Password: req.Password, // Password should already be hashed by caller
 		Name:     req.Name,
+		Role:     "user", // Always create as regular user
 	}
 
 	if err := s.repo.Create(user); err != nil {
@@ -80,6 +81,12 @@ func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*model
 		return nil, err
 	}
 
+	// Protect admin from being modified to regular user
+	// Role cannot be changed through this endpoint
+	if user.Role == "admin" && id == 1 {
+		return nil, errors.New("cannot modify admin user")
+	}
+
 	// Update fields if provided
 	if req.Name != "" {
 		user.Name = req.Name
@@ -107,12 +114,17 @@ func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*model
 
 func (s *UserService) DeleteUser(id uint) error {
 	// Check if user exists
-	_, err := s.repo.FindByID(id)
+	user, err := s.repo.FindByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errors.New("user not found")
 		}
 		return err
+	}
+
+	// Protect admin from deletion
+	if user.Role == "admin" {
+		return errors.New("cannot delete admin user")
 	}
 
 	return s.repo.Delete(id)

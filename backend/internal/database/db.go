@@ -7,6 +7,7 @@ import (
 	"mini-meeting/internal/config"
 	"mini-meeting/internal/models"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -47,4 +48,41 @@ func Migrate() error {
 
 func GetDB() *gorm.DB {
 	return DB
+}
+
+func SeedAdmin(cfg *config.Config) error {
+	log.Println("Checking for admin user...")
+
+	// Check if admin already exists
+	var adminCount int64
+	DB.Model(&models.User{}).Where("role = ?", "admin").Count(&adminCount)
+
+	if adminCount > 0 {
+		log.Println("Admin user already exists")
+		return nil
+	}
+
+	// Hash the admin password from config
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(cfg.Admin.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash admin password: %w", err)
+	}
+
+	// Create default admin user
+	admin := models.User{
+		Email:         cfg.Admin.Email,
+		Password:      string(hashedPassword),
+		Name:          "Administrator",
+		Role:          "admin",
+		EmailVerified: true,
+	}
+
+	if err := DB.Create(&admin).Error; err != nil {
+		return fmt.Errorf("failed to create admin user: %w", err)
+	}
+
+	log.Println("Admin user created successfully")
+	log.Printf("Email: %s", cfg.Admin.Email)
+
+	return nil
 }

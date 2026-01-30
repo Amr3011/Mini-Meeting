@@ -35,6 +35,11 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
+	// Seed admin user
+	if err := database.SeedAdmin(cfg); err != nil {
+		log.Fatalf("Failed to seed admin user: %v", err)
+	}
+
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
