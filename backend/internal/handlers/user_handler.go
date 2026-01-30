@@ -132,3 +132,55 @@ func (h *UserHandler) DeleteUser(c *fiber.Ctx) error {
 		"message": "User deleted successfully",
 	})
 }
+
+// GetMe retrieves the current authenticated user
+// GET /api/users/me
+func (h *UserHandler) GetMe(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	user, err := h.service.GetUserByID(userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": user,
+	})
+}
+
+// UpdateMe updates the current authenticated user
+// PATCH /api/users/me
+func (h *UserHandler) UpdateMe(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	var req models.UpdateUserRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	user, err := h.service.UpdateUser(userID, &req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "User updated successfully",
+		"data":    user,
+	})
+}
