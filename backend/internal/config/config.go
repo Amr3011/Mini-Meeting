@@ -58,8 +58,8 @@ func Load() (*Config, error) {
 			DBName:   getEnv("DB_NAME", "mini_meeting"),
 		},
 		JWT: JWTConfig{
-			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-this-in-production"),
-			Expiration: getEnv("JWT_EXPIRATION", "24h"),
+			Secret:     getEnv("JWT_SECRET"),
+			Expiration: getEnv("JWT_EXPIRATION"),
 		},
 		Email: EmailConfig{
 			Host:     getEnv("EMAIL_HOST", "smtp.gmail.com"),
