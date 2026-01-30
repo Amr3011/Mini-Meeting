@@ -11,14 +11,16 @@ import (
 )
 
 type AuthHandler struct {
-	userService *services.UserService
-	config      *config.Config
+	userService  *services.UserService
+	config       *config.Config
+	emailService *utils.EmailService
 }
 
-func NewAuthHandler(userService *services.UserService, cfg *config.Config) *AuthHandler {
+func NewAuthHandler(userService *services.UserService, cfg *config.Config, emailService *utils.EmailService) *AuthHandler {
 	return &AuthHandler{
-		userService: userService,
-		config:      cfg,
+		userService:  userService,
+		config:       cfg,
+		emailService: emailService,
 	}
 }
 
@@ -68,19 +70,26 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		})
 	}
 
-	// Generate JWT token
-	token, err := utils.GenerateToken(user.ID, user.Email, h.config.JWT.Secret, h.config.JWT.Expiration)
+	// Generate and send verification code
+	code := utils.GenerateVerificationCode()
+	err = h.userService.SetVerificationCode(user.Email, code)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to generate token",
+			"error": "Failed to set verification code",
+		})
+	}
+
+	err = h.emailService.SendVerificationEmail(user.Email, code)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to send verification email",
 		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "User registered successfully",
-		"data": models.AuthResponse{
-			Token: token,
-			User:  *user,
+		"message": "Verification code sent successfully",
+		"data": fiber.Map{
+			"email": user.Email,
 		},
 	})
 }
@@ -101,6 +110,13 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "Invalid email or password",
+		})
+	}
+
+	// Check if email is verified
+	if !user.EmailVerified {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Email not verified. Please verify your email first.",
 		})
 	}
 
@@ -126,5 +142,160 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 			Token: token,
 			User:  *user,
 		},
+	})
+}
+
+// VerifyEmail verifies user's email with the provided code
+// POST /api/v1/auth/verify-email
+func (h *AuthHandler) VerifyEmail(c *fiber.Ctx) error {
+	var req models.VerifyEmailRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	err := h.userService.VerifyEmail(req.Email, req.Code)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Email verified successfully",
+	})
+}
+
+// ResendVerificationCode resends the verification code to user's email
+// POST /api/v1/auth/resend-code
+func (h *AuthHandler) ResendVerificationCode(c *fiber.Ctx) error {
+	var req models.ResendCodeRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Get user by email
+	user, err := h.userService.GetUserByEmail(req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	if user.EmailVerified {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Email already verified",
+		})
+	}
+
+	// Generate and send new verification code
+	code := utils.GenerateVerificationCode()
+	err = h.userService.SetVerificationCode(user.Email, code)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to set verification code",
+		})
+	}
+
+	err = h.emailService.SendVerificationEmail(user.Email, code)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to send verification email",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Verification code sent successfully",
+	})
+}
+
+// ForgotPassword initiates password reset by sending a code to user's email
+// POST /api/v1/auth/forgot-password
+func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
+	var req models.ForgotPasswordRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Get user by email
+	user, err := h.userService.GetUserByEmail(req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Generate and send password reset code
+	code := utils.GenerateVerificationCode()
+	err = h.userService.SetPasswordResetCode(user.Email, code)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	err = h.emailService.SendPasswordResetEmail(user.Email, code)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to send password reset email",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Password reset code sent successfully",
+	})
+}
+
+// VerifyPasswordCode verifies the password reset code
+// POST /api/v1/auth/verify-password-code
+func (h *AuthHandler) VerifyPasswordCode(c *fiber.Ctx) error {
+	var req models.VerifyPasswordCodeRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	err := h.userService.VerifyPasswordResetCode(req.Email, req.Code)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Password reset code verified successfully",
+	})
+}
+
+// ResetPassword resets the user's password with a verified code
+// PATCH /api/v1/auth/reset-password
+func (h *AuthHandler) ResetPassword(c *fiber.Ctx) error {
+	var req models.ResetPasswordRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	err := h.userService.ResetPassword(req.Email, req.Code, req.Password)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Password reset successfully",
 	})
 }

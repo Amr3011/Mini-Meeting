@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"mini-meeting/internal/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -48,4 +49,42 @@ func (r *UserRepository) Update(user *models.User) error {
 
 func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
+}
+
+func (r *UserRepository) UpdateVerificationCode(email, code string, expiry time.Time) error {
+	return r.db.Model(&models.User{}).
+		Where("email = ?", email).
+		Updates(map[string]interface{}{
+			"verification_code":        code,
+			"verification_code_expiry": expiry,
+		}).Error
+}
+
+func (r *UserRepository) VerifyEmail(email string) error {
+	return r.db.Model(&models.User{}).
+		Where("email = ?", email).
+		Updates(map[string]interface{}{
+			"email_verified":           true,
+			"verification_code":        "",
+			"verification_code_expiry": nil,
+		}).Error
+}
+
+func (r *UserRepository) UpdatePasswordResetCode(email, code string, expiry time.Time) error {
+	return r.db.Model(&models.User{}).
+		Where("email = ?", email).
+		Updates(map[string]interface{}{
+			"password_reset_code":   code,
+			"password_reset_expiry": expiry,
+		}).Error
+}
+
+func (r *UserRepository) UpdatePassword(email, hashedPassword string) error {
+	return r.db.Model(&models.User{}).
+		Where("email = ?", email).
+		Updates(map[string]interface{}{
+			"password":              hashedPassword,
+			"password_reset_code":   "",
+			"password_reset_expiry": nil,
+		}).Error
 }

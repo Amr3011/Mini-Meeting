@@ -10,6 +10,7 @@ import (
 	"mini-meeting/internal/repositories"
 	"mini-meeting/internal/routes"
 	"mini-meeting/internal/services"
+	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -57,10 +58,11 @@ func main() {
 
 	// Initialize services
 	userService := services.NewUserService(userRepo)
+	emailService := utils.NewEmailService(&cfg.Email)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
-	authHandler := handlers.NewAuthHandler(userService, cfg)
+	authHandler := handlers.NewAuthHandler(userService, cfg, emailService)
 
 	// Setup routes
 	routes.SetupRoutes(app, userHandler, authHandler, cfg)

@@ -3,12 +3,17 @@ package models
 import "time"
 
 type User struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Email     string    `gorm:"unique;not null" json:"email"`
-	Password  string    `gorm:"not null" json:"-"`
-	Name      string    `gorm:"not null" json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID                     uint       `gorm:"primaryKey" json:"id"`
+	Email                  string     `gorm:"unique;not null" json:"email"`
+	Password               string     `gorm:"not null" json:"-"`
+	Name                   string     `gorm:"not null" json:"name"`
+	EmailVerified          bool       `gorm:"default:false" json:"email_verified"`
+	VerificationCode       string     `gorm:"size:6" json:"-"`
+	VerificationCodeExpiry *time.Time `json:"-"`
+	PasswordResetCode      string     `gorm:"size:6" json:"-"`
+	PasswordResetExpiry    *time.Time `json:"-"`
+	CreatedAt              time.Time  `json:"created_at"`
+	UpdatedAt              time.Time  `json:"updated_at"`
 }
 
 type CreateUserRequest struct {
@@ -37,4 +42,28 @@ type LoginRequest struct {
 type AuthResponse struct {
 	Token string `json:"token"`
 	User  User   `json:"user"`
+}
+
+type VerifyEmailRequest struct {
+	Email string `json:"email" validate:"required,email"`
+	Code  string `json:"code" validate:"required,len=6"`
+}
+
+type ResendCodeRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type ForgotPasswordRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
+type VerifyPasswordCodeRequest struct {
+	Email string `json:"email" validate:"required,email"`
+	Code  string `json:"code" validate:"required,len=6"`
+}
+
+type ResetPasswordRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Code     string `json:"code" validate:"required,len=6"`
+	Password string `json:"password" validate:"required,min=6"`
 }

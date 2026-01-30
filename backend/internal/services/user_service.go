@@ -4,6 +4,8 @@ import (
 	"errors"
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
+	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -19,7 +21,8 @@ func NewUserService(repo *repositories.UserRepository) *UserService {
 
 func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
 	// Check if email already exists
-	existingUser, err := s.repo.FindByEmail(req.Email)
+	email := strings.ToLower(req.Email)
+	existingUser, err := s.repo.FindByEmail(email)
 	if err == nil && existingUser != nil {
 		return nil, errors.New("email already exists")
 	}
@@ -29,7 +32,7 @@ func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, e
 	}
 
 	user := &models.User{
-		Email:    req.Email,
+		Email:    email,
 		Password: req.Password, // Password should already be hashed by caller
 		Name:     req.Name,
 	}
@@ -53,6 +56,7 @@ func (s *UserService) GetUserByID(id uint) (*models.User, error) {
 }
 
 func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
+	email = strings.ToLower(email)
 	user, err := s.repo.FindByEmail(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -81,7 +85,10 @@ func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*model
 		user.Name = req.Name
 	}
 	if req.Email != "" {
-		user.Email = req.Email
+		if user.EmailVerified {
+			return nil, errors.New("cannot update email after verification")
+		}
+		user.Email = strings.ToLower(req.Email)
 	}
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -109,4 +116,112 @@ func (s *UserService) DeleteUser(id uint) error {
 	}
 
 	return s.repo.Delete(id)
+}
+
+func (s *UserService) SetVerificationCode(email, code string) error {
+	email = strings.ToLower(email)
+	expiry := time.Now().Add(10 * time.Minute)
+	return s.repo.UpdateVerificationCode(email, code, expiry)
+}
+
+func (s *UserService) VerifyEmail(email, code string) error {
+	email = strings.ToLower(email)
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	if user.EmailVerified {
+		return errors.New("email already verified")
+	}
+
+	if user.VerificationCode == "" {
+		return errors.New("no verification code set")
+	}
+
+	if user.VerificationCode != code {
+		return errors.New("invalid verification code")
+	}
+
+	if user.VerificationCodeExpiry == nil || time.Now().After(*user.VerificationCodeExpiry) {
+		return errors.New("verification code expired")
+	}
+
+	return s.repo.VerifyEmail(email)
+}
+
+func (s *UserService) SetPasswordResetCode(email, code string) error {
+	email = strings.ToLower(email)
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	if !user.EmailVerified {
+		return errors.New("email not verified")
+	}
+
+	expiry := time.Now().Add(10 * time.Minute)
+	return s.repo.UpdatePasswordResetCode(email, code, expiry)
+}
+
+func (s *UserService) VerifyPasswordResetCode(email, code string) error {
+	email = strings.ToLower(email)
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	if user.PasswordResetCode == "" {
+		return errors.New("no password reset code set")
+	}
+
+	if user.PasswordResetCode != code {
+		return errors.New("invalid reset code")
+	}
+
+	if user.PasswordResetExpiry == nil || time.Now().After(*user.PasswordResetExpiry) {
+		return errors.New("reset code expired")
+	}
+
+	return nil
+}
+
+func (s *UserService) ResetPassword(email, code, newPassword string) error {
+	email = strings.ToLower(email)
+	user, err := s.repo.FindByEmail(email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	if user.PasswordResetCode == "" {
+		return errors.New("no password reset code set")
+	}
+
+	if user.PasswordResetCode != code {
+		return errors.New("invalid reset code")
+	}
+
+	if user.PasswordResetExpiry == nil || time.Now().After(*user.PasswordResetExpiry) {
+		return errors.New("reset code expired")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.UpdatePassword(email, string(hashedPassword))
 }

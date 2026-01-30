@@ -11,6 +11,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	Email    EmailConfig
 }
 
 type ServerConfig struct {
@@ -29,6 +30,15 @@ type DatabaseConfig struct {
 type JWTConfig struct {
 	Secret     string
 	Expiration string
+}
+
+type EmailConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
+	From     string
+	Support  string
 }
 
 func Load() (*Config, error) {
@@ -50,6 +60,14 @@ func Load() (*Config, error) {
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-this-in-production"),
 			Expiration: getEnv("JWT_EXPIRATION", "24h"),
+		},
+		Email: EmailConfig{
+			Host:     getEnv("EMAIL_HOST", "smtp.gmail.com"),
+			Port:     getEnv("EMAIL_PORT", "587"),
+			User:     getEnv("EMAIL_USER", ""),
+			Password: getEnv("EMAIL_PASSWORD", ""),
+			From:     getEnv("EMAIL_FROM", ""),
+			Support:  getEnv("EMAIL_SUPPORT", ""),
 		},
 	}
 
