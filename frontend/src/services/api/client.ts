@@ -11,7 +11,8 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor - Add JWT token to all requests
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    // Check both localStorage (Remember Me) and sessionStorage (session-only)
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,6 +32,7 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized - redirect to login
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";
     }

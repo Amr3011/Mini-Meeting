@@ -15,6 +15,7 @@ export const LoginForm: React.FC = () => {
   const { login } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     register,
@@ -29,7 +30,7 @@ export const LoginForm: React.FC = () => {
     setError(null);
 
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, rememberMe);
       navigate("/dashboard");
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
@@ -96,6 +97,8 @@ export const LoginForm: React.FC = () => {
             <label className="flex items-center gap-2 cursor-pointer group">
               <input
                 type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500 transition-colors"
               />
               <span className="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">

@@ -6,7 +6,7 @@ import { userService } from "../services/api/user.service";
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
   isAuthenticated: boolean;
@@ -17,7 +17,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("token") || sessionStorage.getItem("token")
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize auth state - fetch user if token exists
@@ -31,6 +33,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           console.error("Failed to fetch user:", error);
           // Token might be invalid, clear it
           localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
           setToken(null);
         }
       }
@@ -40,18 +43,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initializeAuth();
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe: boolean = false) => {
     const { token: newToken, user: userData } = await authService.login({
       email,
       password,
     });
-    localStorage.setItem("token", newToken);
+    
+    // Use localStorage for persistent storage (Remember Me) or sessionStorage for session-only
+    if (rememberMe) {
+      localStorage.setItem("token", newToken);
+      // Clear sessionStorage if it exists
+      sessionStorage.removeItem("token");
+    } else {
+      sessionStorage.setItem("token", newToken);
+      // Clear localStorage if it exists
+      localStorage.removeItem("token");
+    }
+    
     setToken(newToken);
     setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setToken(null);
     setUser(null);
   };
