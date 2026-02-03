@@ -69,11 +69,13 @@ func SeedAdmin(cfg *config.Config) error {
 	}
 
 	// Create default admin user
+	hashedPasswordStr := string(hashedPassword)
 	admin := models.User{
 		Email:         cfg.Admin.Email,
-		Password:      string(hashedPassword),
+		Password:      &hashedPasswordStr,
 		Name:          "Administrator",
 		Role:          "admin",
+		Provider:      models.ProviderLocal,
 		EmailVerified: true,
 	}
 

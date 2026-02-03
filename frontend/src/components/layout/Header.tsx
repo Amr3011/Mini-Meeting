@@ -105,9 +105,17 @@ export const Header: React.FC = () => {
                 className="flex items-center gap-2 p-1.5 pr-3 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all duration-200"
               >
                 <div className="relative">
-                  <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                    {user?.name.charAt(0).toUpperCase()}
-                  </div>
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="w-9 h-9 rounded-full object-cover shadow-md"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-linear-to-br from-brand-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                      {user?.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   {/* Online status indicator */}
                   <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-success-500 border-2 border-white rounded-full" />
                 </div>

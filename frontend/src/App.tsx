@@ -11,6 +11,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import AdminUsers from "./pages/AdminUsers";
+import OAuthSuccess from "./pages/OAuthSuccess";
+import OAuthError from "./pages/OAuthError";
 
 function App() {
   return (
@@ -23,6 +25,10 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          
+          {/* OAuth callback routes */}
+          <Route path="/auth/oauth-success" element={<OAuthSuccess />} />
+          <Route path="/auth/oauth-error" element={<OAuthError />} />
 
           {/* Protected routes */}
           <Route

@@ -5,9 +5,12 @@ import "time"
 type User struct {
 	ID                     uint       `gorm:"primaryKey" json:"id"`
 	Email                  string     `gorm:"unique;not null" json:"email"`
-	Password               string     `gorm:"not null" json:"-"`
+	Password               *string    `gorm:"" json:"-"`
 	Name                   string     `gorm:"not null" json:"name"`
 	Role                   string     `gorm:"default:'user';not null" json:"role"`
+	Provider               Provider   `gorm:"default:'local';not null" json:"provider"`
+	ProviderID             string     `gorm:"index" json:"-"`
+	AvatarURL              string     `gorm:"" json:"avatar_url"`
 	EmailVerified          bool       `gorm:"default:false" json:"email_verified"`
 	VerificationCode       string     `gorm:"size:6" json:"-"`
 	VerificationCodeExpiry *time.Time `json:"-"`
@@ -68,3 +71,11 @@ type ResetPasswordRequest struct {
 	Code     string `json:"code" validate:"required,len=6"`
 	Password string `json:"password" validate:"required,min=6"`
 }
+
+type Provider string
+
+const (
+	ProviderLocal  Provider = "local"
+	ProviderGoogle Provider = "google"
+	ProviderGithub Provider = "github"
+)

@@ -29,12 +29,20 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Handle 401 Unauthorized - redirect to login
+    // Handle 401 Unauthorized - redirect to login (but not if already on login/register pages)
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
+      const currentPath = window.location.pathname;
+      const isAuthPage = currentPath === "/login" || currentPath === "/register" ||
+        currentPath === "/verify-email" || currentPath === "/forgot-password" ||
+        currentPath === "/reset-password";
+
+      // Only clear tokens and redirect if not on an auth page
+      if (!isAuthPage) {
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
     }
 
     // Handle network errors

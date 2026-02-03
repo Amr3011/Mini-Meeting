@@ -20,6 +20,7 @@ export const ResetPasswordForm: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60); // Start timer at 60 seconds since code already sent
+  const [showPasswordMatch, setShowPasswordMatch] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const {
@@ -33,11 +34,12 @@ export const ResetPasswordForm: React.FC = () => {
   });
 
   const password = watch("password", "");
+  const confirmPassword = watch("confirmPassword", "");
 
   // Calculate password strength
   const getPasswordStrength = (pwd: string): { strength: number; label: string; color: string } => {
     if (!pwd) return { strength: 0, label: "", color: "" };
-    
+
     let strength = 0;
     if (pwd.length >= 6) strength++;
     if (pwd.length >= 10) strength++;
@@ -61,6 +63,19 @@ export const ResetPasswordForm: React.FC = () => {
     }
   }, [resendTimer]);
 
+  // Debounce password match validation
+  useEffect(() => {
+    if (confirmPassword) {
+      setShowPasswordMatch(false);
+      const timer = setTimeout(() => {
+        setShowPasswordMatch(true);
+      }, 500); // Show validation 500ms after user stops typing
+      return () => clearTimeout(timer);
+    } else {
+      setShowPasswordMatch(false);
+    }
+  }, [confirmPassword]);
+
   const handleCodeChange = (index: number, value: string) => {
     if (value && !/^\d$/.test(value)) return;
 
@@ -82,7 +97,7 @@ export const ResetPasswordForm: React.FC = () => {
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").slice(0, 6);
-    
+
     if (/^\d+$/.test(pastedData)) {
       const newCode = pastedData.split("").concat(Array(6).fill("")).slice(0, 6);
       setCode(newCode);
@@ -93,7 +108,7 @@ export const ResetPasswordForm: React.FC = () => {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       setError("Please enter your email address");
       return;
@@ -113,10 +128,11 @@ export const ResetPasswordForm: React.FC = () => {
       setStep("password");
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
-      setError(
+      const errorMessage =
+        axiosError.response?.data?.error ||
         axiosError.response?.data?.message ||
-          "Invalid or expired code. Please try again."
-      );
+        "Invalid or expired code. Please try again.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -132,16 +148,17 @@ export const ResetPasswordForm: React.FC = () => {
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
-      setError(
+      const errorMessage =
+        axiosError.response?.data?.error ||
         axiosError.response?.data?.message ||
-          "Failed to resend code. Please try again."
-      );
+        "Failed to resend code. Please try again.";
+      setError(errorMessage);
     }
   };
 
   const onSubmitPassword = async (data: ResetPasswordFormData) => {
     const fullCode = code.join("");
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -151,16 +168,17 @@ export const ResetPasswordForm: React.FC = () => {
         code: fullCode,
         password: data.password,
       });
-      
+
       navigate("/login", {
         state: { message: "Password reset successfully! Please login with your new password." },
       });
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
-      setError(
+      const errorMessage =
+        axiosError.response?.data?.error ||
         axiosError.response?.data?.message ||
-          "Failed to reset password. Please try again."
-      );
+        "Failed to reset password. Please try again.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -188,7 +206,7 @@ export const ResetPasswordForm: React.FC = () => {
         <div className="glass rounded-2xl shadow-2xl p-8 space-y-6 animate-scale-up" style={{ animationDelay: '200ms' }}>
           <form onSubmit={handleVerifyCode} className="space-y-6">
             {error && <ErrorMessage message={error} />}
-            
+
             {success && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-800">
                 {success}
@@ -226,10 +244,9 @@ export const ResetPasswordForm: React.FC = () => {
                       w-14 h-16 text-center text-3xl font-bold 
                       border-2 rounded-xl transition-all duration-200
                       focus:outline-none focus:ring-4
-                      ${
-                        digit
-                          ? 'border-brand-500 bg-brand-50 text-brand-700 ring-brand-100'
-                          : 'border-gray-300 hover:border-gray-400 focus:border-brand-500 focus:ring-brand-100'
+                      ${digit
+                        ? 'border-brand-500 bg-brand-50 text-brand-700 ring-brand-100'
+                        : 'border-gray-300 hover:border-gray-400 focus:border-brand-500 focus:ring-brand-100'
                       }
                       ${digit && 'animate-pulse'}
                     `}
@@ -239,11 +256,11 @@ export const ResetPasswordForm: React.FC = () => {
             </div>
 
             {/* Verify Button */}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               variant="gradient"
               size="lg"
-              fullWidth 
+              fullWidth
               isLoading={isLoading}
             >
               Verify Code
@@ -338,68 +355,142 @@ export const ResetPasswordForm: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmitPassword)} className="space-y-6">
           {error && <ErrorMessage message={error} />}
 
-        <input type="hidden" {...register("email")} value={email} />
-        <input type="hidden" {...register("code")} value={code.join("")} />
+          <input type="hidden" {...register("email")} value={email} />
+          <input type="hidden" {...register("code")} value={code.join("")} />
 
-        <div>
-          <Input
-            label="New Password"
-            type="password"
-            placeholder="Enter new password"
-            error={errors.password?.message}
-            {...register("password")}
-          />
-          
-          {password && (
-            <div className="mt-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-600">Password strength:</span>
-                <span className={`text-xs font-medium ${passwordStrength.label === 'Weak' ? 'text-red-600' : passwordStrength.label === 'Fair' ? 'text-yellow-600' : passwordStrength.label === 'Good' ? 'text-blue-600' : 'text-green-600'}`}>
-                  {passwordStrength.label}
+          <div>
+            <Input
+              label="New Password"
+              type="password"
+              placeholder="Enter new password"
+              error={errors.password?.message}
+              {...register("password")}
+            />
+
+            {/* Enhanced Password Strength Indicator */}
+            {password && (
+              <div className="mt-3 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Password strength:</span>
+                  <span className={`text-sm font-semibold ${passwordStrength.label === 'Weak' ? 'text-danger-600' :
+                      passwordStrength.label === 'Fair' ? 'text-warning-600' :
+                        passwordStrength.label === 'Good' ? 'text-brand-600' :
+                          'text-success-600'
+                    }`}>
+                    {passwordStrength.label}
+                  </span>
+                </div>
+
+                {/* Colorful Progress Bar */}
+                <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full transition-all duration-300 ${passwordStrength.label === 'Weak' ? 'bg-linear-to-r from-danger-400 to-danger-600' :
+                        passwordStrength.label === 'Fair' ? 'bg-linear-to-r from-warning-400 to-warning-600' :
+                          passwordStrength.label === 'Good' ? 'bg-linear-to-r from-brand-400 to-brand-600' :
+                            'bg-linear-to-r from-success-400 to-success-600'
+                      }`}
+                    style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                  >
+                    <div className="absolute inset-0 shimmer" />
+                  </div>
+                </div>
+
+                {/* Password Requirements */}
+                <div className="space-y-2 text-xs">
+                  <div className={`flex items-center gap-2 transition-colors ${password.length >= 6 ? 'text-success-600' : 'text-gray-400'
+                    }`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {password.length >= 6 ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      ) : (
+                        <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                      )}
+                    </svg>
+                    <span>At least 6 characters</span>
+                  </div>
+                  <div className={`flex items-center gap-2 transition-colors ${/[a-z]/.test(password) && /[A-Z]/.test(password) ? 'text-success-600' : 'text-gray-400'
+                    }`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {/[a-z]/.test(password) && /[A-Z]/.test(password) ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      ) : (
+                        <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                      )}
+                    </svg>
+                    <span>Uppercase & lowercase letters</span>
+                  </div>
+                  <div className={`flex items-center gap-2 transition-colors ${/\d/.test(password) ? 'text-success-600' : 'text-gray-400'
+                    }`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {/\d/.test(password) ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      ) : (
+                        <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                      )}
+                    </svg>
+                    <span>At least one number</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Input
+              label="Confirm Password"
+              type="password"
+              placeholder="Confirm new password"
+              error={errors.confirmPassword?.message}
+              {...register("confirmPassword")}
+            />
+
+            {/* Password Match Indicator */}
+            {confirmPassword && showPasswordMatch && (
+              <div className={`mt-2 flex items-center gap-2 text-sm transition-colors ${
+                confirmPassword === password 
+                  ? 'text-success-600' 
+                  : 'text-danger-600'
+              }`}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {confirmPassword === password ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  )}
+                </svg>
+                <span className="font-medium">
+                  {confirmPassword === password 
+                    ? 'Passwords match' 
+                    : 'Passwords do not match'}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                <div
-                  className={`h-1.5 rounded-full transition-all ${passwordStrength.color}`}
-                  style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <Input
-          label="Confirm Password"
-          type="password"
-          placeholder="Confirm new password"
-          error={errors.confirmPassword?.message}
-          {...register("confirmPassword")}
-        />
+          <Button
+            type="submit"
+            variant="gradient"
+            size="lg"
+            fullWidth
+            isLoading={isLoading}
+          >
+            Reset Password
+          </Button>
+        </form>
+      </div>
 
-        <Button 
-          type="submit" 
-          variant="gradient"
-          size="lg"
-          fullWidth 
-          isLoading={isLoading}
+      {/* Back to Login */}
+      <div className="text-center mt-6">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
         >
-          Reset Password
-        </Button>
-      </form>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to login
+        </Link>
+      </div>
     </div>
-
-    {/* Back to Login */}
-    <div className="text-center mt-6">
-      <Link
-        to="/login"
-        className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to login
-      </Link>
-    </div>
-  </div>
   );
 };

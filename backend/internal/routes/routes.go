@@ -22,15 +22,19 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	auth.Post("/verify-password-code", authHandler.VerifyPasswordCode)
 	auth.Patch("/reset-password", authHandler.ResetPassword)
 
+	// OAuth routes (public)
+	auth.Get("/:provider", authHandler.OAuthLogin)
+	auth.Get("/:provider/callback", authHandler.OAuthCallback)
+
 	// User routes (protected)
 	users := api.Group("/users", middleware.AuthMiddleware(cfg))
 	users.Get("/me", userHandler.GetMe)      // Get current user
 	users.Patch("/me", userHandler.UpdateMe) // Update current user
 
 	// Admin-only routes
-	users.Post("/", middleware.AdminMiddleware(), userHandler.CreateUser)      // Admin only
-	users.Get("/", middleware.AdminMiddleware(), userHandler.GetAllUsers)      // Admin only
-	users.Get("/:id", middleware.AdminMiddleware(), userHandler.GetUser)       // Admin only
-	users.Patch("/:id", middleware.AdminMiddleware(), userHandler.UpdateUser)  // Admin only
-	users.Delete("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser) // Admin only
+	users.Post("/", middleware.AdminMiddleware(), userHandler.CreateUser)
+	users.Get("/", middleware.AdminMiddleware(), userHandler.GetAllUsers)
+	users.Get("/:id", middleware.AdminMiddleware(), userHandler.GetUser)
+	users.Patch("/:id", middleware.AdminMiddleware(), userHandler.UpdateUser)
+	users.Delete("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser)
 }

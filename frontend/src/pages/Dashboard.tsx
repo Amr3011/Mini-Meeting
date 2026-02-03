@@ -20,7 +20,7 @@ export default function Dashboard() {
           {/* Stats Cards */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
                   className="h-8 w-8 text-blue-600"
                   fill="none"
@@ -46,7 +46,7 @@ export default function Dashboard() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
                   className="h-8 w-8 text-green-600"
                   fill="none"
@@ -72,7 +72,7 @@ export default function Dashboard() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
                   className="h-8 w-8 text-purple-600"
                   fill="none"

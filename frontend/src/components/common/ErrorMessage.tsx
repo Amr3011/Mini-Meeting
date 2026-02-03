@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface ErrorMessageProps {
   message: string;
@@ -12,7 +12,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
   return (
     <div className="bg-danger-50 border border-danger-200 rounded-lg p-4 animate-slide-down">
       <div className="flex items-start">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <svg
             className="h-5 w-5 text-danger-400"
             xmlns="http://www.w3.org/2000/svg"
@@ -30,6 +30,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
           <p className="text-sm text-danger-800 font-medium">{message}</p>
           {onRetry && (
             <button
+              type="button"
               onClick={onRetry}
               className="mt-2 text-sm font-medium text-danger-800 hover:text-danger-900 underline transition-colors"
             >
@@ -67,6 +68,13 @@ export const Toast: React.FC<ToastProps> = ({
 }) => {
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleClose = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose(id);
+    }, 300);
+  }, [id, onClose]);
+
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => {
@@ -75,14 +83,7 @@ export const Toast: React.FC<ToastProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [duration, id]);
-
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onClose(id);
-    }, 300);
-  };
+  }, [duration, id, handleClose]);
 
   const typeConfig = {
     success: {
@@ -142,7 +143,7 @@ export const Toast: React.FC<ToastProps> = ({
     >
       <div className="flex items-start gap-3">
         {/* Icon */}
-        <div className={`flex-shrink-0 ${config.iconColor}`}>
+        <div className={`shrink-0 ${config.iconColor}`}>
           {config.icon}
         </div>
 
@@ -167,8 +168,9 @@ export const Toast: React.FC<ToastProps> = ({
 
         {/* Close button */}
         <button
+          type="button"
           onClick={handleClose}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+          className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

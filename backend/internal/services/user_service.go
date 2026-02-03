@@ -33,9 +33,10 @@ func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, e
 
 	user := &models.User{
 		Email:    email,
-		Password: req.Password, // Password should already be hashed by caller
+		Password: &req.Password,
 		Name:     req.Name,
-		Role:     "user", // Always create as regular user
+		Role:     "user",
+		Provider: models.ProviderLocal,
 	}
 
 	if err := s.repo.Create(user); err != nil {
@@ -102,7 +103,8 @@ func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*model
 		if err != nil {
 			return nil, err
 		}
-		user.Password = string(hashedPassword)
+		hashedPasswordStr := string(hashedPassword)
+		user.Password = &hashedPasswordStr
 	}
 
 	if err := s.repo.Update(user); err != nil {
@@ -236,4 +238,82 @@ func (s *UserService) ResetPassword(email, code, newPassword string) error {
 	}
 
 	return s.repo.UpdatePassword(email, string(hashedPassword))
+}
+
+func (s *UserService) FindOrCreateOAuthUser(provider models.Provider, providerID string, email string, name string, avatarURL string) (*models.User, error) {
+	email = strings.ToLower(email)
+
+	// First, try to find user by provider and provider ID
+	user, err := s.repo.FindByProvider(provider, providerID)
+	if err == nil && user != nil {
+		// Update avatar URL if it changed
+		if user.AvatarURL != avatarURL {
+			user.AvatarURL = avatarURL
+			s.repo.Update(user)
+		}
+		return user, nil
+	}
+
+	// Check if a user with this email already exists
+	existingUser, err := s.repo.FindByEmail(email)
+	if err == nil && existingUser != nil {
+		// User exists with same email but different provider
+		if existingUser.Provider == models.ProviderLocal {
+			// Suggest linking accounts - return error with specific message
+			return nil, errors.New("account_exists_local")
+		} else if existingUser.Provider != provider {
+			// Already linked to another OAuth provider
+			return nil, errors.New("account_exists_different_provider")
+		}
+	}
+
+	// Create new OAuth user
+	user = &models.User{
+		Email:         email,
+		Name:          name,
+		Provider:      provider,
+		ProviderID:    providerID,
+		AvatarURL:     avatarURL,
+		Role:          "user",
+		EmailVerified: true,
+		Password:      nil,
+	}
+
+	if err := s.repo.Create(user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) LinkOAuthProvider(userID uint, provider models.Provider, providerID string, avatarURL string) error {
+	user, err := s.repo.FindByID(userID)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	// Check if already linked to this provider
+	if user.Provider == provider && user.ProviderID == providerID {
+		return nil // Already linked
+	}
+
+	// Check if provider is already in use by another account
+	existingUser, err := s.repo.FindByProvider(provider, providerID)
+	if err == nil && existingUser != nil && existingUser.ID != userID {
+		return errors.New("provider already linked to another account")
+	}
+
+	// Update provider info
+	return s.repo.UpdateProviderInfo(userID, provider, providerID, avatarURL)
+}
+
+func (s *UserService) GetUserByProvider(provider models.Provider, providerID string) (*models.User, error) {
+	user, err := s.repo.FindByProvider(provider, providerID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
+		}
+		return nil, err
+	}
+	return user, nil
 }
