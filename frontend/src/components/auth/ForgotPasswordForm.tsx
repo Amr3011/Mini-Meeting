@@ -32,14 +32,15 @@ export const ForgotPasswordForm: React.FC = () => {
       navigate("/reset-password", { state: { email: data.email } });
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
-      
+
       if (axiosError.response?.status === 404) {
         setError("No account found with this email address.");
       } else {
-        setError(
+        const errorMessage =
+          axiosError.response?.data?.error ||
           axiosError.response?.data?.message ||
-            "Failed to send reset code. Please try again."
-        );
+          "Failed to send reset code. Please try again.";
+        setError(errorMessage);
       }
     } finally {
       setIsLoading(false);
@@ -76,11 +77,11 @@ export const ForgotPasswordForm: React.FC = () => {
             {...register("email")}
           />
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             variant="gradient"
             size="lg"
-            fullWidth 
+            fullWidth
             isLoading={isLoading}
           >
             Send reset code

@@ -279,6 +279,13 @@ func (h *AuthHandler) ForgotPassword(c *fiber.Ctx) error {
 		})
 	}
 
+	// Check if user registered via OAuth (no password to reset)
+	if user.Password == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fmt.Sprintf("This account is linked with %s. Please use %s login.", user.Provider, user.Provider),
+		})
+	}
+
 	// Generate and send password reset code
 	code := utils.GenerateVerificationCode()
 	err = h.userService.SetPasswordResetCode(user.Email, code)
