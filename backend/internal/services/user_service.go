@@ -92,20 +92,6 @@ func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*model
 	if req.Name != "" {
 		user.Name = req.Name
 	}
-	if req.Email != "" {
-		if user.EmailVerified {
-			return nil, errors.New("cannot update email after verification")
-		}
-		user.Email = strings.ToLower(req.Email)
-	}
-	if req.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-		if err != nil {
-			return nil, err
-		}
-		hashedPasswordStr := string(hashedPassword)
-		user.Password = &hashedPasswordStr
-	}
 
 	if err := s.repo.Update(user); err != nil {
 		return nil, err
