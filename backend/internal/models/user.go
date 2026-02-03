@@ -27,9 +27,7 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Email    string `json:"email" validate:"omitempty,email"`
-	Password string `json:"password" validate:"omitempty,min=6"`
-	Name     string `json:"name" validate:"omitempty"`
+	Name string `json:"name" validate:"omitempty"`
 }
 
 type RegisterRequest struct {
