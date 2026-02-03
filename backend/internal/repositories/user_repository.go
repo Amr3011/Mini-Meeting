@@ -54,37 +54,94 @@ func (r *UserRepository) Delete(id uint) error {
 func (r *UserRepository) UpdateVerificationCode(email, code string, expiry time.Time) error {
 	return r.db.Model(&models.User{}).
 		Where("email = ?", email).
-		Updates(map[string]interface{}{
-			"verification_code":        code,
-			"verification_code_expiry": expiry,
+		Updates(VerificationCodeUpdate{
+			VerificationCode:       code,
+			VerificationCodeExpiry: &expiry,
 		}).Error
 }
 
 func (r *UserRepository) VerifyEmail(email string) error {
 	return r.db.Model(&models.User{}).
 		Where("email = ?", email).
-		Updates(map[string]interface{}{
-			"email_verified":           true,
-			"verification_code":        "",
-			"verification_code_expiry": nil,
+		Updates(EmailVerificationUpdate{
+			EmailVerified:          true,
+			VerificationCode:       "",
+			VerificationCodeExpiry: nil,
 		}).Error
 }
 
 func (r *UserRepository) UpdatePasswordResetCode(email, code string, expiry time.Time) error {
 	return r.db.Model(&models.User{}).
 		Where("email = ?", email).
-		Updates(map[string]interface{}{
-			"password_reset_code":   code,
-			"password_reset_expiry": expiry,
+		Updates(PasswordResetCodeUpdate{
+			PasswordResetCode:   code,
+			PasswordResetExpiry: &expiry,
 		}).Error
 }
 
 func (r *UserRepository) UpdatePassword(email, hashedPassword string) error {
 	return r.db.Model(&models.User{}).
 		Where("email = ?", email).
-		Updates(map[string]interface{}{
-			"password":              hashedPassword,
-			"password_reset_code":   "",
-			"password_reset_expiry": nil,
+		Updates(PasswordUpdate{
+			Password:            hashedPassword,
+			PasswordResetCode:   "",
+			PasswordResetExpiry: nil,
 		}).Error
+}
+
+func (r *UserRepository) FindByProvider(provider models.Provider, providerID string) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("provider = ? AND provider_id = ?", provider, providerID).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) FindByEmailAndProvider(email string, provider models.Provider) (*models.User, error) {
+	var user models.User
+	err := r.db.Where("email = ? AND provider = ?", email, provider).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) UpdateProviderInfo(userID uint, provider models.Provider, providerID string, avatarURL string) error {
+	return r.db.Model(&models.User{}).
+		Where("id = ?", userID).
+		Updates(ProviderInfoUpdate{
+			Provider:   provider,
+			ProviderID: providerID,
+			AvatarURL:  avatarURL,
+		}).Error
+}
+
+// Update structs for type safety
+type VerificationCodeUpdate struct {
+	VerificationCode       string     `gorm:"column:verification_code"`
+	VerificationCodeExpiry *time.Time `gorm:"column:verification_code_expiry"`
+}
+
+type EmailVerificationUpdate struct {
+	EmailVerified          bool       `gorm:"column:email_verified"`
+	VerificationCode       string     `gorm:"column:verification_code"`
+	VerificationCodeExpiry *time.Time `gorm:"column:verification_code_expiry"`
+}
+
+type PasswordResetCodeUpdate struct {
+	PasswordResetCode   string     `gorm:"column:password_reset_code"`
+	PasswordResetExpiry *time.Time `gorm:"column:password_reset_expiry"`
+}
+
+type PasswordUpdate struct {
+	Password            string     `gorm:"column:password"`
+	PasswordResetCode   string     `gorm:"column:password_reset_code"`
+	PasswordResetExpiry *time.Time `gorm:"column:password_reset_expiry"`
+}
+
+type ProviderInfoUpdate struct {
+	Provider   models.Provider `gorm:"column:provider"`
+	ProviderID string          `gorm:"column:provider_id"`
+	AvatarURL  string          `gorm:"column:avatar_url"`
 }

@@ -13,11 +13,13 @@ type Config struct {
 	JWT      JWTConfig
 	Email    EmailConfig
 	Admin    AdminConfig
+	OAuth    OAuthConfig
 }
 
 type ServerConfig struct {
-	Port string
-	Env  string
+	Port        string
+	Env         string
+	FrontendURL string
 }
 
 type DatabaseConfig struct {
@@ -47,14 +49,32 @@ type AdminConfig struct {
 	Password string
 }
 
+type OAuthConfig struct {
+	Google GoogleOAuthConfig
+	Github GithubOAuthConfig
+}
+
+type GoogleOAuthConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
+}
+
+type GithubOAuthConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
 
 	config := &Config{
 		Server: ServerConfig{
-			Port: getEnv("PORT", "3000"),
-			Env:  getEnv("ENV", "development"),
+			Port:        getEnv("PORT", "3000"),
+			Env:         getEnv("ENV", "development"),
+			FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -78,6 +98,18 @@ func Load() (*Config, error) {
 		Admin: AdminConfig{
 			Email:    getEnv("ADMIN_EMAIL"),
 			Password: getEnv("ADMIN_PASSWORD"),
+		},
+		OAuth: OAuthConfig{
+			Google: GoogleOAuthConfig{
+				ClientID:     getEnv("GOOGLE_CLIENT_ID"),
+				ClientSecret: getEnv("GOOGLE_CLIENT_SECRET"),
+				RedirectURL:  getEnv("GOOGLE_REDIRECT_URL"),
+			},
+			Github: GithubOAuthConfig{
+				ClientID:     getEnv("GITHUB_CLIENT_ID"),
+				ClientSecret: getEnv("GITHUB_CLIENT_SECRET"),
+				RedirectURL:  getEnv("GITHUB_REDIRECT_URL"),
+			},
 		},
 	}
 
