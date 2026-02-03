@@ -10,6 +10,7 @@ import (
 	"mini-meeting/internal/repositories"
 	"mini-meeting/internal/routes"
 	"mini-meeting/internal/services"
+	"mini-meeting/pkg/cache"
 	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,6 +30,12 @@ func main() {
 	if err := database.Connect(&cfg.Database); err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+
+	// Connect to Redis
+	if err := cache.Connect(&cfg.Redis); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	defer cache.Close()
 
 	// Run migrations
 	if err := database.Migrate(); err != nil {
