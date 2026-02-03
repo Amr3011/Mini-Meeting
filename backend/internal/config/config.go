@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Redis    RedisConfig
 	JWT      JWTConfig
 	Email    EmailConfig
 	Admin    AdminConfig
@@ -28,6 +29,13 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	DBName   string
+}
+
+type RedisConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
 }
 
 type JWTConfig struct {
@@ -82,6 +90,12 @@ func Load() (*Config, error) {
 			User:     getEnv("DB_USER", "postgres"),
 			Password: getEnv("DB_PASSWORD", "root"),
 			DBName:   getEnv("DB_NAME", "mini_meeting"),
+		},
+		Redis: RedisConfig{
+			Host:     getEnv("REDIS_HOST", "localhost"),
+			Port:     getEnv("REDIS_PORT", "6379"),
+			Username: getEnv("REDIS_USERNAME", "default"),
+			Password: getEnv("REDIS_PASSWORD", ""),
 		},
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET"),

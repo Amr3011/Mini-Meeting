@@ -4,9 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"time"
+
 	"mini-meeting/internal/config"
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/services"
+	"mini-meeting/pkg/cache"
 	"mini-meeting/pkg/oauth"
 	"mini-meeting/pkg/utils"
 
@@ -372,7 +375,16 @@ func (h *AuthHandler) OAuthLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	// Store state in session/cookie for validation (you may want to use Redis or session store)
+	// Store state in Redis with 5-minute expiration
+	oauthStateKey := fmt.Sprintf("oauth:state:%s", state)
+	err = cache.SetString(oauthStateKey, provider, 5*time.Minute)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to store OAuth state",
+		})
+	}
+
+	// Also set state in cookie for reference
 	c.Cookie(&fiber.Cookie{
 		Name:     "oauth_state",
 		Value:    state,
@@ -402,7 +414,24 @@ func (h *AuthHandler) OAuthCallback(c *fiber.Ctx) error {
 		})
 	}
 
-	// Clear state cookie
+	// Validate state from Redis
+	oauthStateKey := fmt.Sprintf("oauth:state:%s", state)
+	storedProvider, err := cache.GetString(oauthStateKey)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "OAuth state expired or invalid",
+		})
+	}
+
+	// Verify provider matches
+	if storedProvider != provider {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Provider mismatch",
+		})
+	}
+
+	// Clear state from Redis and cookie
+	cache.Delete(oauthStateKey)
 	c.Cookie(&fiber.Cookie{
 		Name:   "oauth_state",
 		Value:  "",
