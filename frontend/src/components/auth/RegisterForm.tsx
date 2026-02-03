@@ -68,6 +68,10 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
+  const handleOAuthLogin = (provider: "google" | "github") => {
+    authService.initiateOAuthLogin(provider);
+  };
+
   return (
     <div className="w-full max-w-md space-y-8">
       {/* Header */}
@@ -205,10 +209,11 @@ export const RegisterForm: React.FC = () => {
         </div>
       </div>
 
-      {/* Social Login Buttons (Placeholder for future OAuth) */}
+      {/* Social Login Buttons */}
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
+          onClick={() => handleOAuthLogin("google")}
           className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -221,6 +226,7 @@ export const RegisterForm: React.FC = () => {
         </button>
         <button
           type="button"
+          onClick={() => handleOAuthLogin("github")}
           className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
