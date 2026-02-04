@@ -70,6 +70,7 @@ export const RegisterForm: React.FC = () => {
   };
 
   const handleOAuthLogin = (provider: "google" | "github") => {
+    localStorage.setItem('lastLoginMethod', provider);
     authService.initiateOAuthLogin(provider);
   };
 

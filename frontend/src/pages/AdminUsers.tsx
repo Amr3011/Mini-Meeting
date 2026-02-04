@@ -6,10 +6,10 @@ import { Input } from "../components/common/Input";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { Loading } from "../components/common/Loading";
 import { userService } from "../services/api/user.service";
-import type { User, CreateUserRequest, UpdateUserRequest } from "../types/user.types";
+import type { User, CreateUserRequest } from "../types/user.types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, updateUserSchema } from "../utils/validators";
+import { registerSchema } from "../utils/validators";
 import type { AxiosError } from "axios";
 import type { ApiError } from "../types/auth.types";
 import { useAuth } from "../hooks/useAuth";
@@ -20,7 +20,6 @@ export default function AdminUsers() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -58,16 +57,6 @@ export default function AdminUsers() {
     resolver: zodResolver(registerSchema),
   });
 
-  // Edit user form
-  const {
-    register: registerEdit,
-    handleSubmit: handleSubmitEdit,
-    formState: { errors: editErrors },
-    reset: resetEdit,
-  } = useForm<UpdateUserRequest>({
-    resolver: zodResolver(updateUserSchema),
-  });
-
   const handleCreateUser = async (data: CreateUserRequest) => {
     setActionLoading(true);
     try {
@@ -80,27 +69,6 @@ export default function AdminUsers() {
       setError(
         axiosError.response?.data?.message ||
           "Failed to create user. Please try again."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleEditUser = async (data: UpdateUserRequest) => {
-    if (!selectedUser) return;
-
-    setActionLoading(true);
-    try {
-      await userService.updateUser(selectedUser.id, data);
-      await fetchUsers();
-      setIsEditModalOpen(false);
-      setSelectedUser(null);
-      resetEdit();
-    } catch (err) {
-      const axiosError = err as AxiosError<ApiError>;
-      setError(
-        axiosError.response?.data?.message ||
-          "Failed to update user. Please try again."
       );
     } finally {
       setActionLoading(false);
@@ -131,12 +99,6 @@ export default function AdminUsers() {
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const openEditModal = (user: User) => {
-    setSelectedUser(user);
-    resetEdit({ name: user.name, email: user.email, password: "" });
-    setIsEditModalOpen(true);
   };
 
   const openDeleteModal = (user: User) => {
@@ -233,7 +195,7 @@ export default function AdminUsers() {
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
+                          <div className="shrink-0 h-10 w-10">
                             <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
@@ -274,12 +236,6 @@ export default function AdminUsers() {
                         {new Date(user.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openEditModal(user)}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          Edit
-                        </button>
                         <button
                           onClick={() => openDeleteModal(user)}
                           className="text-red-600 hover:text-red-900"
@@ -348,62 +304,6 @@ export default function AdminUsers() {
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   resetCreate();
-                }}
-                disabled={actionLoading}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Edit User Modal */}
-        <Modal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedUser(null);
-            resetEdit();
-          }}
-          title="Edit User"
-        >
-          <form
-            onSubmit={handleSubmitEdit(handleEditUser)}
-            className="space-y-4"
-          >
-            <Input
-              label="Full Name"
-              type="text"
-              placeholder="Enter full name"
-              error={editErrors.name?.message}
-              {...registerEdit("name")}
-            />
-            <Input
-              label="Email"
-              type="email"
-              placeholder="Enter email"
-              error={editErrors.email?.message}
-              {...registerEdit("email")}
-            />
-            <Input
-              label="New Password"
-              type="password"
-              placeholder="Leave blank to keep current"
-              error={editErrors.password?.message}
-              helperText="Only fill if changing password"
-              {...registerEdit("password")}
-            />
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" isLoading={actionLoading}>
-                Save Changes
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setSelectedUser(null);
-                  resetEdit();
                 }}
                 disabled={actionLoading}
               >
