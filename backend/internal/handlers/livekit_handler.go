@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
 
+	"mini-meeting/internal/config"
 	"mini-meeting/internal/services"
+	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,17 +15,20 @@ type LiveKitHandler struct {
 	livekitService *services.LiveKitService
 	meetingService *services.MeetingService
 	userService    *services.UserService
+	config         *config.Config
 }
 
 func NewLiveKitHandler(
 	livekitService *services.LiveKitService,
 	meetingService *services.MeetingService,
 	userService *services.UserService,
+	cfg *config.Config,
 ) *LiveKitHandler {
 	return &LiveKitHandler{
 		livekitService: livekitService,
 		meetingService: meetingService,
 		userService:    userService,
+		config:         cfg,
 	}
 }
 
@@ -58,13 +64,23 @@ type ParticipantInfo struct {
 }
 
 // GenerateToken generates a LiveKit token for joining a meeting
+// Supports both authenticated users and guest users
 func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
-	// Get user ID from context (set by auth middleware)
-	userID, ok := c.Locals("userID").(uint)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
-		})
+	// Try to get user ID from context (set by auth middleware for authenticated users)
+	// For guest users, this will be nil
+	var userID uint
+
+	// Try to extract user from JWT token if present (for authenticated users)
+	authHeader := c.Get("Authorization")
+	if authHeader != "" {
+		parts := strings.Split(authHeader, " ")
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			token := parts[1]
+			claims, err := utils.ValidateToken(token, h.config.JWT.Secret)
+			if err == nil {
+				userID = claims.UserID
+			}
+		}
 	}
 
 	var req GenerateTokenRequest
@@ -82,33 +98,53 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get user details
-	user, err := h.userService.GetUserByID(userID)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "User not found",
-		})
-	}
+	var userName string
+	var identity string
+	var userRole string
+	var metadata string
 
-	// Determine user role for the meeting
-	// Creator is admin, others are regular users
-	userRole := "user"
-	if meeting.CreatorID == userID {
-		userRole = "admin"
-	}
+	// Handle authenticated users
+	if userID > 0 {
+		// Get user details
+		user, err := h.userService.GetUserByID(userID)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "User not found",
+			})
+		}
 
-	// Use custom user name if provided, otherwise use user's name
-	userName := user.Name
-	if req.UserName != "" {
+		// Determine user role for the meeting
+		// Creator is admin, others are regular users
+		userRole = "user"
+		if meeting.CreatorID == userID {
+			userRole = "admin"
+		}
+
+		// Use custom user name if provided, otherwise use user's name
+		userName = user.Name
+		if req.UserName != "" {
+			userName = req.UserName
+		}
+
+		identity = fmt.Sprintf("user_%d", userID)
+		metadata = fmt.Sprintf(`{"name":"%s","avatar":"%s","role":"%s"}`, userName, user.AvatarURL, userRole)
+	} else {
+		// Handle guest users
+		if req.UserName == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "User name is required for guest users",
+			})
+		}
+
 		userName = req.UserName
+		userRole = "guest"
+		// Generate a unique guest identity based on timestamp and random component
+		identity = fmt.Sprintf("guest_%d", c.Context().ConnID())
+		metadata = fmt.Sprintf(`{"name":"%s","avatar":"","role":"%s"}`, userName, userRole)
 	}
-
-	// Create metadata with user info
-	metadata := fmt.Sprintf(`{"name":"%s","avatar":"%s","role":"%s"}`, userName, user.AvatarURL, userRole)
 
 	// Generate token
 	// Use meeting code as room name for LiveKit
-	identity := fmt.Sprintf("user_%d", userID)
 	token, err := h.livekitService.CreateJoinToken(
 		req.MeetingCode,
 		identity,

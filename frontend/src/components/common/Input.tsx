@@ -10,6 +10,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   onClear?: () => void;
   floatingLabel?: boolean;
   showCharCount?: boolean;
+  hideValidationIcon?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
@@ -29,6 +30,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       maxLength,
       value,
       type = "text",
+      hideValidationIcon = false,
       ...props
     },
     ref
@@ -128,7 +130,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {/* Right side icons/buttons */}
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
               {/* Validation icon */}
-              {!error && hasValue && !isPasswordField && (
+              {!error && hasValue && !isPasswordField && !hideValidationIcon && (
                 <div className="text-success-500">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

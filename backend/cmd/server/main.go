@@ -79,7 +79,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(userService)
 	authHandler := handlers.NewAuthHandler(userService, cfg, emailService)
 	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
-	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService)
+	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, cfg)
 
 	// Setup routes
 	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, cfg)

@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+import apiClient from './client';
 
 export interface LiveKitTokenResponse {
   token: string;
@@ -36,8 +34,8 @@ export const generateToken = async (
   meetingCode: string,
   userName?: string
 ): Promise<LiveKitTokenResponse> => {
-  const response = await axios.post<LiveKitTokenResponse>(
-    `${API_URL}/livekit/token`,
+  const response = await apiClient.post<LiveKitTokenResponse>(
+    `/livekit/token`,
     {
       meeting_code: meetingCode,
       user_name: userName,
@@ -55,7 +53,7 @@ export const removeParticipant = async (
   meetingCode: string,
   participantIdentity: string
 ): Promise<void> => {
-  await axios.post(`${API_URL}/livekit/remove-participant`, {
+  await apiClient.post(`/livekit/remove-participant`, {
     meeting_code: meetingCode,
     participant_identity: participantIdentity,
   });
@@ -68,8 +66,8 @@ export const removeParticipant = async (
 export const listParticipants = async (
   meetingCode: string
 ): Promise<ListParticipantsResponse> => {
-  const response = await axios.get<ListParticipantsResponse>(
-    `${API_URL}/livekit/participants`,
+  const response = await apiClient.get<ListParticipantsResponse>(
+    `/livekit/participants`,
     {
       params: { meeting_code: meetingCode },
     }

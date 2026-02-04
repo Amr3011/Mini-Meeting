@@ -1,8 +1,28 @@
+import { useNavigate } from "react-router-dom";
 import { LoginForm } from "../components/auth/LoginForm";
+import { Button } from "../components/common/Button";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex">
+      {/* Back to Home Button */}
+      <div className="absolute top-4 left-4 z-20">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+          size="md"
+          leftIcon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          }
+        >
+          Back to Home
+        </Button>
+      </div>
+
       {/* Left Side - Form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
         <LoginForm />

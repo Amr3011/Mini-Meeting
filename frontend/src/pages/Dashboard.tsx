@@ -1,11 +1,29 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Layout } from "../components/layout/Layout";
 import { CreateMeetingModal } from "../components/meeting/CreateMeetingModal";
+import { JoinMeetingInput } from "../components/meeting/JoinMeetingInput";
+import { meetingService } from "../services/api/meeting.service";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isCreateMeetingModalOpen, setIsCreateMeetingModalOpen] = useState(false);
+  const [isStartingMeeting, setIsStartingMeeting] = useState(false);
+
+  const handleStartNewMeeting = async () => {
+    setIsStartingMeeting(true);
+    try {
+      const newMeeting = await meetingService.createMeeting();
+      navigate(`/${newMeeting.meeting_code}`);
+    } catch (err) {
+      console.error("Failed to create meeting:", err);
+      alert("Failed to create meeting. Please try again.");
+    } finally {
+      setIsStartingMeeting(false);
+    }
+  };
 
   return (
     <Layout>
@@ -100,13 +118,24 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Join Meeting Section */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <JoinMeetingInput showExamples={false} />
+          </div>
+        </div>
+
         {/* Quick Actions */}
         <div className="mt-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button className="bg-white rounded-lg shadow p-6 text-left hover:shadow-md transition-shadow">
+            <button
+              onClick={handleStartNewMeeting}
+              disabled={isStartingMeeting}
+              className="bg-white rounded-lg shadow p-6 text-left hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <div className="flex items-center">
                 <svg
                   className="h-6 w-6 text-blue-600"
@@ -122,7 +151,7 @@ export default function Dashboard() {
                   />
                 </svg>
                 <span className="ml-3 text-lg font-medium text-gray-900">
-                  Start New Meeting
+                  {isStartingMeeting ? "Starting..." : "Start New Meeting"}
                 </span>
               </div>
               <p className="mt-2 text-sm text-gray-500">
