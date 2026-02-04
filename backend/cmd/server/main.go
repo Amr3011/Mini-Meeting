@@ -67,17 +67,20 @@ func main() {
 
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(database.GetDB())
+	meetingRepo := repositories.NewMeetingRepository(database.GetDB())
 
 	// Initialize services
 	userService := services.NewUserService(userRepo)
+	meetingService := services.NewMeetingService(meetingRepo)
 	emailService := utils.NewEmailService(&cfg.Email)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
 	authHandler := handlers.NewAuthHandler(userService, cfg, emailService)
+	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
 
 	// Setup routes
-	routes.SetupRoutes(app, userHandler, authHandler, cfg)
+	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, cfg)
 
 	// Health check route
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {

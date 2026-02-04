@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, cfg *config.Config) {
+func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, cfg *config.Config) {
 	// API routes
 	api := app.Group("/api/v1")
 
@@ -37,4 +37,15 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	users.Get("/:id", middleware.AdminMiddleware(), userHandler.GetUser)
 	users.Patch("/:id", middleware.AdminMiddleware(), userHandler.UpdateUser)
 	users.Delete("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser)
+
+	// Meeting routes (protected)
+	meetings := api.Group("/meetings", middleware.AuthMiddleware(cfg))
+	meetings.Post("/", meetingHandler.CreateMeeting)
+	meetings.Get("/my", meetingHandler.GetMyMeetings)
+	meetings.Get("/code/:code", meetingHandler.GetMeetingByCode)
+	meetings.Get("/:id", meetingHandler.GetMeeting)
+	meetings.Delete("/:id", meetingHandler.DeleteMeeting)
+
+	// Admin-only meeting routes
+	meetings.Get("/", middleware.AdminMiddleware(), meetingHandler.GetAllMeetings)
 }

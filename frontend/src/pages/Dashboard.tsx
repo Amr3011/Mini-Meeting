@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { Layout } from "../components/layout/Layout";
+import { CreateMeetingModal } from "../components/meeting/CreateMeetingModal";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [isCreateMeetingModalOpen, setIsCreateMeetingModalOpen] = useState(false);
 
   return (
     <Layout>
@@ -12,7 +15,7 @@ export default function Dashboard() {
             Welcome back, {user?.name}!
           </h1>
           <p className="mt-2 text-gray-600">
-            This is your dashboard. Meeting features coming soon...
+            This is your dashboard. Create and manage your meetings here.
           </p>
         </div>
 
@@ -127,7 +130,10 @@ export default function Dashboard() {
               </p>
             </button>
 
-            <button className="bg-white rounded-lg shadow p-6 text-left hover:shadow-md transition-shadow">
+            <button
+              onClick={() => setIsCreateMeetingModalOpen(true)}
+              className="bg-white rounded-lg shadow p-6 text-left hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center">
                 <svg
                   className="h-6 w-6 text-blue-600"
@@ -143,16 +149,22 @@ export default function Dashboard() {
                   />
                 </svg>
                 <span className="ml-3 text-lg font-medium text-gray-900">
-                  Schedule Meeting
+                  Create Meeting
                 </span>
               </div>
               <p className="mt-2 text-sm text-gray-500">
-                Plan a meeting for later
+                Create Meeting for later
               </p>
             </button>
           </div>
         </div>
       </div>
+
+      {/* Create Meeting Modal */}
+      <CreateMeetingModal
+        isOpen={isCreateMeetingModalOpen}
+        onClose={() => setIsCreateMeetingModalOpen(false)}
+      />
     </Layout>
   );
 }
