@@ -24,6 +24,7 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
+	URL      string
 	Host     string
 	Port     string
 	User     string
@@ -85,6 +86,7 @@ func Load() (*Config, error) {
 			FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 		},
 		Database: DatabaseConfig{
+			URL:      getEnv("DATABASE_URL"),
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "5432"),
 			User:     getEnv("DB_USER", "postgres"),
@@ -131,8 +133,14 @@ func Load() (*Config, error) {
 }
 
 func (c *DatabaseConfig) DSN() string {
+	// If DATABASE_URL is provided, use it directly
+	if c.URL != "" {
+		return c.URL
+	}
+
+	// Otherwise, construct DSN from individual parameters
 	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		c.Host, c.Port, c.User, c.Password, c.DBName,
 	)
 }
