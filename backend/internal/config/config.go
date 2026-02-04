@@ -15,6 +15,7 @@ type Config struct {
 	Email    EmailConfig
 	Admin    AdminConfig
 	OAuth    OAuthConfig
+	LiveKit  LiveKitConfig
 }
 
 type ServerConfig struct {
@@ -75,6 +76,12 @@ type GithubOAuthConfig struct {
 	RedirectURL  string
 }
 
+type LiveKitConfig struct {
+	APIKey    string
+	APISecret string
+	URL       string
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -126,6 +133,11 @@ func Load() (*Config, error) {
 				ClientSecret: getEnv("GITHUB_CLIENT_SECRET"),
 				RedirectURL:  getEnv("GITHUB_REDIRECT_URL"),
 			},
+		},
+		LiveKit: LiveKitConfig{
+			APIKey:    getEnv("LIVEKIT_API_KEY"),
+			APISecret: getEnv("LIVEKIT_API_SECRET"),
+			URL:       getEnv("LIVEKIT_URL", "ws://localhost:7880"),
 		},
 	}
 

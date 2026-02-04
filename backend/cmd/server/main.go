@@ -73,14 +73,16 @@ func main() {
 	userService := services.NewUserService(userRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
 	emailService := utils.NewEmailService(&cfg.Email)
+	livekitService := services.NewLiveKitService(cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
 	authHandler := handlers.NewAuthHandler(userService, cfg, emailService)
 	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
+	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService)
 
 	// Setup routes
-	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, cfg)
+	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, cfg)
 
 	// Health check route
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {
