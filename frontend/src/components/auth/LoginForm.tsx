@@ -143,7 +143,7 @@ export const LoginForm: React.FC = () => {
             </Button>
             {lastLoginMethod === 'email' && (
               <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg animate-pulse">
-                Last
+                Last used
               </span>
             )}
           </div>
@@ -177,7 +177,7 @@ export const LoginForm: React.FC = () => {
             </button>
             {lastLoginMethod === 'google' && (
               <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
-                Last
+                Last used
               </span>
             )}
           </div>
@@ -194,7 +194,7 @@ export const LoginForm: React.FC = () => {
             </button>
             {lastLoginMethod === 'github' && (
               <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-lg animate-pulse z-10">
-                Last
+                Last used
               </span>
             )}
           </div>

@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, cfg *config.Config) {
+func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, livekitHandler *handlers.LiveKitHandler, cfg *config.Config) {
 	// API routes
 	api := app.Group("/api/v1")
 
@@ -38,14 +38,26 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	users.Patch("/:id", middleware.AdminMiddleware(), userHandler.UpdateUser)
 	users.Delete("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser)
 
-	// Meeting routes (protected)
+	// Public meeting routes (accessible to guests)
+	publicMeetings := api.Group("/meetings")
+	publicMeetings.Get("/code/:code", meetingHandler.GetMeetingByCode)
+
+	// Protected meeting routes (require authentication)
 	meetings := api.Group("/meetings", middleware.AuthMiddleware(cfg))
 	meetings.Post("/", meetingHandler.CreateMeeting)
 	meetings.Get("/my", meetingHandler.GetMyMeetings)
-	meetings.Get("/code/:code", meetingHandler.GetMeetingByCode)
 	meetings.Get("/:id", meetingHandler.GetMeeting)
 	meetings.Delete("/:id", meetingHandler.DeleteMeeting)
 
 	// Admin-only meeting routes
 	meetings.Get("/", middleware.AdminMiddleware(), meetingHandler.GetAllMeetings)
+
+	// Public LiveKit routes (accessible to guests for joining meetings)
+	publicLiveKit := api.Group("/livekit")
+	publicLiveKit.Post("/token", livekitHandler.GenerateToken)
+
+	// Protected LiveKit routes (require authentication)
+	livekit := api.Group("/livekit", middleware.AuthMiddleware(cfg))
+	livekit.Get("/participants", livekitHandler.ListParticipants)
+	livekit.Post("/remove-participant", livekitHandler.RemoveParticipant)
 }

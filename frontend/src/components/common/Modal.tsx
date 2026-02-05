@@ -124,7 +124,7 @@ export const Modal: React.FC<ModalProps> = ({
             `}>
               {/* Type Icon */}
               {typeIcons[type] && (
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                   {typeIcons[type]}
                 </div>
               )}

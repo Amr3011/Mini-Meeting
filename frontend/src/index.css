@@ -230,7 +230,50 @@
   
   /* Focus visible for better accessibility */
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand-500;
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+  
+  /* Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* Focus visible only (for keyboard users) */
+  .focus-visible-only:focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    * {
+      border-color: currentColor !important;
+    }
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  /* Skip to main content link */
+  .skip-to-main {
+    @apply fixed top-0 left-0 z-50 px-4 py-2 bg-brand-600 text-white rounded-br-lg;
+    @apply transform -translate-y-full focus:translate-y-0 transition-transform;
   }
 }
 
@@ -247,15 +290,15 @@
   
   /* Gradient backgrounds */
   .gradient-primary {
-    @apply bg-gradient-to-r from-brand-500 to-brand-600;
+    @apply bg-linear-to-r from-brand-500 to-brand-600;
   }
   
   .gradient-secondary {
-    @apply bg-gradient-to-r from-purple-500 to-purple-600;
+    @apply bg-linear-to-r from-purple-500 to-purple-600;
   }
   
   .gradient-success {
-    @apply bg-gradient-to-r from-success-500 to-success-600;
+    @apply bg-linear-to-r from-success-500 to-success-600;
   }
   
   .gradient-mesh {
@@ -280,7 +323,7 @@
   
   /* Text gradient */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-purple-600;
+    @apply bg-clip-text text-transparent bg-linear-to-r from-brand-500 to-purple-600;
   }
   
   /* Animated border */
@@ -483,5 +526,200 @@
   height: 10px;
   background: #f0f;
   animation: confetti-fall 3s linear forwards;
+}
+
+/* LiveKit Meeting Room Custom Styles */
+.meeting-room-container {
+  /* Dark theme for meeting room */
+  --lk-bg: #111827;
+  --lk-bg2: #1f2937;
+  --lk-bg3: #374151;
+  --lk-fg: #f9fafb;
+  --lk-fg2: #e5e7eb;
+  --lk-border: #4b5563;
+  --lk-control-bg: rgba(31, 41, 55, 0.9);
+  --lk-control-hover-bg: rgba(55, 65, 81, 0.95);
+  --lk-button-bg: #2563eb;
+  --lk-button-bg-hover: #1e40af;
+  --lk-danger-bg: #ef4444;
+  --lk-danger-bg-hover: #dc2626;
+  --lk-success-bg: #10b981;
+}
+
+/* LiveKit component overrides */
+.lk-video-conference {
+  @apply h-full w-full;
+}
+
+/* Toolbar styling */
+.lk-control-bar {
+  @apply backdrop-blur-xl;
+  background: rgba(31, 41, 55, 0.95) !important;
+  border-top: 1px solid rgba(75, 85, 99, 0.5);
+  padding: 1rem !important;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Control buttons */
+.lk-button {
+  @apply transition-all duration-200;
+  border-radius: 0.75rem !important;
+  padding: 0.75rem !important;
+  min-width: 3rem;
+}
+
+.lk-button:hover {
+  @apply transform -translate-y-0.5;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* Active/pressed button state */
+.lk-button[data-lk-active="true"] {
+  background: #2563eb !important;
+}
+
+/* Danger button (end call, mute) */
+.lk-button[data-lk-danger="true"] {
+  background: #ef4444 !important;
+}
+
+.lk-button[data-lk-danger="true"]:hover {
+  background: #dc2626 !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Participant tiles */
+.lk-grid-layout {
+  gap: 0.75rem !important;
+  padding: 1rem !important;
+}
+
+.lk-participant-tile {
+  border-radius: 1rem !important;
+  overflow: hidden;
+  border: 2px solid rgba(75, 85, 99, 0.3);
+  background: #1f2937 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.lk-participant-tile:hover {
+  border-color: rgba(37, 99, 235, 0.5);
+  transform: scale(1.02);
+}
+
+/* Focused speaker */
+.lk-participant-tile[data-lk-speaking="true"] {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Participant name label */
+.lk-participant-metadata {
+  background: rgba(17, 24, 39, 0.9) !important;
+  backdrop-filter: blur(8px);
+  padding: 0.5rem 0.75rem !important;
+  border-radius: 0.5rem;
+  margin: 0.5rem !important;
+}
+
+.lk-participant-name {
+  @apply font-medium text-white;
+  font-size: 0.875rem;
+}
+
+/* Audio level indicator */
+.lk-audio-visualizer {
+  border-radius: 0.25rem;
+}
+
+/* Camera off placeholder */
+.lk-participant-placeholder {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+}
+
+/* Screen share styling */
+.lk-focus-layout {
+  gap: 0.75rem !important;
+  padding: 1rem !important;
+}
+
+/* Chat panel */
+.lk-chat {
+  background: rgba(31, 41, 55, 0.95) !important;
+  backdrop-filter: blur(12px);
+  border-left: 1px solid rgba(75, 85, 99, 0.5);
+}
+
+.lk-chat-entry {
+  @apply rounded-lg;
+  background: rgba(55, 65, 81, 0.5) !important;
+  padding: 0.75rem !important;
+  margin: 0.5rem !important;
+}
+
+/* Settings modal */
+.lk-settings-menu {
+  background: rgba(31, 41, 55, 0.98) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 1rem !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Connection quality indicator */
+.lk-connection-quality {
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(17, 24, 39, 0.8) !important;
+}
+
+/* Scrollbar for participant list */
+.lk-participant-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lk-participant-list::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.5);
+  border-radius: 4px;
+}
+
+.lk-participant-list::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.8);
+  border-radius: 4px;
+}
+
+.lk-participant-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.9);
+}
+
+/* Toast notifications in meeting */
+.lk-toast {
+  background: rgba(31, 41, 55, 0.95) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  border-radius: 0.75rem !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .lk-control-bar {
+    padding: 0.75rem !important;
+  }
+  
+  .lk-button {
+    padding: 0.5rem !important;
+    min-width: 2.5rem;
+  }
+  
+  .lk-grid-layout {
+    padding: 0.5rem !important;
+    gap: 0.5rem !important;
+  }
+  
+  .lk-participant-tile {
+    border-radius: 0.75rem !important;
+  }
 }
 
