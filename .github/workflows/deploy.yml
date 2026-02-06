@@ -22,7 +22,7 @@ jobs:
             set -e  # Exit if any command fails
 
             echo "📦 Starting deployment..."
-            cd /mini-meeting
+            cd /Mini-Meeting
 
             echo "📥 Pulling latest code..."
             git pull origin main
