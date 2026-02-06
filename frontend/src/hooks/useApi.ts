@@ -2,25 +2,25 @@ import { useState } from "react";
 import type { AxiosError } from "axios";
 import type { ApiError } from "../types/auth.types";
 
-interface UseApiReturn<T> {
+interface UseApiReturn<T, TArgs extends unknown[]> {
   data: T | null;
   error: string | null;
   isLoading: boolean;
-  execute: (...args: any[]) => Promise<T | undefined>;
+  execute: (...args: TArgs) => Promise<T | undefined>;
   reset: () => void;
 }
 
 /**
  * Custom hook for handling API calls with loading and error states
  */
-export function useApi<T>(
-  apiFunction: (...args: any[]) => Promise<T>
-): UseApiReturn<T> {
+export function useApi<T, TArgs extends unknown[] = []>(
+  apiFunction: (...args: TArgs) => Promise<T>
+): UseApiReturn<T, TArgs> {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const execute = async (...args: any[]): Promise<T | undefined> => {
+  const execute = async (...args: TArgs): Promise<T | undefined> => {
     setIsLoading(true);
     setError(null);
 
