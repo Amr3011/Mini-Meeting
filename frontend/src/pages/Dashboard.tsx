@@ -37,8 +37,8 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Stats Cards */}
+        {/* Stats Cards - Commented out for future use */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="shrink-0">
@@ -116,14 +116,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Join Meeting Section */}
-        <div className="mt-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <JoinMeetingInput showExamples={false} />
-          </div>
-        </div>
+        </div> */}
 
         {/* Quick Actions */}
         <div className="mt-8">
@@ -185,6 +178,13 @@ export default function Dashboard() {
                 Create Meeting for later
               </p>
             </button>
+          </div>
+        </div>
+
+        {/* Join Meeting Section */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <JoinMeetingInput showExamples={false} />
           </div>
         </div>
       </div>
