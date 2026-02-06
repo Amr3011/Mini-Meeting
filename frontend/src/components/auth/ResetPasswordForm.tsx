@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,8 @@ import { Button } from "../common/Button";
 import { Input } from "../common/Input";
 import { ErrorMessage } from "../common/ErrorMessage";
 import { PasswordStrengthIndicator } from "../common/PasswordStrengthIndicator";
+import { CodeInput } from "../common/CodeInput";
+import { ResendCodeButton } from "../common/ResendCodeButton";
 import type { AxiosError } from "axios";
 import type { ApiError } from "../../types/auth.types";
 
@@ -20,9 +22,7 @@ export const ResetPasswordForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(60); // Start timer at 60 seconds since code already sent
   const [showPasswordMatch, setShowPasswordMatch] = useState(false);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const {
     register,
@@ -37,14 +37,6 @@ export const ResetPasswordForm: React.FC = () => {
   const password = watch("password", "");
   const confirmPassword = watch("confirmPassword", "");
 
-  // Timer for resend button
-  useEffect(() => {
-    if (resendTimer > 0) {
-      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendTimer]);
-
   // Debounce password match validation
   useEffect(() => {
     if (confirmPassword) {
@@ -57,36 +49,6 @@ export const ResetPasswordForm: React.FC = () => {
       setShowPasswordMatch(false);
     }
   }, [confirmPassword]);
-
-  const handleCodeChange = (index: number, value: string) => {
-    if (value && !/^\d$/.test(value)) return;
-
-    const newCode = [...code];
-    newCode[index] = value;
-    setCode(newCode);
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").slice(0, 6);
-
-    if (/^\d+$/.test(pastedData)) {
-      const newCode = pastedData.split("").concat(Array(6).fill("")).slice(0, 6);
-      setCode(newCode);
-      const nextIndex = Math.min(pastedData.length, 5);
-      inputRefs.current[nextIndex]?.focus();
-    }
-  };
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,21 +83,11 @@ export const ResetPasswordForm: React.FC = () => {
   };
 
   const handleResendCode = async () => {
-    if (!email || resendTimer > 0) return;
+    if (!email) return;
 
-    try {
-      await authService.forgotPassword({ email });
-      setSuccess("Reset code sent successfully!");
-      setResendTimer(60);
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      const axiosError = err as AxiosError<ApiError>;
-      const errorMessage =
-        axiosError.response?.data?.error ||
-        axiosError.response?.data?.message ||
-        "Failed to resend code. Please try again.";
-      setError(errorMessage);
-    }
+    await authService.forgotPassword({ email });
+    setSuccess("Reset code sent successfully!");
+    setTimeout(() => setSuccess(null), 3000);
   };
 
   const onSubmitPassword = async (data: ResetPasswordFormData) => {
@@ -204,38 +156,7 @@ export const ResetPasswordForm: React.FC = () => {
               disabled={!!location.state?.email}
             />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-4 text-center">
-                Reset Code
-              </label>
-              <div className="flex gap-3 justify-center">
-                {code.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => {
-                      inputRefs.current[index] = el;
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleCodeChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    onPaste={handlePaste}
-                    className={`
-                      w-14 h-16 text-center text-3xl font-bold 
-                      border-2 rounded-xl transition-all duration-200
-                      focus:outline-none focus:ring-4
-                      ${digit
-                        ? 'border-brand-500 bg-brand-50 text-brand-700 ring-brand-100'
-                        : 'border-gray-300 hover:border-gray-400 focus:border-brand-500 focus:ring-brand-100'
-                      }
-                      ${digit && 'animate-pulse'}
-                    `}
-                  />
-                ))}
-              </div>
-            </div>
+            <CodeInput code={code} onChange={setCode} label="Reset Code" />
 
             {/* Verify Button */}
             <Button
@@ -249,54 +170,7 @@ export const ResetPasswordForm: React.FC = () => {
             </Button>
           </form>
 
-          {/* Resend Code with Circular Timer */}
-          <div className="flex items-center justify-center gap-4 pt-4 border-t border-gray-200">
-            {resendTimer > 0 ? (
-              <div className="flex items-center gap-3">
-                <div className="relative w-12 h-12">
-                  {/* Background circle */}
-                  <svg className="w-12 h-12 transform -rotate-90">
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="20"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      className="text-gray-200"
-                    />
-                    <circle
-                      cx="24"
-                      cy="24"
-                      r="20"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      fill="none"
-                      strokeDasharray={`${2 * Math.PI * 20}`}
-                      strokeDashoffset={`${2 * Math.PI * 20 * (1 - resendTimer / 60)}`}
-                      className="text-brand-500 transition-all duration-1000"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-700">
-                    {resendTimer}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-600">Wait before resending</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResendCode}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-all duration-200"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Resend code
-              </button>
-            )}
-          </div>
+          <ResendCodeButton onResend={handleResendCode} initialTimer={60} />
         </div>
 
         {/* Back to Login */}
