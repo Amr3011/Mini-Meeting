@@ -48,6 +48,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
   const [permissionsGranted, setPermissionsGranted] = useState<boolean>(false);
   const [audioLevel, setAudioLevel] = useState<number>(0);
   const [linkCopied, setLinkCopied] = useState<boolean>(false);
+  const [showPermissionButton, setShowPermissionButton] = useState<boolean>(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -91,112 +92,134 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
     verifyMeeting();
   }, [meetingCode, navigate]);
 
-  // Request device permissions and enumerate devices
+  // Check if mobile device to show permission button
   useEffect(() => {
-    const setupDevices = async () => {
-      try {
-        let mediaStream: MediaStream | null = null;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile, show button to request permissions (requires user gesture)
+      setShowPermissionButton(true);
+    }
+  }, []);
 
-        // Try to get both audio and video first
+  // Request device permissions and enumerate devices
+  const setupDevices = async () => {
+    try {
+      let mediaStream: MediaStream | null = null;
+
+      // Try to get both audio and video first
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: VIDEO_CONSTRAINTS.lobby,
+          audio: true,
+        });
+      } catch (combinedError) {
+        console.warn("Failed to get both audio and video, trying separately:", combinedError);
+
+        // If combined request fails, try to get them separately
+        const tracks: MediaStreamTrack[] = [];
+
+        // Try video only
         try {
-          mediaStream = await navigator.mediaDevices.getUserMedia({
+          const videoStream = await navigator.mediaDevices.getUserMedia({
             video: VIDEO_CONSTRAINTS.lobby,
+            audio: false,
+          });
+          tracks.push(...videoStream.getVideoTracks());
+        } catch (videoError) {
+          console.warn("Failed to get video:", videoError);
+          setCameraEnabled(false);
+        }
+
+        // Try audio only
+        try {
+          const audioStream = await navigator.mediaDevices.getUserMedia({
+            video: false,
             audio: true,
           });
-        } catch (combinedError) {
-          console.warn("Failed to get both audio and video, trying separately:", combinedError);
-
-          // If combined request fails, try to get them separately
-          const tracks: MediaStreamTrack[] = [];
-
-          // Try video only
-          try {
-            const videoStream = await navigator.mediaDevices.getUserMedia({
-              video: VIDEO_CONSTRAINTS.lobby,
-              audio: false,
-            });
-            tracks.push(...videoStream.getVideoTracks());
-          } catch (videoError) {
-            console.warn("Failed to get video:", videoError);
-            setCameraEnabled(false);
-          }
-
-          // Try audio only
-          try {
-            const audioStream = await navigator.mediaDevices.getUserMedia({
-              video: false,
-              audio: true,
-            });
-            tracks.push(...audioStream.getAudioTracks());
-          } catch (audioError) {
-            console.warn("Failed to get audio:", audioError);
-            setMicEnabled(false);
-          }
-
-          // If we got at least one track, create a stream
-          if (tracks.length > 0) {
-            mediaStream = new MediaStream(tracks);
-          } else {
-            // If both failed, throw to be caught by outer catch
-            throw combinedError;
-          }
+          tracks.push(...audioStream.getAudioTracks());
+        } catch (audioError) {
+          console.warn("Failed to get audio:", audioError);
+          setMicEnabled(false);
         }
 
-        setStream(mediaStream);
-        setPermissionsGranted(true);
-        setDeviceError(null);
-        setError("");
-
-        // Get device list after permissions granted
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videos = devices.filter((d) => d.kind === "videoinput");
-        const audios = devices.filter((d) => d.kind === "audioinput");
-        const speakers = devices.filter((d) => d.kind === "audiooutput");
-
-        setVideoDevices(videos);
-        setAudioDevices(audios);
-        setAudioOutputDevices(speakers);
-
-        // Set default selections
-        if (videos.length > 0 && !selectedCamera) {
-          setSelectedCamera(videos[0].deviceId);
-        }
-        if (audios.length > 0 && !selectedMic) {
-          setSelectedMic(audios[0].deviceId);
-        }
-        if (speakers.length > 0 && !selectedSpeaker) {
-          setSelectedSpeaker(speakers[0].deviceId);
-        }
-
-        // Setup audio analyzer for microphone level if we have audio tracks
-        const audioTracks = mediaStream?.getAudioTracks() || [];
-        if (audioTracks.length > 0) {
-          setupAudioAnalyzer(mediaStream!);
-        }
-
-      } catch (err) {
-        console.error("Failed to get device permissions:", err);
-        const mediaError = err as { name?: string };
-
-        // Set specific device error type
-        if (mediaError.name === "NotAllowedError" || mediaError.name === "PermissionDeniedError") {
-          setDeviceError('access-denied');
-          setError(ERROR_MESSAGES.DEVICE_ACCESS_DENIED);
-        } else if (mediaError.name === "NotFoundError") {
-          setDeviceError('not-found');
-          setError(ERROR_MESSAGES.NO_DEVICES_FOUND);
+        // If we got at least one track, create a stream
+        if (tracks.length > 0) {
+          mediaStream = new MediaStream(tracks);
         } else {
-          setDeviceError('generic');
-          setError(ERROR_MESSAGES.DEVICE_ERROR);
+          // If both failed, throw to be caught by outer catch
+          throw combinedError;
         }
-        setPermissionsGranted(false);
       }
-    };
 
-    if (meetingData && !permissionsGranted) {
+      setStream(mediaStream);
+      setPermissionsGranted(true);
+      setDeviceError(null);
+      setError("");
+
+      // Get device list after permissions granted
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videos = devices.filter((d) => d.kind === "videoinput");
+      const audios = devices.filter((d) => d.kind === "audioinput");
+      const speakers = devices.filter((d) => d.kind === "audiooutput");
+
+      setVideoDevices(videos);
+      setAudioDevices(audios);
+      setAudioOutputDevices(speakers);
+
+      // Set default selections
+      if (videos.length > 0 && !selectedCamera) {
+        setSelectedCamera(videos[0].deviceId);
+      }
+      if (audios.length > 0 && !selectedMic) {
+        setSelectedMic(audios[0].deviceId);
+      }
+      if (speakers.length > 0 && !selectedSpeaker) {
+        setSelectedSpeaker(speakers[0].deviceId);
+      }
+
+      // Setup audio analyzer for microphone level if we have audio tracks
+      const audioTracks = mediaStream?.getAudioTracks() || [];
+      if (audioTracks.length > 0) {
+        setupAudioAnalyzer(mediaStream!);
+      }
+
+    } catch (err) {
+      console.error("Failed to get device permissions:", err);
+      const mediaError = err as { name?: string };
+
+      // Set specific device error type
+      if (mediaError.name === "NotAllowedError" || mediaError.name === "PermissionDeniedError") {
+        setDeviceError('access-denied');
+        setError(ERROR_MESSAGES.DEVICE_ACCESS_DENIED);
+      } else if (mediaError.name === "NotFoundError") {
+        setDeviceError('not-found');
+        setError(ERROR_MESSAGES.NO_DEVICES_FOUND);
+      } else {
+        setDeviceError('generic');
+        setError(ERROR_MESSAGES.DEVICE_ERROR);
+      }
+      setPermissionsGranted(false);
+    }
+  };
+
+  // Auto-request on desktop, manual on mobile
+  useEffect(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (meetingData && !permissionsGranted && !isMobile) {
       setupDevices();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meetingData, permissionsGranted]);
 
+  // Handler for manual permission request
+  const handleRequestPermissions = async () => {
+    setShowPermissionButton(false);
+    await setupDevices();
+  };
+
+  useEffect(() => {
     return () => {
       // Cleanup
       if (stream) {
@@ -778,6 +801,27 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
                   aria-label="Enter your display name"
                   aria-required="true"
                 />
+              </div>
+            )}
+
+            {/* Permission request button for mobile devices */}
+            {showPermissionButton && !permissionsGranted && (
+              <div className="pt-2">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={handleRequestPermissions}
+                  className="bg-brand-600 hover:bg-brand-700"
+                >
+                  <svg className="w-5 h-5 mr-2 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Allow Camera & Microphone
+                </Button>
+                <p className="text-xs text-center text-gray-400 mt-2">
+                  Tap to grant camera and microphone permissions
+                </p>
               </div>
             )}
 
