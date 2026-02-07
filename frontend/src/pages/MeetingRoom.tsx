@@ -9,7 +9,9 @@ import {
   ParticipantTile,
   ControlBar,
   useTracks,
+  Chat,
 } from "@livekit/components-react";
+import "@livekit/components-styles";
 import { DisconnectReason, VideoPresets, Track } from "livekit-client";
 import { ERROR_MESSAGES } from "../utils/constants";
 import { DisconnectMessage } from "../components/meeting/DisconnectMessage";
@@ -74,33 +76,27 @@ const MeetingRoomContent: React.FC<{
   }, [room, devicePreferences, devicesApplied]);
 
   return (
-    <div 
-      style={{ 
-        height: '100%', 
-        width: '100%', 
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#0f172a'
-      }}
-    >
-      {/* Video grid - takes remaining space */}
-      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        <GridLayout tracks={tracks} style={{ height: '100%' }}>
-          <ParticipantTile />
-        </GridLayout>
+    <div className="h-full w-full relative flex flex-row bg-slate-900 text-white">
+      {/* Main video area with grid and controls */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Video grid - takes remaining space */}
+        <div className="flex-1 overflow-hidden relative">
+          <GridLayout tracks={tracks} className="h-full [&_.lk-participant-name]:text-white [&_.lk-participant-metadata]:text-white [&_.lk-participant-metadata-item]:text-gray-300">
+            <ParticipantTile />
+          </GridLayout>
+        </div>
+
+        {/* Control bar - fixed at bottom */}
+        <div className="w-full p-4 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700/50 [&_.lk-button]:text-white [&_.lk-button-group-menu-item]:text-white">
+          <ControlBar variation="verbose" />
+        </div>
       </div>
-      
-      {/* Control bar - fixed at bottom */}
-      <div style={{ 
-        width: '100%', 
-        padding: '1rem',
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-        borderTop: '1px solid rgba(51, 65, 85, 0.5)'
-      }}>
-        <ControlBar variation="verbose" />
+
+      {/* Chat sidebar */}
+      <div className="w-96 border-l border-slate-700/50 flex flex-col bg-slate-800 [&_.lk-chat-entry]:text-white [&_.lk-chat-entry__name]:text-gray-300 [&_.lk-chat-entry__message]:text-white [&_.lk-form-control]:text-white [&_.lk-form-control]:bg-slate-700 [&_.lk-form-control::placeholder]:text-gray-400 [&_.lk-chat-header]:text-white [&_.lk-button]:text-white">
+        <Chat />
       </div>
-      
+
       <RoomAudioRenderer />
     </div>
   );
@@ -159,17 +155,10 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
   // Render full-screen meeting room
   return (
-    <div 
-      className="fixed inset-0 z-50 bg-gray-900" 
-      role="main" 
+    <div
+      className="fixed inset-0 z-50 bg-gray-900 h-screen w-screen m-0 p-0 overflow-hidden text-white"
+      role="main"
       aria-label="Meeting room"
-      style={{ 
-        height: '100vh', 
-        width: '100vw', 
-        margin: 0, 
-        padding: 0,
-        overflow: 'hidden'
-      }}
     >
       <LiveKitRoom
         token={tokenData.token}
@@ -224,13 +213,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             ],
           },
         }}
-        style={{ 
-          height: '100%', 
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative'
-        }}
+        className="h-full w-full flex flex-col relative"
       >
         <MeetingRoomContent
           devicePreferences={devicePreferences}
