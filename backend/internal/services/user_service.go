@@ -12,11 +12,15 @@ import (
 )
 
 type UserService struct {
-	repo *repositories.UserRepository
+	repo        *repositories.UserRepository
+	meetingRepo *repositories.MeetingRepository
 }
 
-func NewUserService(repo *repositories.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo *repositories.UserRepository, meetingRepo *repositories.MeetingRepository) *UserService {
+	return &UserService{
+		repo:        repo,
+		meetingRepo: meetingRepo,
+	}
 }
 
 func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
@@ -113,6 +117,11 @@ func (s *UserService) DeleteUser(id uint) error {
 	// Protect admin from deletion
 	if user.Role == "admin" {
 		return errors.New("cannot delete admin user")
+	}
+
+	// Delete all meetings created by this user
+	if err := s.meetingRepo.DeleteByCreatorID(id); err != nil {
+		return err
 	}
 
 	return s.repo.Delete(id)

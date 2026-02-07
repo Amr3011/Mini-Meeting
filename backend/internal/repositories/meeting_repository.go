@@ -64,3 +64,7 @@ func (r *MeetingRepository) ExistsByCode(code string) (bool, error) {
 	}
 	return count > 0, nil
 }
+
+func (r *MeetingRepository) DeleteByCreatorID(creatorID uint) error {
+	return r.db.Where("creator_id = ?", creatorID).Delete(&models.Meeting{}).Error
+}

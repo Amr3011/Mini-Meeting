@@ -70,7 +70,7 @@ func main() {
 	meetingRepo := repositories.NewMeetingRepository(database.GetDB())
 
 	// Initialize services
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
 	emailService := utils.NewEmailService(&cfg.Email)
 	livekitService := services.NewLiveKitService(cfg)
