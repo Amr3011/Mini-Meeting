@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useParams, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { isValidMeetingCode } from "./utils/validators";
 
 // Eager load critical pages
 import Landing from "./pages/Landing";
@@ -30,6 +31,18 @@ const LoadingFallback = () => (
     </div>
   </div>
 );
+
+// Wrapper component to validate meeting code format
+const MeetingCodeValidator = () => {
+  const { meetingCode } = useParams<{ meetingCode: string }>();
+  
+  // Validate meeting code format (xxx-xxxx-xxx)
+  if (!meetingCode || !isValidMeetingCode(meetingCode)) {
+    return <Navigate to="/404" replace />;
+  }
+  
+  return <Meeting />;
+};
 
 function App() {
   return (
@@ -79,10 +92,11 @@ function App() {
           />
 
           {/* Meeting route - accessible to everyone (authenticated and guests) */}
-          {/* Must be second to last as it's a catch-all dynamic route */}
-          <Route path="/:meetingCode" element={<Meeting />} />
+          {/* Must be after all specific routes as it's a dynamic catch-all */}
+          {/* Validates meeting code format before rendering */}
+          <Route path="/:meetingCode" element={<MeetingCodeValidator />} />
 
-          {/* 404 */}
+          {/* 404 - catch all unmatched routes */}
           <Route path="*" element={<NotFound />} />
         </Routes>
           </Suspense>
