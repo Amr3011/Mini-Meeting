@@ -7,8 +7,6 @@ import {
   useRoomContext,
   RoomAudioRenderer,
 } from "@livekit/components-react";
-import { Modal } from "../components/common/Modal";
-import { Button } from "../components/common/Button";
 import { DisconnectReason, VideoPresets } from "livekit-client";
 import { ERROR_MESSAGES } from "../utils/constants";
 
@@ -18,10 +16,8 @@ import { ERROR_MESSAGES } from "../utils/constants";
  */
 const MeetingRoomContent: React.FC<{
   devicePreferences: DevicePreferences;
-  onLeave: () => void;
-}> = ({ devicePreferences, onLeave }) => {
+}> = ({ devicePreferences }) => {
   const room = useRoomContext();
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [devicesApplied, setDevicesApplied] = useState(false);
 
   // Apply device preferences when room is ready
@@ -64,74 +60,11 @@ const MeetingRoomContent: React.FC<{
     }
   }, [room, devicePreferences, devicesApplied]);
 
-  const handleLeaveClick = () => {
-    setShowLeaveModal(true);
-  };
-
-  const handleConfirmLeave = () => {
-    setShowLeaveModal(false);
-    onLeave();
-  };
-
   return (
     <div className="h-full w-full relative">
       {/* VideoConference provides a full-featured meeting UI */}
       <VideoConference />
       <RoomAudioRenderer />
-
-      {/* Leave Meeting Button - positioned to not conflict with LiveKit controls */}
-      <div className="absolute top-6 right-6 z-100">
-        <Button
-          onClick={handleLeaveClick}
-          variant="danger"
-          size="sm"
-          className="shadow-xl backdrop-blur-sm bg-danger-600/95 hover:bg-danger-700 border border-danger-400/30 min-w-30"
-          aria-label="Leave meeting"
-        >
-          <svg 
-            className="w-4 h-4 mr-1.5" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
-            />
-          </svg>
-          Leave
-        </Button>
-      </div>
-
-      {/* Leave Confirmation Modal */}
-      <Modal
-        isOpen={showLeaveModal}
-        onClose={() => setShowLeaveModal(false)}
-        title="Leave Meeting"
-        type="warning"
-        size="sm"
-        footer={
-          <div className="flex gap-3 justify-end">
-            <Button
-              onClick={() => setShowLeaveModal(false)}
-              variant="secondary"
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmLeave} variant="danger">
-              Leave Meeting
-            </Button>
-          </div>
-        }
-      >
-        <p className="text-gray-300">
-          Are you sure you want to leave this meeting? You can rejoin using the
-          meeting link.
-        </p>
-      </Modal>
     </div>
   );
 };
@@ -283,7 +216,6 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       >
         <MeetingRoomContent
           devicePreferences={devicePreferences}
-          onLeave={onLeave}
         />
       </LiveKitRoom>
     </div>
