@@ -9,7 +9,7 @@ import {
 } from "@livekit/components-react";
 import { Modal } from "../components/common/Modal";
 import { Button } from "../components/common/Button";
-import { DisconnectReason } from "livekit-client";
+import { DisconnectReason, VideoPresets } from "livekit-client";
 import { ERROR_MESSAGES } from "../utils/constants";
 
 /**
@@ -233,14 +233,49 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         video={devicePreferences.videoEnabled}
         audio={devicePreferences.audioEnabled}
         options={{
+          // Video quality settings - High quality with simulcast
           videoCaptureDefaults: {
             deviceId: devicePreferences.videoDeviceId,
+            resolution: {
+              width: 1280,
+              height: 720,
+              frameRate: 30,
+            },
           },
+          // Audio quality settings - High quality audio
           audioCaptureDefaults: {
             deviceId: devicePreferences.audioDeviceId,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
           },
           audioOutput: {
             deviceId: devicePreferences.audioOutputDeviceId,
+          },
+          // Adaptive streaming - automatically adjusts quality based on network
+          adaptiveStream: true,
+          // Dynacast - only sends layers that are being consumed
+          dynacast: true,
+          // Publish defaults for optimal quality
+          publishDefaults: {
+            videoEncoding: {
+              maxBitrate: 3_000_000, // 3 Mbps for high quality
+              maxFramerate: 30,
+            },
+            screenShareEncoding: {
+              maxBitrate: 5_000_000, // 5 Mbps for screen share (higher for clarity)
+              maxFramerate: 15,
+            },
+            // Simulcast - sends multiple quality versions using predefined presets
+            videoSimulcastLayers: [
+              VideoPresets.h720,    // High quality layer (1280x720)
+              VideoPresets.h360,    // Medium quality layer (640x360)
+              VideoPresets.h180,    // Low quality layer (320x180)
+            ],
+            screenShareSimulcastLayers: [
+              VideoPresets.h1080,   // High quality for screen share (1920x1080)
+              VideoPresets.h720,    // Lower quality fallback (1280x720)
+            ],
           },
         }}
         className="meeting-room-container"

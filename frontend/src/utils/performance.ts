@@ -123,12 +123,35 @@ export const getOptimizedVideoConstraints = (
       frameRate: { ideal: 24 },
     };
   } else {
-    // Higher quality for actual meeting
+    // Higher quality for actual meeting with HD resolution
     return {
       ...baseConstraints,
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
-      frameRate: { ideal: 30 },
+      width: { ideal: 1280, min: 640 },
+      height: { ideal: 720, min: 480 },
+      frameRate: { ideal: 30, min: 15 },
+      // Additional quality constraints
+      aspectRatio: { ideal: 16 / 9 },
+      facingMode: 'user',
     };
   }
+};
+
+/**
+ * Get optimized screen share constraints for high-quality screen sharing
+ */
+export const getScreenShareConstraints = (): DisplayMediaStreamOptions => {
+  return {
+    video: {
+      // High resolution for screen share
+      width: { ideal: 1920, max: 1920 },
+      height: { ideal: 1080, max: 1080 },
+      frameRate: { ideal: 15, max: 30 },
+      // @ts-ignore - displaySurface is valid but not in TS types
+      displaySurface: 'monitor', // Prefer full screen
+      // @ts-ignore
+      logicalSurface: true,
+      cursor: 'always', // Show cursor in screen share
+    },
+    audio: false, // System audio can be enabled separately
+  };
 };
