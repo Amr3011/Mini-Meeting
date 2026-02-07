@@ -2,7 +2,7 @@ import apiClient from "./client";
 import type {
   User,
   UserResponse,
-  UsersResponse,
+  PaginatedUsersResponse,
   UpdateUserRequest,
   UserUpdateResponse,
   CreateUserRequest,
@@ -27,11 +27,17 @@ export const userService = {
   },
 
   /**
-   * Get all users (Admin only)
+   * Get all users with pagination and search (Admin only)
    */
-  getAllUsers: async (): Promise<User[]> => {
-    const response = await apiClient.get<UsersResponse>("/users");
-    return response.data.data;
+  getAllUsers: async (
+    page: number = 1,
+    pageSize: number = 10,
+    search: string = ""
+  ): Promise<PaginatedUsersResponse> => {
+    const response = await apiClient.get<PaginatedUsersResponse>("/users", {
+      params: { page, page_size: pageSize, search },
+    });
+    return response.data;
   },
 
   /**

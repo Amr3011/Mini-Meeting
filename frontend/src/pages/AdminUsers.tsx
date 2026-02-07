@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Layout } from "../components/layout/Layout";
 import { Button } from "../components/common/Button";
 import { Modal } from "../components/common/Modal";
 import { Input } from "../components/common/Input";
 import { ErrorMessage } from "../components/common/ErrorMessage";
 import { Loading } from "../components/common/Loading";
+import { Pagination } from "../components/common/Pagination";
 import { userService } from "../services/api/user.service";
 import type { User, CreateUserRequest } from "../types/user.types";
 import { useForm } from "react-hook-form";
@@ -14,24 +15,81 @@ import type { AxiosError } from "axios";
 import type { ApiError } from "../types/auth.types";
 import { useAuth } from "../hooks/useAuth";
 
+// Session storage keys
+const STORAGE_KEY = 'adminUsersState';
+
+// Helper to get cached state
+const getCachedState = (search: string) => {
+  try {
+    const cached = sessionStorage.getItem(`${STORAGE_KEY}_${search}`);
+    return cached ? JSON.parse(cached) : null;
+  } catch {
+    return null;
+  }
+};
+
+// Helper to save state
+const saveState = (state: {
+  users: User[];
+  currentPage: number;
+  pageSize: number;
+  totalUsers: number;
+  totalPages: number;
+  search: string;
+}) => {
+  try {
+    sessionStorage.setItem(`${STORAGE_KEY}_${state.search}`, JSON.stringify(state));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const cachedState = getCachedState(searchTerm);
+  const hasFetchedRef = useRef(false);
+  
+  const [users, setUsers] = useState<User[]>(cachedState?.users || []);
+  const [isLoading, setIsLoading] = useState(!cachedState);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(cachedState?.currentPage || 1);
+  const [pageSize, setPageSize] = useState(cachedState?.pageSize || 10);
+  const [totalUsers, setTotalUsers] = useState(cachedState?.totalUsers || 0);
+  const [totalPages, setTotalPages] = useState(cachedState?.totalPages || 0);
 
   // Fetch users
-  const fetchUsers = async () => {
+  const fetchUsers = async (force = false) => {
+    // Prevent duplicate calls in strict mode
+    if (!force && hasFetchedRef.current) {
+      return;
+    }
+    
+    hasFetchedRef.current = true;
     setIsLoading(true);
     setError(null);
+    
     try {
-      const data = await userService.getAllUsers();
-      setUsers(data);
+      const data = await userService.getAllUsers(currentPage, pageSize, searchTerm);
+      setUsers(data.data);
+      setTotalUsers(data.total);
+      setTotalPages(data.total_pages);
+      
+      // Save to session storage
+      saveState({
+        users: data.data,
+        currentPage,
+        pageSize,
+        totalUsers: data.total,
+        totalPages: data.total_pages,
+        search: searchTerm,
+      });
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
       setError(
@@ -43,9 +101,43 @@ export default function AdminUsers() {
     }
   };
 
+  // Handle search input change with debounce
   useEffect(() => {
+    const timer = setTimeout(() => {
+      // Reset to page 1 when search term changes
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      } else {
+        hasFetchedRef.current = false;
+        fetchUsers();
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
+  useEffect(() => {
+    // If we have cached data that matches current page/pageSize/search, don't refetch
+    const cached = getCachedState(searchTerm);
+    if (
+      cached &&
+      cached.currentPage === currentPage &&
+      cached.pageSize === pageSize &&
+      cached.search === searchTerm &&
+      cached.users.length > 0 &&
+      !hasFetchedRef.current
+    ) {
+      // Mark as fetched to prevent duplicate calls
+      hasFetchedRef.current = true;
+      return;
+    }
+    
+    // Reset fetch flag and fetch new data
+    hasFetchedRef.current = false;
     fetchUsers();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize]);
 
   // Create user form
   const {
@@ -61,7 +153,8 @@ export default function AdminUsers() {
     setActionLoading(true);
     try {
       await userService.createUser(data);
-      await fetchUsers();
+      hasFetchedRef.current = false;
+      await fetchUsers(true);
       setIsCreateModalOpen(false);
       resetCreate();
     } catch (err) {
@@ -87,7 +180,8 @@ export default function AdminUsers() {
     setActionLoading(true);
     try {
       await userService.deleteUser(selectedUser.id);
-      await fetchUsers();
+      hasFetchedRef.current = false;
+      await fetchUsers(true);
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
     } catch (err) {
@@ -105,13 +199,6 @@ export default function AdminUsers() {
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
   };
-
-  // Filter users based on search term
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   if (isLoading) {
     return (
@@ -147,12 +234,13 @@ export default function AdminUsers() {
           )}
 
           {/* Search */}
-          <div className="max-w-md">
+          <div className="mb-4">
             <Input
               type="text"
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-md"
             />
           </div>
         </div>
@@ -167,10 +255,10 @@ export default function AdminUsers() {
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Sign Up Method
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Created
@@ -181,7 +269,7 @@ export default function AdminUsers() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.length === 0 ? (
+                {users.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
@@ -191,7 +279,7 @@ export default function AdminUsers() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
+                  users.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -201,25 +289,19 @@ export default function AdminUsers() {
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                               {user.name}
+                              {user.role === "admin" && (
+                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                  Admin
+                                </span>
+                              )}
                             </div>
                             <div className="text-sm text-gray-500">
                               {user.email}
                             </div>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === "admin"
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {user.email_verified ? (
@@ -231,6 +313,21 @@ export default function AdminUsers() {
                             Unverified
                           </span>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            user.provider === "google"
+                              ? "bg-red-100 text-red-800"
+                              : user.provider === "github"
+                              ? "bg-gray-800 text-white"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {user.provider === "local"
+                            ? "Email"
+                            : user.provider.charAt(0).toUpperCase() + user.provider.slice(1)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(user.created_at).toLocaleDateString()}
@@ -251,13 +348,21 @@ export default function AdminUsers() {
             </table>
           </div>
 
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-            <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">{filteredUsers.length}</span>{" "}
-              of <span className="font-medium">{users.length}</span> users
-            </p>
-          </div>
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalItems={totalUsers}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            onPageSizeChange={(newPageSize) => {
+              setPageSize(newPageSize);
+              setCurrentPage(1); // Reset to first page when changing page size
+            }}
+          />
         </div>
 
         {/* Create User Modal */}

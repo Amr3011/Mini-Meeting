@@ -33,6 +33,14 @@ export interface UsersResponse {
   data: User[];
 }
 
+export interface PaginatedUsersResponse {
+  data: User[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 export interface UserUpdateResponse {
   message: string;
   data: User;

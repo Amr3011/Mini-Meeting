@@ -37,10 +37,34 @@ func (r *UserRepository) FindByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepository) FindAll() ([]models.User, error) {
+func (r *UserRepository) FindAllPaginated(page, pageSize int, search string) ([]models.User, int64, error) {
 	var users []models.User
-	err := r.db.Find(&users).Error
-	return users, err
+	var total int64
+
+	// Build query
+	query := r.db.Model(&models.User{})
+
+	// Apply search filter if provided
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where("name ILIKE ? OR email ILIKE ?", searchPattern, searchPattern)
+	}
+
+	// Count total users with filter
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Calculate offset
+	offset := (page - 1) * pageSize
+
+	// Fetch paginated users
+	err := query.Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&users).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }
 
 func (r *UserRepository) Update(user *models.User) error {

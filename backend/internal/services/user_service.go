@@ -73,8 +73,33 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAllUsers() ([]models.User, error) {
-	return s.repo.FindAll()
+func (s *UserService) GetAllUsersPaginated(page, pageSize int, search string) (*models.PaginatedUsersResponse, error) {
+	// Set default values
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	users, total, err := s.repo.FindAllPaginated(page, pageSize, search)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate total pages
+	totalPages := int(total) / pageSize
+	if int(total)%pageSize > 0 {
+		totalPages++
+	}
+
+	return &models.PaginatedUsersResponse{
+		Data:       users,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
 }
 
 func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*models.User, error) {
