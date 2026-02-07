@@ -37,18 +37,21 @@ func NewLiveKitService(cfg *config.Config) *LiveKitService {
 // CreateJoinToken creates a token with role-based permissions
 // roomName should be the meeting code from the database
 // identity is the user ID as string
+// userName is the display name for the participant
 // userRole is the user's role (admin, user, etc.)
 // metadata can include user name, avatar, etc.
 func (s *LiveKitService) CreateJoinToken(
 	roomName string,
 	identity string,
+	userName string,
 	userRole string,
 	metadata string,
 ) (string, error) {
 	at := auth.NewAccessToken(s.apiKey, s.apiSecret)
 
-	// Set identity and metadata
+	// Set identity, name, and metadata
 	at.SetIdentity(identity)
+	at.SetName(userName)
 	if metadata != "" {
 		at.SetMetadata(metadata)
 	}

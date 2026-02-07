@@ -3,11 +3,14 @@ import { type DevicePreferences } from "./MeetingLobby";
 import type { LiveKitTokenResponse } from "../services/api/livekit.service";
 import {
   LiveKitRoom,
-  VideoConference,
   useRoomContext,
   RoomAudioRenderer,
+  GridLayout,
+  ParticipantTile,
+  ControlBar,
+  useTracks,
 } from "@livekit/components-react";
-import { DisconnectReason, VideoPresets } from "livekit-client";
+import { DisconnectReason, VideoPresets, Track } from "livekit-client";
 import { ERROR_MESSAGES } from "../utils/constants";
 
 /**
@@ -19,6 +22,15 @@ const MeetingRoomContent: React.FC<{
 }> = ({ devicePreferences }) => {
   const room = useRoomContext();
   const [devicesApplied, setDevicesApplied] = useState(false);
+
+  // Get all tracks (video and audio) from all participants
+  const tracks = useTracks(
+    [
+      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.ScreenShare, withPlaceholder: false },
+    ],
+    { onlySubscribed: false }
+  );
 
   // Apply device preferences when room is ready
   useEffect(() => {
@@ -61,9 +73,33 @@ const MeetingRoomContent: React.FC<{
   }, [room, devicePreferences, devicesApplied]);
 
   return (
-    <div className="h-full w-full relative">
-      {/* VideoConference provides a full-featured meeting UI */}
-      <VideoConference />
+    <div 
+      style={{ 
+        height: '100%', 
+        width: '100%', 
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: '#0f172a'
+      }}
+    >
+      {/* Video grid - takes remaining space */}
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <GridLayout tracks={tracks} style={{ height: '100%' }}>
+          <ParticipantTile />
+        </GridLayout>
+      </div>
+      
+      {/* Control bar - fixed at bottom */}
+      <div style={{ 
+        width: '100%', 
+        padding: '1rem',
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        borderTop: '1px solid rgba(51, 65, 85, 0.5)'
+      }}>
+        <ControlBar variation="verbose" />
+      </div>
+      
       <RoomAudioRenderer />
     </div>
   );
@@ -157,7 +193,18 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
   // Render full-screen meeting room
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gray-900" role="main" aria-label="Meeting room">
+    <div 
+      className="fixed inset-0 z-50 bg-gray-900" 
+      role="main" 
+      aria-label="Meeting room"
+      style={{ 
+        height: '100vh', 
+        width: '100vw', 
+        margin: 0, 
+        padding: 0,
+        overflow: 'hidden'
+      }}
+    >
       <LiveKitRoom
         token={tokenData.token}
         serverUrl={tokenData.url}
@@ -211,8 +258,13 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             ],
           },
         }}
-        className="meeting-room-container"
-        style={{ height: "100%", width: "100%" }}
+        style={{ 
+          height: '100%', 
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative'
+        }}
       >
         <MeetingRoomContent
           devicePreferences={devicePreferences}
