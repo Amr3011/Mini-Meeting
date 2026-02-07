@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useParams, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -38,7 +38,7 @@ const MeetingCodeValidator = () => {
   
   // Validate meeting code format (xxx-xxxx-xxx)
   if (!meetingCode || !isValidMeetingCode(meetingCode)) {
-    return <Navigate to="/404" replace />;
+    return <NotFound />;
   }
   
   return <Meeting />;
@@ -90,6 +90,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* 404 - Not Found page */}
+          <Route path="/404" element={<NotFound />} />
 
           {/* Meeting route - accessible to everyone (authenticated and guests) */}
           {/* Must be after all specific routes as it's a dynamic catch-all */}
