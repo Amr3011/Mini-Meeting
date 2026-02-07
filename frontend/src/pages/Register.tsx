@@ -49,21 +49,21 @@ export default function Register() {
 
           {/* Heading */}
           <h1 className="text-4xl font-bold text-center mb-4">
-            Join thousands of
+            Start Your
             <br />
-            happy users
+            Meeting Journey
           </h1>
           <p className="text-lg text-white/80 text-center max-w-md mb-12">
-            Start hosting professional meetings in minutes. No credit card required.
+            Start hosting professional meetings in seconds. No credit card required.
           </p>
 
           {/* Features */}
           <div className="space-y-4 w-full max-w-md">
             {[
-              { icon: '🚀', text: 'Get started in under 60 seconds' },
-              { icon: '💳', text: 'Free forever, no credit card needed' },
-              { icon: '🔒', text: 'Enterprise-grade security' },
-              { icon: '🌟', text: 'Join 10,000+ satisfied users' },
+              { icon: '💳', text: 'Free, no credit card required' },
+              { icon: '🔒', text: 'Secure and private meetings' },
+              { icon: '🎥', text: 'HD video and crystal clear audio' },
+              { icon: '💬', text: 'Screen sharing and Real-time chat' },
             ].map((feature, i) => (
               <div
                 key={i}
