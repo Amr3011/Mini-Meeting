@@ -10,7 +10,7 @@ require (
 	github.com/livekit/protocol v1.44.1-0.20260120134243-0914cc74653e
 	github.com/livekit/server-sdk-go/v2 v2.13.3
 	github.com/redis/go-redis/v9 v9.17.3
-	golang.org/x/crypto v0.47.0
+	golang.org/x/crypto v0.47.0 // indirect
 	gorm.io/driver/postgres v1.5.4
 	gorm.io/gorm v1.25.5
 )
