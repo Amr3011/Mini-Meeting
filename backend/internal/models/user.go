@@ -77,3 +77,11 @@ const (
 	ProviderGoogle Provider = "google"
 	ProviderGithub Provider = "github"
 )
+
+type PaginatedUsersResponse struct {
+	Data       []User `json:"data"`
+	Total      int64  `json:"total"`
+	Page       int    `json:"page"`
+	PageSize   int    `json:"page_size"`
+	TotalPages int    `json:"total_pages"`
+}

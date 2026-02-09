@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { MeetingLobby, type DevicePreferences } from "./MeetingLobby";
 import { MeetingRoom } from "./MeetingRoom";
 import type { LiveKitTokenResponse } from "../services/api/livekit.service";
@@ -13,22 +13,24 @@ import { useAuth } from "../hooks/useAuth";
  */
 const Meeting: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { meetingCode } = useParams<{ meetingCode: string }>();
+  const { isAuthenticated, user } = useAuth();
 
   const [hasJoined, setHasJoined] = useState(false);
-  const [devicePreferences, setDevicePreferences] = useState<DevicePreferences | null>(null);
-  const [tokenData, setTokenData] = useState<LiveKitTokenResponse | null>(null);
+  const [userName, setUserName] = useState<string>("");
 
-  const handleJoinMeeting = (prefs: DevicePreferences, token: LiveKitTokenResponse) => {
-    setDevicePreferences(prefs);
-    setTokenData(token);
+  const handleJoinMeeting = (_prefs: DevicePreferences, token: LiveKitTokenResponse) => {
+    // Get user name from auth context, or use the display name returned by the backend
+    const name = isAuthenticated && user
+      ? user.name || user.email.split("@")[0]
+      : token.user_name || token.identity;
+    setUserName(name);
     setHasJoined(true);
   };
 
   const handleLeaveMeeting = () => {
     setHasJoined(false);
-    setDevicePreferences(null);
-    setTokenData(null);
+    setUserName("");
 
     // Navigate based on authentication status
     if (isAuthenticated) {
@@ -38,11 +40,11 @@ const Meeting: React.FC = () => {
     }
   };
 
-  if (hasJoined && devicePreferences && tokenData) {
+  if (hasJoined && meetingCode) {
     return (
       <MeetingRoom
-        devicePreferences={devicePreferences}
-        tokenData={tokenData}
+        meetingCode={meetingCode}
+        userName={userName}
         onLeave={handleLeaveMeeting}
       />
     );

@@ -12,11 +12,15 @@ import (
 )
 
 type UserService struct {
-	repo *repositories.UserRepository
+	repo        *repositories.UserRepository
+	meetingRepo *repositories.MeetingRepository
 }
 
-func NewUserService(repo *repositories.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo *repositories.UserRepository, meetingRepo *repositories.MeetingRepository) *UserService {
+	return &UserService{
+		repo:        repo,
+		meetingRepo: meetingRepo,
+	}
 }
 
 func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
@@ -69,8 +73,33 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAllUsers() ([]models.User, error) {
-	return s.repo.FindAll()
+func (s *UserService) GetAllUsersPaginated(page, pageSize int, search string) (*models.PaginatedUsersResponse, error) {
+	// Set default values
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	users, total, err := s.repo.FindAllPaginated(page, pageSize, search)
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate total pages
+	totalPages := int(total) / pageSize
+	if int(total)%pageSize > 0 {
+		totalPages++
+	}
+
+	return &models.PaginatedUsersResponse{
+		Data:       users,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
 }
 
 func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*models.User, error) {
@@ -113,6 +142,11 @@ func (s *UserService) DeleteUser(id uint) error {
 	// Protect admin from deletion
 	if user.Role == "admin" {
 		return errors.New("cannot delete admin user")
+	}
+
+	// Delete all meetings created by this user
+	if err := s.meetingRepo.DeleteByCreatorID(id); err != nil {
+		return err
 	}
 
 	return s.repo.Delete(id)

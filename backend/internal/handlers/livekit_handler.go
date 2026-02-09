@@ -148,6 +148,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 	token, err := h.livekitService.CreateJoinToken(
 		req.MeetingCode,
 		identity,
+		userName,
 		userRole,
 		metadata,
 	)

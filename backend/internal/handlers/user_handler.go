@@ -67,19 +67,23 @@ func (h *UserHandler) GetUser(c *fiber.Ctx) error {
 	})
 }
 
-// GetAllUsers retrieves all users
-// GET /api/users
+// GetAllUsers retrieves all users with pagination and search
+// GET /api/users?page=1&page_size=10&search=keyword
 func (h *UserHandler) GetAllUsers(c *fiber.Ctx) error {
-	users, err := h.service.GetAllUsers()
+	// Parse pagination parameters
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("page_size", 10)
+	search := c.Query("search", "")
+
+	// Get paginated users
+	result, err := h.service.GetAllUsersPaginated(page, pageSize, search)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
 
-	return c.JSON(fiber.Map{
-		"data": users,
-	})
+	return c.JSON(result)
 }
 
 // UpdateUser updates a user by ID

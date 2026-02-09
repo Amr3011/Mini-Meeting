@@ -25,7 +25,7 @@ FROM alpine:latest
 # Install ca-certificates for HTTPS requests
 RUN apk --no-cache add ca-certificates tzdata
 
-# Set timezone (optional, adjust as needed)
+# Set timezone
 ENV TZ=UTC
 
 WORKDIR /root/
