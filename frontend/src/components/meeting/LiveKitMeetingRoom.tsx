@@ -1,5 +1,5 @@
 import { LiveKitRoom, VideoConference } from '@livekit/components-react';
-import '@livekit/components-styles/index.css';
+import '@livekit/components-styles';
 import { useLiveKit } from '../../hooks/useLiveKit';
 import { Loading } from '../common/Loading';
 import { ErrorMessage } from '../common/ErrorMessage';
@@ -32,7 +32,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0f1219] via-[#111827] to-[#0f1219]">
         <Loading text="Connecting to meeting..." />
       </div>
     );
@@ -40,7 +40,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0f1219] via-[#111827] to-[#0f1219]">
         <div className="max-w-md">
           <ErrorMessage message={error} />
         </div>
@@ -50,7 +50,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
 
   if (!token || !livekitUrl) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0f1219] via-[#111827] to-[#0f1219]">
         <div className="max-w-md">
           <ErrorMessage message="Failed to connect to meeting. Please try again." />
         </div>
@@ -59,15 +59,15 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   }
 
   return (
-    <div className="h-screen w-screen">
+    <div className="h-screen w-screen bg-[#0f1219]">
       <LiveKitRoom
         token={token}
         serverUrl={livekitUrl}
         connect={true}
         onDisconnected={onDisconnect}
+        data-lk-theme="default"
         style={{ height: '100%' }}
       >
-        {/* VideoConference provides a full-featured meeting UI */}
         <VideoConference />
       </LiveKitRoom>
     </div>
