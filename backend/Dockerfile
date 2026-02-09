@@ -33,9 +33,6 @@ WORKDIR /root/
 # Copy the binary from builder
 COPY --from=builder /app/main .
 
-# Copy email templates
-COPY --from=builder /app/pkg/utils/templates ./pkg/utils/templates
-
 # Copy migrations
 COPY --from=builder /app/migrations ./migrations
 

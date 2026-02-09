@@ -4,8 +4,7 @@ export interface User {
   email: string;
   name: string;
   role: "user" | "admin";
-  email_verified: boolean;
-  provider: "local" | "google" | "github";
+  provider: "google" | "github";
   avatar_url?: string;
   created_at: string;
   updated_at: string;

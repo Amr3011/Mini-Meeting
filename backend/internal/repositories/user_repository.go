@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"mini-meeting/internal/models"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -75,44 +74,6 @@ func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&models.User{}, id).Error
 }
 
-func (r *UserRepository) UpdateVerificationCode(email, code string, expiry time.Time) error {
-	return r.db.Model(&models.User{}).
-		Where("email = ?", email).
-		Updates(VerificationCodeUpdate{
-			VerificationCode:       code,
-			VerificationCodeExpiry: &expiry,
-		}).Error
-}
-
-func (r *UserRepository) VerifyEmail(email string) error {
-	return r.db.Model(&models.User{}).
-		Where("email = ?", email).
-		Updates(EmailVerificationUpdate{
-			EmailVerified:          true,
-			VerificationCode:       "",
-			VerificationCodeExpiry: nil,
-		}).Error
-}
-
-func (r *UserRepository) UpdatePasswordResetCode(email, code string, expiry time.Time) error {
-	return r.db.Model(&models.User{}).
-		Where("email = ?", email).
-		Updates(PasswordResetCodeUpdate{
-			PasswordResetCode:   code,
-			PasswordResetExpiry: &expiry,
-		}).Error
-}
-
-func (r *UserRepository) UpdatePassword(email, hashedPassword string) error {
-	return r.db.Model(&models.User{}).
-		Where("email = ?", email).
-		Updates(PasswordUpdate{
-			Password:            hashedPassword,
-			PasswordResetCode:   "",
-			PasswordResetExpiry: nil,
-		}).Error
-}
-
 func (r *UserRepository) FindByProvider(provider models.Provider, providerID string) (*models.User, error) {
 	var user models.User
 	err := r.db.Where("provider = ? AND provider_id = ?", provider, providerID).First(&user).Error
@@ -139,29 +100,6 @@ func (r *UserRepository) UpdateProviderInfo(userID uint, provider models.Provide
 			ProviderID: providerID,
 			AvatarURL:  avatarURL,
 		}).Error
-}
-
-// Update structs for type safety
-type VerificationCodeUpdate struct {
-	VerificationCode       string     `gorm:"column:verification_code"`
-	VerificationCodeExpiry *time.Time `gorm:"column:verification_code_expiry"`
-}
-
-type EmailVerificationUpdate struct {
-	EmailVerified          bool       `gorm:"column:email_verified"`
-	VerificationCode       string     `gorm:"column:verification_code"`
-	VerificationCodeExpiry *time.Time `gorm:"column:verification_code_expiry"`
-}
-
-type PasswordResetCodeUpdate struct {
-	PasswordResetCode   string     `gorm:"column:password_reset_code"`
-	PasswordResetExpiry *time.Time `gorm:"column:password_reset_expiry"`
-}
-
-type PasswordUpdate struct {
-	Password            string     `gorm:"column:password"`
-	PasswordResetCode   string     `gorm:"column:password_reset_code"`
-	PasswordResetExpiry *time.Time `gorm:"column:password_reset_expiry"`
 }
 
 type ProviderInfoUpdate struct {

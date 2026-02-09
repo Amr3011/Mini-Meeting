@@ -7,10 +7,7 @@ import { ErrorMessage } from "../components/common/ErrorMessage";
 import { Loading } from "../components/common/Loading";
 import { Pagination } from "../components/common/Pagination";
 import { userService } from "../services/api/user.service";
-import type { User, CreateUserRequest } from "../types/user.types";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema } from "../utils/validators";
+import type { User } from "../types/user.types";
 import type { AxiosError } from "axios";
 import type { ApiError } from "../types/auth.types";
 import { useAuth } from "../hooks/useAuth";
@@ -53,7 +50,6 @@ export default function AdminUsers() {
   const [users, setUsers] = useState<User[]>(cachedState?.users || []);
   const [isLoading, setIsLoading] = useState(!cachedState);
   const [error, setError] = useState<string | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -139,35 +135,6 @@ export default function AdminUsers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize]);
 
-  // Create user form
-  const {
-    register: registerCreate,
-    handleSubmit: handleSubmitCreate,
-    formState: { errors: createErrors },
-    reset: resetCreate,
-  } = useForm<CreateUserRequest>({
-    resolver: zodResolver(registerSchema),
-  });
-
-  const handleCreateUser = async (data: CreateUserRequest) => {
-    setActionLoading(true);
-    try {
-      await userService.createUser(data);
-      hasFetchedRef.current = false;
-      await fetchUsers(true);
-      setIsCreateModalOpen(false);
-      resetCreate();
-    } catch (err) {
-      const axiosError = err as AxiosError<ApiError>;
-      setError(
-        axiosError.response?.data?.message ||
-          "Failed to create user. Please try again."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
 
@@ -213,18 +180,13 @@ export default function AdminUsers() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                User Management
-              </h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Manage all users in the system
-              </p>
-            </div>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              Create User
-            </Button>
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">
+              User Management
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Manage all users in the system
+            </p>
           </div>
 
           {error && (
@@ -278,9 +240,6 @@ export default function AdminUsers() {
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Sign Up Method
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -327,17 +286,6 @@ export default function AdminUsers() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {user.email_verified ? (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Verified
-                          </span>
-                        ) : (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                            Unverified
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             user.provider === "google"
@@ -347,9 +295,7 @@ export default function AdminUsers() {
                               : "bg-blue-100 text-blue-800"
                           }`}
                         >
-                          {user.provider === "local"
-                            ? "Email"
-                            : user.provider.charAt(0).toUpperCase() + user.provider.slice(1)}
+                          {user.provider.charAt(0).toUpperCase() + user.provider.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -387,59 +333,6 @@ export default function AdminUsers() {
             }}
           />
         </div>
-
-        {/* Create User Modal */}
-        <Modal
-          isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            resetCreate();
-          }}
-          title="Create New User"
-        >
-          <form
-            onSubmit={handleSubmitCreate(handleCreateUser)}
-            className="space-y-4"
-          >
-            <Input
-              label="Full Name"
-              type="text"
-              placeholder="Enter full name"
-              error={createErrors.name?.message}
-              {...registerCreate("name")}
-            />
-            <Input
-              label="Email"
-              type="email"
-              placeholder="Enter email"
-              error={createErrors.email?.message}
-              {...registerCreate("email")}
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Enter password"
-              error={createErrors.password?.message}
-              {...registerCreate("password")}
-            />
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" isLoading={actionLoading}>
-                Create User
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setIsCreateModalOpen(false);
-                  resetCreate();
-                }}
-                disabled={actionLoading}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </Modal>
 
         {/* Delete Confirmation Modal */}
         <Modal

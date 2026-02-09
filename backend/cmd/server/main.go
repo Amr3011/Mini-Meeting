@@ -11,7 +11,6 @@ import (
 	"mini-meeting/internal/routes"
 	"mini-meeting/internal/services"
 	"mini-meeting/pkg/cache"
-	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -42,11 +41,6 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	// Seed admin user
-	if err := database.SeedAdmin(cfg); err != nil {
-		log.Fatalf("Failed to seed admin user: %v", err)
-	}
-
 	// Initialize Fiber app
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -72,12 +66,11 @@ func main() {
 	// Initialize services
 	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
-	emailService := utils.NewEmailService(&cfg.Email)
 	livekitService := services.NewLiveKitService(cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
-	authHandler := handlers.NewAuthHandler(userService, cfg, emailService)
+	authHandler := handlers.NewAuthHandler(userService, cfg)
 	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
 	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, cfg)
 

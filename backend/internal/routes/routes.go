@@ -12,17 +12,8 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	// API routes
 	api := app.Group("/api/v1")
 
-	// Auth routes (public)
+	// Auth routes (public) - OAuth only
 	auth := api.Group("/auth")
-	auth.Post("/register", authHandler.Register)
-	auth.Post("/login", authHandler.Login)
-	auth.Post("/verify-email", authHandler.VerifyEmail)
-	auth.Post("/resend-code", authHandler.ResendVerificationCode)
-	auth.Post("/forgot-password", authHandler.ForgotPassword)
-	auth.Post("/verify-password-code", authHandler.VerifyPasswordCode)
-	auth.Patch("/reset-password", authHandler.ResetPassword)
-
-	// OAuth routes (public)
 	auth.Get("/:provider", authHandler.OAuthLogin)
 	auth.Get("/:provider/callback", authHandler.OAuthCallback)
 
@@ -32,10 +23,8 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	users.Patch("/me", userHandler.UpdateMe)
 
 	// Admin-only routes
-	users.Post("/", middleware.AdminMiddleware(), userHandler.CreateUser)
 	users.Get("/", middleware.AdminMiddleware(), userHandler.GetAllUsers)
 	users.Get("/:id", middleware.AdminMiddleware(), userHandler.GetUser)
-	users.Patch("/:id", middleware.AdminMiddleware(), userHandler.UpdateUser)
 	users.Delete("/:id", middleware.AdminMiddleware(), userHandler.DeleteUser)
 
 	// Public meeting routes (accessible to guests)

@@ -90,11 +90,10 @@ func (g *GoogleProvider) GetUserInfo(accessToken string) (*OAuthUser, error) {
 	}
 
 	var googleUser struct {
-		ID            string `json:"id"`
-		Email         string `json:"email"`
-		Name          string `json:"name"`
-		Picture       string `json:"picture"`
-		VerifiedEmail bool   `json:"verified_email"`
+		ID      string `json:"id"`
+		Email   string `json:"email"`
+		Name    string `json:"name"`
+		Picture string `json:"picture"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&googleUser); err != nil {
@@ -106,6 +105,5 @@ func (g *GoogleProvider) GetUserInfo(accessToken string) (*OAuthUser, error) {
 		Email:     googleUser.Email,
 		Name:      googleUser.Name,
 		AvatarURL: googleUser.Picture,
-		Verified:  googleUser.VerifiedEmail,
 	}, nil
 }

@@ -130,7 +130,6 @@ func (gh *GithubProvider) GetUserInfo(accessToken string) (*OAuthUser, error) {
 		Email:     email,
 		Name:      name,
 		AvatarURL: githubUser.AvatarURL,
-		Verified:  true, // GitHub emails are considered verified
 	}, nil
 }
 
@@ -158,7 +157,6 @@ func (gh *GithubProvider) getPrimaryEmail(accessToken string) (string, error) {
 	var emails []struct {
 		Email      string `json:"email"`
 		Primary    bool   `json:"primary"`
-		Verified   bool   `json:"verified"`
 		Visibility string `json:"visibility"`
 	}
 
@@ -166,19 +164,12 @@ func (gh *GithubProvider) getPrimaryEmail(accessToken string) (string, error) {
 		return "", fmt.Errorf("failed to decode emails: %w", err)
 	}
 
-	// Find primary verified email
+	// Find primary email
 	for _, e := range emails {
-		if e.Primary && e.Verified {
+		if e.Primary {
 			return e.Email, nil
 		}
 	}
 
-	// Find any verified email
-	for _, e := range emails {
-		if e.Verified {
-			return e.Email, nil
-		}
-	}
-
-	return "", fmt.Errorf("no verified email found")
+	return "", fmt.Errorf("no primary email found")
 }

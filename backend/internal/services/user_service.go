@@ -5,9 +5,7 @@ import (
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
 	"strings"
-	"time"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -21,33 +19,6 @@ func NewUserService(repo *repositories.UserRepository, meetingRepo *repositories
 		repo:        repo,
 		meetingRepo: meetingRepo,
 	}
-}
-
-func (s *UserService) CreateUser(req *models.CreateUserRequest) (*models.User, error) {
-	// Check if email already exists
-	email := strings.ToLower(req.Email)
-	existingUser, err := s.repo.FindByEmail(email)
-	if err == nil && existingUser != nil {
-		return nil, errors.New("email already exists")
-	}
-	// Ignore error if it's just "not found"
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
-	}
-
-	user := &models.User{
-		Email:    email,
-		Password: &req.Password,
-		Name:     req.Name,
-		Role:     "user",
-		Provider: models.ProviderLocal,
-	}
-
-	if err := s.repo.Create(user); err != nil {
-		return nil, err
-	}
-
-	return user, nil
 }
 
 func (s *UserService) GetUserByID(id uint) (*models.User, error) {
@@ -152,114 +123,6 @@ func (s *UserService) DeleteUser(id uint) error {
 	return s.repo.Delete(id)
 }
 
-func (s *UserService) SetVerificationCode(email, code string) error {
-	email = strings.ToLower(email)
-	expiry := time.Now().Add(10 * time.Minute)
-	return s.repo.UpdateVerificationCode(email, code, expiry)
-}
-
-func (s *UserService) VerifyEmail(email, code string) error {
-	email = strings.ToLower(email)
-	user, err := s.repo.FindByEmail(email)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("user not found")
-		}
-		return err
-	}
-
-	if user.EmailVerified {
-		return errors.New("email already verified")
-	}
-
-	if user.VerificationCode == "" {
-		return errors.New("no verification code set")
-	}
-
-	if user.VerificationCode != code {
-		return errors.New("invalid verification code")
-	}
-
-	if user.VerificationCodeExpiry == nil || time.Now().After(*user.VerificationCodeExpiry) {
-		return errors.New("verification code expired")
-	}
-
-	return s.repo.VerifyEmail(email)
-}
-
-func (s *UserService) SetPasswordResetCode(email, code string) error {
-	email = strings.ToLower(email)
-	user, err := s.repo.FindByEmail(email)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("user not found")
-		}
-		return err
-	}
-
-	if !user.EmailVerified {
-		return errors.New("email not verified")
-	}
-
-	expiry := time.Now().Add(10 * time.Minute)
-	return s.repo.UpdatePasswordResetCode(email, code, expiry)
-}
-
-func (s *UserService) VerifyPasswordResetCode(email, code string) error {
-	email = strings.ToLower(email)
-	user, err := s.repo.FindByEmail(email)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("user not found")
-		}
-		return err
-	}
-
-	if user.PasswordResetCode == "" {
-		return errors.New("no password reset code set")
-	}
-
-	if user.PasswordResetCode != code {
-		return errors.New("invalid reset code")
-	}
-
-	if user.PasswordResetExpiry == nil || time.Now().After(*user.PasswordResetExpiry) {
-		return errors.New("reset code expired")
-	}
-
-	return nil
-}
-
-func (s *UserService) ResetPassword(email, code, newPassword string) error {
-	email = strings.ToLower(email)
-	user, err := s.repo.FindByEmail(email)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("user not found")
-		}
-		return err
-	}
-
-	if user.PasswordResetCode == "" {
-		return errors.New("no password reset code set")
-	}
-
-	if user.PasswordResetCode != code {
-		return errors.New("invalid reset code")
-	}
-
-	if user.PasswordResetExpiry == nil || time.Now().After(*user.PasswordResetExpiry) {
-		return errors.New("reset code expired")
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	return s.repo.UpdatePassword(email, string(hashedPassword))
-}
-
 func (s *UserService) FindOrCreateOAuthUser(provider models.Provider, providerID string, email string, name string, avatarURL string) (*models.User, error) {
 	email = strings.ToLower(email)
 
@@ -278,10 +141,7 @@ func (s *UserService) FindOrCreateOAuthUser(provider models.Provider, providerID
 	existingUser, err := s.repo.FindByEmail(email)
 	if err == nil && existingUser != nil {
 		// User exists with same email but different provider
-		if existingUser.Provider == models.ProviderLocal {
-			// Suggest linking accounts - return error with specific message
-			return nil, errors.New("account_exists_local")
-		} else if existingUser.Provider != provider {
+		if existingUser.Provider != provider {
 			// Already linked to another OAuth provider
 			return nil, errors.New("account_exists_different_provider")
 		}
@@ -289,14 +149,12 @@ func (s *UserService) FindOrCreateOAuthUser(provider models.Provider, providerID
 
 	// Create new OAuth user
 	user = &models.User{
-		Email:         email,
-		Name:          name,
-		Provider:      provider,
-		ProviderID:    providerID,
-		AvatarURL:     avatarURL,
-		Role:          "user",
-		EmailVerified: true,
-		Password:      nil,
+		Email:      email,
+		Name:       name,
+		Provider:   provider,
+		ProviderID: providerID,
+		AvatarURL:  avatarURL,
+		Role:       "user",
 	}
 
 	if err := s.repo.Create(user); err != nil {

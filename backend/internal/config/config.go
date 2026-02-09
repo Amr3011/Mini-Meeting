@@ -12,8 +12,6 @@ type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
 	JWT      JWTConfig
-	Email    EmailConfig
-	Admin    AdminConfig
 	OAuth    OAuthConfig
 	LiveKit  LiveKitConfig
 }
@@ -43,20 +41,6 @@ type RedisConfig struct {
 type JWTConfig struct {
 	Secret     string
 	Expiration string
-}
-
-type EmailConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	From     string
-	Support  string
-}
-
-type AdminConfig struct {
-	Email    string
-	Password string
 }
 
 type OAuthConfig struct {
@@ -109,18 +93,6 @@ func Load() (*Config, error) {
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET"),
 			Expiration: getEnv("JWT_EXPIRATION"),
-		},
-		Email: EmailConfig{
-			Host:     getEnv("EMAIL_HOST", "smtp.gmail.com"),
-			Port:     getEnv("EMAIL_PORT", "587"),
-			User:     getEnv("EMAIL_USER", ""),
-			Password: getEnv("EMAIL_PASSWORD", ""),
-			From:     getEnv("EMAIL_FROM", ""),
-			Support:  getEnv("EMAIL_SUPPORT", ""),
-		},
-		Admin: AdminConfig{
-			Email:    getEnv("ADMIN_EMAIL"),
-			Password: getEnv("ADMIN_PASSWORD"),
 		},
 		OAuth: OAuthConfig{
 			Google: GoogleOAuthConfig{

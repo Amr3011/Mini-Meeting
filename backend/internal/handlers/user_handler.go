@@ -16,35 +16,6 @@ func NewUserHandler(service *services.UserService) *UserHandler {
 	return &UserHandler{service: service}
 }
 
-// CreateUser creates a new user
-// POST /api/users
-func (h *UserHandler) CreateUser(c *fiber.Ctx) error {
-	var req models.CreateUserRequest
-
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	user, err := h.service.CreateUser(&req)
-	if err != nil {
-		if err.Error() == "email already exists" {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": "Email already exists",
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "User created successfully",
-		"data":    user,
-	})
-}
-
 // GetUser retrieves a user by ID
 // GET /api/users/:id
 func (h *UserHandler) GetUser(c *fiber.Ctx) error {
@@ -84,36 +55,6 @@ func (h *UserHandler) GetAllUsers(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(result)
-}
-
-// UpdateUser updates a user by ID
-// PATCH /api/users/:id
-func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
-	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid user ID",
-		})
-	}
-
-	var req models.UpdateUserRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
-
-	user, err := h.service.UpdateUser(uint(id), &req)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"message": "User updated successfully",
-		"data":    user,
-	})
 }
 
 // DeleteUser deletes a user by ID

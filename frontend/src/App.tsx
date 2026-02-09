@@ -11,9 +11,6 @@ import Login from "./pages/Login";
 
 // Lazy load non-critical pages for better performance
 const Register = lazy(() => import("./pages/Register"));
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
@@ -55,9 +52,6 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* OAuth callback routes */}
           <Route path="/auth/oauth-success" element={<OAuthSuccess />} />

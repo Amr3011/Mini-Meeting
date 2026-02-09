@@ -1,12 +1,10 @@
 import React, { createContext, useState, useEffect, useRef, type ReactNode } from "react";
 import type { User } from "../types/user.types";
-import { authService } from "../services/api/auth.service";
 import { userService } from "../services/api/user.service";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
   setAuthData: (token: string) => Promise<void>;
@@ -53,27 +51,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initializeAuth();
   }, [token, user]);
 
-  const login = async (email: string, password: string, rememberMe: boolean = false) => {
-    const { token: newToken, user: userData } = await authService.login({
-      email,
-      password,
-    });
-    
-    // Use localStorage for persistent storage (Remember Me) or sessionStorage for session-only
-    if (rememberMe) {
-      localStorage.setItem("token", newToken);
-      // Clear sessionStorage if it exists
-      sessionStorage.removeItem("token");
-    } else {
-      sessionStorage.setItem("token", newToken);
-      // Clear localStorage if it exists
-      localStorage.removeItem("token");
-    }
-    
-    setToken(newToken);
-    setUser(userData);
-  };
-
   const logout = () => {
     localStorage.removeItem("token");
     sessionStorage.removeItem("token");
@@ -115,7 +92,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       value={{
         user,
         token,
-        login,
         logout,
         setUser,
         setAuthData,
