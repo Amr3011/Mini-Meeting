@@ -3,10 +3,14 @@ import '@livekit/components-styles';
 import {
   VideoPresets,
   ScreenSharePresets,
+  DisconnectReason,
 } from 'livekit-client';
 import { useLiveKit } from '../../hooks/useLiveKit';
 import { Loading } from '../common/Loading';
 import { ErrorMessage } from '../common/ErrorMessage';
+import { AdminControls } from './AdminControls';
+import { DisconnectMessage } from './DisconnectMessage';
+import { useState, useEffect, useMemo } from 'react';
 
 interface LiveKitMeetingRoomProps {
   meetingCode: string;
@@ -33,6 +37,46 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
     userName,
     autoConnect: true,
   });
+
+  const [disconnectReason, setDisconnectReason] = useState<string | null>(null);
+
+  // Extract admin role from token metadata
+  const isAdmin = useMemo(() => {
+    if (!token) return false;
+    try {
+      // Decode JWT token to get metadata
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const metadata = payload.metadata ? JSON.parse(payload.metadata) : {};
+      return metadata.role === 'admin';
+    } catch (e) {
+      console.error('Failed to parse token metadata:', e);
+      return false;
+    }
+  }, [token]);
+
+  // Handle disconnect with redirect after showing message
+  useEffect(() => {
+    if (disconnectReason) {
+      const timer = setTimeout(() => {
+        onDisconnect?.();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [disconnectReason, onDisconnect]);
+
+  const handleDisconnect = (reason?: DisconnectReason) => {
+    let message = 'You left the meeting';
+    
+    if (reason === DisconnectReason.SERVER_SHUTDOWN) {
+      message = 'Meeting ended by host';
+    } else if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
+      message = 'You were removed from the meeting';
+    } else if (reason === DisconnectReason.ROOM_DELETED) {
+      message = 'Meeting ended by host';
+    }
+    
+    setDisconnectReason(message);
+  };
 
   if (isLoading) {
     return (
@@ -62,13 +106,18 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
     );
   }
 
+  // Show disconnect message if disconnected
+  if (disconnectReason) {
+    return <DisconnectMessage reason={disconnectReason} />;
+  }
+
   return (
     <div className="h-screen w-screen bg-[#0f1219]">
       <LiveKitRoom
         token={token}
         serverUrl={livekitUrl}
         connect={true}
-        onDisconnected={onDisconnect}
+        onDisconnected={handleDisconnect}
         data-lk-theme="default"
         style={{ height: '100%' }}
         options={{
@@ -118,6 +167,11 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
         }}
       >
         <VideoConference />
+        <AdminControls
+          meetingCode={meetingCode}
+          isAdmin={isAdmin}
+          onEndMeeting={() => onDisconnect?.()}
+        />
       </LiveKitRoom>
     </div>
   );

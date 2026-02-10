@@ -4,6 +4,7 @@ import (
 	"errors"
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
+	"mini-meeting/internal/types"
 	"strings"
 
 	"gorm.io/gorm"
@@ -44,7 +45,7 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetAllUsersPaginated(page, pageSize int, search string) (*models.PaginatedUsersResponse, error) {
+func (s *UserService) GetAllUsersPaginated(page, pageSize int, search string) (*types.PaginatedUsersResponse, error) {
 	// Set default values
 	if page < 1 {
 		page = 1
@@ -64,7 +65,7 @@ func (s *UserService) GetAllUsersPaginated(page, pageSize int, search string) (*
 		totalPages++
 	}
 
-	return &models.PaginatedUsersResponse{
+	return &types.PaginatedUsersResponse{
 		Data:       users,
 		Total:      total,
 		Page:       page,
@@ -73,7 +74,7 @@ func (s *UserService) GetAllUsersPaginated(page, pageSize int, search string) (*
 	}, nil
 }
 
-func (s *UserService) UpdateUser(id uint, req *models.UpdateUserRequest) (*models.User, error) {
+func (s *UserService) UpdateUser(id uint, req *types.UpdateUserRequest) (*models.User, error) {
 	user, err := s.repo.FindByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
