@@ -14,26 +14,9 @@ type User struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-type UpdateUserRequest struct {
-	Name string `json:"name" validate:"omitempty"`
-}
-
-type AuthResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
-}
-
 type Provider string
 
 const (
 	ProviderGoogle Provider = "google"
 	ProviderGithub Provider = "github"
 )
-
-type PaginatedUsersResponse struct {
-	Data       []User `json:"data"`
-	Total      int64  `json:"total"`
-	Page       int    `json:"page"`
-	PageSize   int    `json:"page_size"`
-	TotalPages int    `json:"total_pages"`
-}

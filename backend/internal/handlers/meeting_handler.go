@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"mini-meeting/internal/config"
-	"mini-meeting/internal/models"
 	"mini-meeting/internal/services"
+	"mini-meeting/internal/types"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -45,7 +45,7 @@ func (h *MeetingHandler) CreateMeeting(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Meeting created successfully",
-		"data":    meeting.ToResponse(baseURL),
+		"data":    types.ToMeetingResponse(meeting, baseURL),
 	})
 }
 
@@ -77,7 +77,7 @@ func (h *MeetingHandler) GetMeeting(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"data": meeting.ToResponse(baseURL),
+		"data": types.ToMeetingResponse(meeting, baseURL),
 	})
 }
 
@@ -109,7 +109,7 @@ func (h *MeetingHandler) GetMeetingByCode(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"data": meeting.ToResponse(baseURL),
+		"data": types.ToMeetingResponse(meeting, baseURL),
 	})
 }
 
@@ -135,9 +135,9 @@ func (h *MeetingHandler) GetMyMeetings(c *fiber.Ctx) error {
 		baseURL = "http://localhost:5173"
 	}
 
-	responses := make([]models.MeetingResponse, len(meetings))
+	responses := make([]types.MeetingResponse, len(meetings))
 	for i, meeting := range meetings {
-		responses[i] = meeting.ToResponse(baseURL)
+		responses[i] = types.ToMeetingResponse(&meeting, baseURL)
 	}
 
 	return c.JSON(fiber.Map{
@@ -160,9 +160,9 @@ func (h *MeetingHandler) GetAllMeetings(c *fiber.Ctx) error {
 		baseURL = "http://localhost:5173"
 	}
 
-	responses := make([]models.MeetingResponse, len(meetings))
+	responses := make([]types.MeetingResponse, len(meetings))
 	for i, meeting := range meetings {
-		responses[i] = meeting.ToResponse(baseURL)
+		responses[i] = types.ToMeetingResponse(&meeting, baseURL)
 	}
 
 	return c.JSON(fiber.Map{

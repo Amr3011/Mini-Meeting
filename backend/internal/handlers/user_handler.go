@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"mini-meeting/internal/models"
 	"mini-meeting/internal/services"
+	"mini-meeting/internal/types"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -110,7 +110,7 @@ func (h *UserHandler) UpdateMe(c *fiber.Ctx) error {
 		})
 	}
 
-	var req models.UpdateUserRequest
+	var req types.UpdateUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",

@@ -49,4 +49,6 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	livekit := api.Group("/livekit", middleware.AuthMiddleware(cfg))
 	livekit.Get("/participants", livekitHandler.ListParticipants)
 	livekit.Post("/remove-participant", livekitHandler.RemoveParticipant)
+	livekit.Post("/mute-participant", livekitHandler.MuteParticipant)
+	livekit.Post("/end-meeting", livekitHandler.EndMeeting)
 }

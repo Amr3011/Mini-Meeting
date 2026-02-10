@@ -6,6 +6,7 @@ import (
 
 	"mini-meeting/internal/config"
 	"mini-meeting/internal/services"
+	"mini-meeting/internal/types"
 	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -32,37 +33,6 @@ func NewLiveKitHandler(
 	}
 }
 
-// Request/Response types
-type GenerateTokenRequest struct {
-	MeetingCode string `json:"meeting_code" validate:"required"`
-	UserName    string `json:"user_name,omitempty"`
-}
-
-type GenerateTokenResponse struct {
-	Token    string `json:"token"`
-	URL      string `json:"url"`
-	RoomName string `json:"room_name"`
-	Identity string `json:"identity"`
-	UserName string `json:"user_name"`
-}
-
-type RemoveParticipantRequest struct {
-	MeetingCode         string `json:"meeting_code" validate:"required"`
-	ParticipantIdentity string `json:"participant_identity" validate:"required"`
-}
-
-type ListParticipantsResponse struct {
-	Participants []ParticipantInfo `json:"participants"`
-}
-
-type ParticipantInfo struct {
-	Identity string `json:"identity"`
-	Name     string `json:"name"`
-	State    string `json:"state"`
-	Metadata string `json:"metadata"`
-	JoinedAt int64  `json:"joined_at"`
-}
-
 // GenerateToken generates a LiveKit token for joining a meeting
 // Supports both authenticated users and guest users
 func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
@@ -83,7 +53,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		}
 	}
 
-	var req GenerateTokenRequest
+	var req types.GenerateTokenRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -158,7 +128,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		})
 	}
 
-	response := GenerateTokenResponse{
+	response := types.GenerateTokenResponse{
 		Token:    token,
 		URL:      h.livekitService.GetURL(),
 		RoomName: req.MeetingCode,
@@ -178,7 +148,7 @@ func (h *LiveKitHandler) RemoveParticipant(c *fiber.Ctx) error {
 		})
 	}
 
-	var req RemoveParticipantRequest
+	var req types.RemoveParticipantRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -237,9 +207,9 @@ func (h *LiveKitHandler) ListParticipants(c *fiber.Ctx) error {
 	}
 
 	// Convert to response format
-	participantInfos := make([]ParticipantInfo, 0, len(participants))
+	participantInfos := make([]types.ParticipantInfo, 0, len(participants))
 	for _, p := range participants {
-		participantInfos = append(participantInfos, ParticipantInfo{
+		participantInfos = append(participantInfos, types.ParticipantInfo{
 			Identity: p.Identity,
 			Name:     p.Name,
 			State:    p.State.String(),
@@ -248,9 +218,93 @@ func (h *LiveKitHandler) ListParticipants(c *fiber.Ctx) error {
 		})
 	}
 
-	response := ListParticipantsResponse{
+	response := types.ListParticipantsResponse{
 		Participants: participantInfos,
 	}
 
 	return c.JSON(response)
+}
+
+// MuteParticipant mutes/unmutes a specific track for a participant (admin only)
+func (h *LiveKitHandler) MuteParticipant(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	var req types.MuteParticipantRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Verify meeting exists and user is the creator
+	meeting, err := h.meetingService.GetMeetingByCode(req.MeetingCode)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Meeting not found",
+		})
+	}
+
+	// Only meeting creator can mute participants
+	if meeting.CreatorID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Only meeting creator can mute participants",
+		})
+	}
+
+	// Mute/unmute participant track
+	err = h.livekitService.MuteParticipantTrack(req.MeetingCode, req.ParticipantIdentity, req.TrackSid, req.Muted)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to mute participant",
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// EndMeeting ends a meeting for all participants (admin only)
+func (h *LiveKitHandler) EndMeeting(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	var req types.EndMeetingRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	// Verify meeting exists and user is the creator
+	meeting, err := h.meetingService.GetMeetingByCode(req.MeetingCode)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Meeting not found",
+		})
+	}
+
+	// Only meeting creator can end the meeting
+	if meeting.CreatorID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Only meeting creator can end the meeting",
+		})
+	}
+
+	// Delete the LiveKit room (this will disconnect all participants)
+	err = h.livekitService.DeleteRoom(req.MeetingCode)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to end meeting",
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
