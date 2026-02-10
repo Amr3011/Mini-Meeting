@@ -18,13 +18,15 @@ const Meeting: React.FC = () => {
 
   const [hasJoined, setHasJoined] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [devicePreferences, setDevicePreferences] = useState<DevicePreferences | null>(null);
 
-  const handleJoinMeeting = (_prefs: DevicePreferences, token: LiveKitTokenResponse) => {
+  const handleJoinMeeting = (prefs: DevicePreferences, token: LiveKitTokenResponse) => {
     // Get user name from auth context, or use the display name returned by the backend
     const name = isAuthenticated && user
       ? user.name || user.email.split("@")[0]
       : token.user_name || token.identity;
     setUserName(name);
+    setDevicePreferences(prefs);
     setHasJoined(true);
   };
 
@@ -40,11 +42,12 @@ const Meeting: React.FC = () => {
     }
   };
 
-  if (hasJoined && meetingCode) {
+  if (hasJoined && meetingCode && devicePreferences) {
     return (
       <MeetingRoom
         meetingCode={meetingCode}
         userName={userName}
+        devicePreferences={devicePreferences}
         onLeave={handleLeaveMeeting}
       />
     );

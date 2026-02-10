@@ -10,11 +10,13 @@ import { Loading } from '../common/Loading';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { AdminControls } from './AdminControls';
 import { DisconnectMessage } from './DisconnectMessage';
+import type { DevicePreferences } from '../../pages/MeetingLobby';
 import { useState, useEffect, useMemo } from 'react';
 
 interface LiveKitMeetingRoomProps {
   meetingCode: string;
   userName?: string;
+  devicePreferences: DevicePreferences;
   onDisconnect?: () => void;
 }
 
@@ -25,6 +27,7 @@ interface LiveKitMeetingRoomProps {
 const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   meetingCode,
   userName,
+  devicePreferences,
   onDisconnect,
 }) => {
   const {
@@ -117,6 +120,8 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
         token={token}
         serverUrl={livekitUrl}
         connect={true}
+        audio={devicePreferences.audioEnabled}
+        video={devicePreferences.videoEnabled}
         onDisconnected={handleDisconnect}
         data-lk-theme="default"
         style={{ height: '100%' }}
