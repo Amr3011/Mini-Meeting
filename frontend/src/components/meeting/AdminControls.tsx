@@ -74,7 +74,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
   return (
     <>
       {/* Admin Button */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 left-4 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition-colors"
@@ -88,7 +88,7 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
 
       {/* Admin Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 w-96 max-h-[70vh] bg-gray-900 rounded-lg shadow-xl z-50 flex flex-col">
+        <div className="fixed bottom-20 left-4 w-96 max-h-[70vh] bg-gray-900 rounded-lg shadow-xl z-50 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-700">
             <h3 className="text-white font-semibold">Admin Controls</h3>
