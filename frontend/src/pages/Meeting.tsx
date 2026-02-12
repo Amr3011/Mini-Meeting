@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MeetingLobby, type DevicePreferences } from "./MeetingLobby";
+import { MeetingLobby, type DevicePreferences, type TokenData } from "./MeetingLobby";
 import { MeetingRoom } from "./MeetingRoom";
-import type { LiveKitTokenResponse } from "../services/api/livekit.service";
 import { useAuth } from "../hooks/useAuth";
 
 /**
  * Meeting handles the entire meeting flow:
  * 1. Shows MeetingLobby for pre-join setup
- * 2. Shows MeetingRoom after joining
- * 3. Manages state transition between lobby and room
+ * 2. Shows WaitingRoom if lobby approval is pending (handled inside MeetingLobby)
+ * 3. Shows MeetingRoom after joining
  */
 const Meeting: React.FC = () => {
   const navigate = useNavigate();
@@ -19,22 +18,23 @@ const Meeting: React.FC = () => {
   const [hasJoined, setHasJoined] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [devicePreferences, setDevicePreferences] = useState<DevicePreferences | null>(null);
+  const [tokenData, setTokenData] = useState<TokenData | null>(null);
 
-  const handleJoinMeeting = (prefs: DevicePreferences, token: LiveKitTokenResponse) => {
-    // Get user name from auth context, or use the display name returned by the backend
+  const handleJoinMeeting = (prefs: DevicePreferences, token: TokenData) => {
     const name = isAuthenticated && user
       ? user.name || user.email.split("@")[0]
       : token.user_name || token.identity;
     setUserName(name);
     setDevicePreferences(prefs);
+    setTokenData(token);
     setHasJoined(true);
   };
 
   const handleLeaveMeeting = () => {
     setHasJoined(false);
     setUserName("");
+    setTokenData(null);
 
-    // Navigate based on authentication status
     if (isAuthenticated) {
       navigate("/dashboard");
     } else {
@@ -42,12 +42,14 @@ const Meeting: React.FC = () => {
     }
   };
 
-  if (hasJoined && meetingCode && devicePreferences) {
+  if (hasJoined && meetingCode && devicePreferences && tokenData) {
     return (
       <MeetingRoom
         meetingCode={meetingCode}
         userName={userName}
         devicePreferences={devicePreferences}
+        token={tokenData.token}
+        livekitUrl={tokenData.url}
         onLeave={handleLeaveMeeting}
       />
     );

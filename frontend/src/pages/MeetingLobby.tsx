@@ -9,13 +9,11 @@ import AudioLevelIndicator from "../components/meeting/AudioLevelIndicator";
 import JoiningOverlay from "../components/meeting/JoiningOverlay";
 import MediaControls from "../components/meeting/MediaControls";
 import MeetingInfoBar from "../components/meeting/MeetingInfoBar";
+import { WaitingRoom } from "../components/meeting/WaitingRoom";
 import { useAuth } from "../hooks/useAuth";
 import { useLobbyDevices } from "../hooks/useLobbyDevices";
 import { meetingService } from "../services/api/meeting.service";
-import {
-  generateToken,
-  type LiveKitTokenResponse,
-} from "../services/api/livekit.service";
+import { requestToJoin } from "../services/api/lobby.service";
 import type { Meeting } from "../types/meeting.types";
 import { ERROR_MESSAGES } from "../utils/constants";
 
@@ -27,11 +25,20 @@ export interface DevicePreferences {
   audioEnabled: boolean;
 }
 
-interface MeetingLobbyProps {
-  onJoin: (prefs: DevicePreferences, token: LiveKitTokenResponse) => void;
+export interface TokenData {
+  token: string;
+  url: string;
+  room_name: string;
+  identity: string;
+  user_name: string;
 }
 
-export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
+interface MeetingLobbyProps {
+  onJoin: (prefs: DevicePreferences, tokenData: TokenData) => void;
+  onCancel?: () => void;
+}
+
+export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) => {
   const { meetingCode } = useParams<{ meetingCode: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -42,6 +49,10 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [isJoining, setIsJoining] = useState<boolean>(false);
+
+  // Lobby waiting room state
+  const [waitingRequestId, setWaitingRequestId] = useState<string | null>(null);
+  const [savedDevicePrefs, setSavedDevicePrefs] = useState<DevicePreferences | null>(null);
 
   // Device management (extracted hook)
   const devices = useLobbyDevices(!!meetingData);
@@ -93,7 +104,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
     }
   }, [devices.stream, devices.cameraEnabled]);
 
-  // Join meeting
+  // Join meeting via lobby
   const handleJoinClick = async () => {
     if (!meetingCode) return;
 
@@ -106,24 +117,36 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
       setIsJoining(true);
       setError("");
 
-      const tokenData = await generateToken(
+      const prefs: DevicePreferences = {
+        videoDeviceId: devices.selectedCamera,
+        audioDeviceId: devices.selectedMic,
+        audioOutputDeviceId: devices.selectedSpeaker,
+        videoEnabled: devices.cameraEnabled,
+        audioEnabled: devices.micEnabled,
+      };
+
+      const response = await requestToJoin(
         meetingCode,
         isAuthenticated ? undefined : displayName.trim(),
       );
 
-      // Stop preview tracks before joining
-      devices.cleanup();
-
-      onJoin(
-        {
-          videoDeviceId: devices.selectedCamera,
-          audioDeviceId: devices.selectedMic,
-          audioOutputDeviceId: devices.selectedSpeaker,
-          videoEnabled: devices.cameraEnabled,
-          audioEnabled: devices.micEnabled,
-        },
-        tokenData,
-      );
+      if (response.status === "auto_approved" && response.token) {
+        // Admin: auto-approved, join immediately
+        devices.cleanup();
+        onJoin(prefs, {
+          token: response.token,
+          url: response.url!,
+          room_name: response.room_name!,
+          identity: response.identity!,
+          user_name: response.user_name!,
+        });
+      } else {
+        // Non-admin: enter waiting room
+        devices.cleanup();
+        setSavedDevicePrefs(prefs);
+        setWaitingRequestId(response.request_id);
+        setIsJoining(false);
+      }
     } catch (err) {
       console.error("Failed to join meeting:", err);
       const axiosError = err as {
@@ -137,8 +160,41 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin }) => {
     }
   };
 
+  // Handle approval from waiting room
+  const handleWaitingApproved = (tokenData: TokenData) => {
+    if (savedDevicePrefs) {
+      onJoin(savedDevicePrefs, tokenData);
+    }
+  };
+
+  // Handle rejection or cancel from waiting room
+  const handleWaitingCancel = () => {
+    setWaitingRequestId(null);
+    setSavedDevicePrefs(null);
+    setIsJoining(false);
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate(isAuthenticated ? "/dashboard" : "/");
+    }
+  };
+
   // Combine errors from both lobby and device hook
   const displayError = error || devices.error;
+
+  // Show waiting room if request is pending
+  if (waitingRequestId && meetingCode) {
+    return (
+      <WaitingRoom
+        requestId={waitingRequestId}
+        meetingCode={meetingCode}
+        displayName={displayName}
+        onApproved={handleWaitingApproved}
+        onRejected={handleWaitingCancel}
+        onCancel={handleWaitingCancel}
+      />
+    );
+  }
 
   if (loading) {
     return (
