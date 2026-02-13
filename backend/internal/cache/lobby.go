@@ -16,9 +16,6 @@ const (
 	// LobbyMeetingRequestsKeyPrefix stores the set of request IDs per meeting
 	LobbyMeetingRequestsKeyPrefix = "lobby:meeting:"
 
-	// LobbyTokenKeyPrefix stores generated tokens for approved requests
-	LobbyTokenKeyPrefix = "lobby:token:"
-
 	// LobbyExpiration is the TTL for all lobby data (1 hour)
 	LobbyExpiration = 1 * time.Hour
 )
@@ -45,15 +42,6 @@ type LobbyRequest struct {
 	CreatedAt   int64              `json:"created_at"`
 }
 
-// LobbyTokenData stores the token data for an approved request
-type LobbyTokenData struct {
-	Token    string `json:"token"`
-	URL      string `json:"url"`
-	RoomName string `json:"room_name"`
-	Identity string `json:"identity"`
-	UserName string `json:"user_name"`
-}
-
 // --- Key helpers ---
 
 func lobbyRequestKey(requestID string) string {
@@ -62,10 +50,6 @@ func lobbyRequestKey(requestID string) string {
 
 func lobbyMeetingRequestsKey(meetingCode string) string {
 	return fmt.Sprintf("%s%s:requests", LobbyMeetingRequestsKeyPrefix, meetingCode)
-}
-
-func lobbyTokenKey(requestID string) string {
-	return fmt.Sprintf("%s%s", LobbyTokenKeyPrefix, requestID)
 }
 
 // --- Operations ---
@@ -162,31 +146,6 @@ func GetPendingRequests(meetingCode string) ([]*LobbyRequest, error) {
 	return pending, nil
 }
 
-// StoreLobbyToken stores a generated token for an approved request
-func StoreLobbyToken(requestID string, tokenData *LobbyTokenData) error {
-	data, err := json.Marshal(tokenData)
-	if err != nil {
-		return fmt.Errorf("failed to marshal token data: %w", err)
-	}
-
-	return cache.SetString(lobbyTokenKey(requestID), string(data), LobbyExpiration)
-}
-
-// GetLobbyToken retrieves the stored token for an approved request
-func GetLobbyToken(requestID string) (*LobbyTokenData, error) {
-	data, err := cache.GetString(lobbyTokenKey(requestID))
-	if err != nil {
-		return nil, fmt.Errorf("token not found for request: %s", requestID)
-	}
-
-	var tokenData LobbyTokenData
-	if err := json.Unmarshal([]byte(data), &tokenData); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal token data: %w", err)
-	}
-
-	return &tokenData, nil
-}
-
 // CleanupLobbyRequest removes all data associated with a request
 func CleanupLobbyRequest(requestID string) error {
 	req, err := GetLobbyRequest(requestID)
@@ -195,7 +154,6 @@ func CleanupLobbyRequest(requestID string) error {
 	}
 
 	cache.Delete(lobbyRequestKey(requestID))
-	cache.Delete(lobbyTokenKey(requestID))
 
 	return nil
 }

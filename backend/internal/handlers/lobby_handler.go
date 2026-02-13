@@ -155,58 +155,13 @@ func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
 		})
 	}
 
+	// Notify admins via WebSocket
+	NotifyAdminsOfNewRequest(lobbyReq)
+
 	return c.JSON(types.LobbyJoinResponse{
 		RequestID: requestID,
 		Status:    "pending",
 	})
-}
-
-// CheckStatus lets a waiting user poll for their request status.
-// GET /api/v1/lobby/status?request_id=xxx&meeting_code=xxx
-func (h *LobbyHandler) CheckStatus(c *fiber.Ctx) error {
-	requestID := c.Query("request_id")
-	if requestID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "request_id is required",
-		})
-	}
-
-	lobbyReq, err := cache.GetLobbyRequest(requestID)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Request not found or expired",
-		})
-	}
-
-	response := types.LobbyStatusResponse{
-		Status: string(lobbyReq.Status),
-	}
-
-	// If approved, include the token data
-	if lobbyReq.Status == cache.LobbyStatusApproved {
-		tokenData, err := cache.GetLobbyToken(requestID)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Token not ready yet",
-			})
-		}
-
-		response.Token = tokenData.Token
-		response.URL = tokenData.URL
-		response.RoomName = tokenData.RoomName
-		response.Identity = tokenData.Identity
-		response.UserName = tokenData.UserName
-
-		// Cleanup after token is fetched
-		go cache.CleanupLobbyRequest(requestID)
-	}
-
-	// If rejected, cleanup
-	if lobbyReq.Status == cache.LobbyStatusRejected {
-		go cache.CleanupLobbyRequest(requestID)
-	}
-
-	return c.JSON(response)
 }
 
 // CancelRequest lets a waiting user cancel their own join request.
@@ -219,9 +174,20 @@ func (h *LobbyHandler) CancelRequest(c *fiber.Ctx) error {
 		})
 	}
 
+	// Get the request to know which meeting to notify
+	req, _ := cache.GetLobbyRequest(requestID)
+
 	if err := cache.CleanupLobbyRequest(requestID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to cancel request",
+		})
+	}
+
+	// Notify admins that this request was cancelled
+	if req != nil {
+		cache.Hub.NotifyAdmins(req.MeetingCode, map[string]string{
+			"type":       "visitor_cancelled",
+			"request_id": requestID,
 		})
 	}
 
@@ -230,61 +196,7 @@ func (h *LobbyHandler) CancelRequest(c *fiber.Ctx) error {
 	})
 }
 
-// GetPendingRequests returns all pending lobby requests for a meeting (admin only).
-// GET /api/v1/lobby/pending?meeting_code=xxx
-func (h *LobbyHandler) GetPendingRequests(c *fiber.Ctx) error {
-	userID, ok := c.Locals("userID").(uint)
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Unauthorized",
-		})
-	}
-
-	meetingCode := c.Query("meeting_code")
-	if meetingCode == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "meeting_code is required",
-		})
-	}
-
-	// Verify the user is the meeting creator
-	meeting, err := h.meetingService.GetMeetingByCode(meetingCode)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Meeting not found",
-		})
-	}
-
-	if meeting.CreatorID != userID {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error": "Only meeting creator can view lobby requests",
-		})
-	}
-
-	pending, err := cache.GetPendingRequests(meetingCode)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to get pending requests",
-		})
-	}
-
-	entries := make([]types.LobbyPendingEntry, 0, len(pending))
-	for _, req := range pending {
-		entries = append(entries, types.LobbyPendingEntry{
-			RequestID: req.ID,
-			Name:      req.Name,
-			AvatarURL: req.AvatarURL,
-			Role:      req.Role,
-			CreatedAt: req.CreatedAt,
-		})
-	}
-
-	return c.JSON(types.LobbyPendingResponse{
-		Requests: entries,
-	})
-}
-
-// RespondToRequest lets the admin approve or reject a lobby request.
+// RespondToRequest lets the admin approve or reject a lobby request (HTTP fallback).
 // POST /api/v1/lobby/respond
 func (h *LobbyHandler) RespondToRequest(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userID").(uint)
@@ -348,6 +260,14 @@ func (h *LobbyHandler) RespondToRequest(c *fiber.Ctx) error {
 			})
 		}
 
+		// Notify visitor via WebSocket
+		cache.Hub.NotifyVisitor(req.RequestID, map[string]string{"type": "rejected"})
+		cache.Hub.NotifyAdmins(req.MeetingCode, map[string]string{
+			"type":       "request_resolved",
+			"request_id": req.RequestID,
+		})
+		go cache.CleanupLobbyRequest(req.RequestID)
+
 		return c.JSON(fiber.Map{
 			"message": "Request rejected",
 		})
@@ -369,27 +289,31 @@ func (h *LobbyHandler) RespondToRequest(c *fiber.Ctx) error {
 		})
 	}
 
-	// Store token for the user to pick up
-	tokenData := &cache.LobbyTokenData{
-		Token:    token,
-		URL:      h.livekitService.GetURL(),
-		RoomName: lobbyReq.MeetingCode,
-		Identity: lobbyReq.Identity,
-		UserName: lobbyReq.Name,
-	}
-
-	if err := cache.StoreLobbyToken(req.RequestID, tokenData); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to store token",
-		})
-	}
-
 	// Update status to approved
 	if err := cache.UpdateLobbyRequestStatus(req.RequestID, cache.LobbyStatusApproved); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to approve request",
 		})
 	}
+
+	// Notify visitor via WebSocket
+	cache.Hub.NotifyVisitor(req.RequestID, map[string]interface{}{
+		"type":      "approved",
+		"token":     token,
+		"url":       h.livekitService.GetURL(),
+		"room_name": lobbyReq.MeetingCode,
+		"identity":  lobbyReq.Identity,
+		"user_name": lobbyReq.Name,
+	})
+	cache.Hub.NotifyAdmins(req.MeetingCode, map[string]string{
+		"type":       "request_resolved",
+		"request_id": req.RequestID,
+	})
+	go func() {
+		// give visitor time to receive the token
+		time.Sleep(5 * time.Second)
+		cache.CleanupLobbyRequest(req.RequestID)
+	}()
 
 	return c.JSON(fiber.Map{
 		"message": "Request approved",

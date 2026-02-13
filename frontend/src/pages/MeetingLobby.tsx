@@ -154,7 +154,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) 
       };
       setError(
         axiosError.response?.data?.message ||
-          ERROR_MESSAGES.TOKEN_GENERATION_FAILED,
+        ERROR_MESSAGES.TOKEN_GENERATION_FAILED,
       );
       setIsJoining(false);
     }
@@ -190,7 +190,6 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) 
         meetingCode={meetingCode}
         displayName={displayName}
         onApproved={handleWaitingApproved}
-        onRejected={handleWaitingCancel}
         onCancel={handleWaitingCancel}
       />
     );

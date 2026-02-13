@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import {
-  getPendingRequests,
-  respondToLobbyRequest,
-  type LobbyPendingEntry,
-} from '../../services/api/lobby.service';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { getAdminWsUrl, type LobbyPendingEntry } from '../../services/api/lobby.service';
 
 interface LobbyRequestsProps {
   meetingCode: string;
@@ -16,65 +13,93 @@ export const LobbyRequests: React.FC<LobbyRequestsProps> = ({
 }) => {
   const [requests, setRequests] = useState<LobbyPendingEntry[]>([]);
   const [respondingTo, setRespondingTo] = useState<Set<string>>(new Set());
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [hasNewRequests, setHasNewRequests] = useState(false);
   const prevCountRef = useRef(0);
 
-  const fetchPending = useCallback(async () => {
-    if (!isAdmin) return;
-    try {
-      const res = await getPendingRequests(meetingCode);
-      const pending = res.requests || [];
-      setRequests(pending);
+  // Build WebSocket URL (only connect if admin)
+  const wsUrl = isAdmin ? getAdminWsUrl(meetingCode) : null;
 
-      // Detect new requests
-      if (pending.length > prevCountRef.current) {
-        setHasNewRequests(true);
-        // Auto-dismiss notification after 3s
-        setTimeout(() => setHasNewRequests(false), 3000);
+  // Handle incoming WebSocket messages
+  const onMessage = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+          case 'pending_requests':
+            // Initial list of pending requests on connect
+            setRequests(data.requests || []);
+            prevCountRef.current = (data.requests || []).length;
+            break;
+
+          case 'new_request':
+            // A new visitor is waiting
+            setRequests((prev) => {
+              const updated = [...prev, data.request];
+              // Show notification
+              if (updated.length > prevCountRef.current) {
+                setHasNewRequests(true);
+                setTimeout(() => setHasNewRequests(false), 3000);
+              }
+              prevCountRef.current = updated.length;
+              return updated;
+            });
+            break;
+
+          case 'request_resolved':
+          case 'visitor_cancelled':
+            // Remove from list
+            setRequests((prev) => {
+              const updated = prev.filter((r) => r.request_id !== data.request_id);
+              prevCountRef.current = updated.length;
+              return updated;
+            });
+            break;
+        }
+      } catch (err) {
+        console.error('Failed to parse WS message:', err);
       }
-      prevCountRef.current = pending.length;
-    } catch (err) {
-      console.error('Failed to fetch lobby requests:', err);
-    }
-  }, [meetingCode, isAdmin]);
+    },
+    []
+  );
 
+  const { sendJsonMessage, readyState } = useWebSocket(wsUrl, {
+    onMessage,
+    shouldReconnect: () => true,
+    reconnectAttempts: Infinity,
+    reconnectInterval: 3000,
+  });
+
+  // Reset on disconnect
   useEffect(() => {
-    if (!isAdmin) return;
-
-    fetchPending();
-    pollRef.current = setInterval(fetchPending, 3000);
-
-    return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-      }
-    };
-  }, [fetchPending, isAdmin]);
-
-  const handleRespond = async (
-    requestId: string,
-    action: 'approve' | 'reject'
-  ) => {
-    setRespondingTo((prev) => new Set(prev).add(requestId));
-    try {
-      await respondToLobbyRequest(meetingCode, requestId, action);
-      // Remove from local list
-      setRequests((prev) => prev.filter((r) => r.request_id !== requestId));
-    } catch (err) {
-      console.error(`Failed to ${action} request:`, err);
-    } finally {
-      setRespondingTo((prev) => {
-        const next = new Set(prev);
-        next.delete(requestId);
-        return next;
-      });
+    if (readyState === ReadyState.CLOSED) {
+      // Will reconnect automatically; pending_requests will be sent again on connect
     }
+  }, [readyState]);
+
+  const handleRespond = (requestId: string, action: 'approve' | 'reject') => {
+    setRespondingTo((prev) => new Set(prev).add(requestId));
+
+    // Send via WebSocket
+    sendJsonMessage({
+      type: 'respond',
+      request_id: requestId,
+      action,
+    });
+
+    // Optimistically remove from list
+    setRequests((prev) => prev.filter((r) => r.request_id !== requestId));
+
+    setRespondingTo((prev) => {
+      const next = new Set(prev);
+      next.delete(requestId);
+      return next;
+    });
   };
 
-  const handleAdmitAll = async () => {
+  const handleAdmitAll = () => {
     for (const req of requests) {
-      await handleRespond(req.request_id, 'approve');
+      handleRespond(req.request_id, 'approve');
     }
   };
 

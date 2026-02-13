@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { checkLobbyStatus, cancelLobbyRequest, type LobbyStatusResponse } from '../../services/api/lobby.service';
+import { useEffect, useState, useCallback } from 'react';
+import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { cancelLobbyRequest, getVisitorWsUrl } from '../../services/api/lobby.service';
 
 interface WaitingRoomProps {
   requestId: string;
@@ -12,7 +13,6 @@ interface WaitingRoomProps {
     identity: string;
     user_name: string;
   }) => void;
-  onRejected: () => void;
   onCancel: () => void;
 }
 
@@ -21,13 +21,48 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({
   meetingCode,
   displayName,
   onApproved,
-  onRejected,
   onCancel,
 }) => {
   const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [dots, setDots] = useState('');
   const [elapsedTime, setElapsedTime] = useState(0);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+
+  // Build WebSocket URL
+  const wsUrl = getVisitorWsUrl(requestId, meetingCode);
+
+  // Handle incoming WebSocket messages
+  const onMessage = useCallback(
+    (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'approved' && data.token) {
+          setStatus('approved');
+          onApproved({
+            token: data.token,
+            url: data.url,
+            room_name: data.room_name,
+            identity: data.identity,
+            user_name: data.user_name,
+          });
+        } else if (data.type === 'rejected') {
+          setStatus('rejected');
+          // Don't call onRejected() immediately — let the "Request Denied" screen show first
+        }
+      } catch (err) {
+        console.error('Failed to parse WS message:', err);
+      }
+    },
+    [onApproved]
+  );
+
+  const { readyState } = useWebSocket(wsUrl, {
+    onMessage,
+    shouldReconnect: () => status === 'pending',
+    reconnectAttempts: 10,
+    reconnectInterval: 3000,
+  });
 
   // Animate dots
   useEffect(() => {
@@ -51,74 +86,69 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Poll for status
-  const pollStatus = useCallback(async () => {
+  const handleCancel = async () => {
     try {
-      const response: LobbyStatusResponse = await checkLobbyStatus(requestId, meetingCode);
-
-      if (response.status === 'approved' && response.token) {
-        setStatus('approved');
-        if (pollRef.current) {
-          clearInterval(pollRef.current);
-          pollRef.current = null;
-        }
-        onApproved({
-          token: response.token,
-          url: response.url!,
-          room_name: response.room_name!,
-          identity: response.identity!,
-          user_name: response.user_name!,
-        });
-      } else if (response.status === 'rejected') {
-        setStatus('rejected');
-        if (pollRef.current) {
-          clearInterval(pollRef.current);
-          pollRef.current = null;
-        }
-        onRejected();
-      }
+      await cancelLobbyRequest(requestId);
     } catch (err) {
-      console.error('Failed to check lobby status:', err);
+      console.error('Failed to cancel lobby request:', err);
     }
-  }, [requestId, meetingCode, onApproved, onRejected]);
+    onCancel();
+  };
 
+  // Auto-redirect countdown when rejected
   useEffect(() => {
-    // Start polling every 2 seconds
-    pollRef.current = setInterval(pollStatus, 2000);
+    if (status !== 'rejected') return;
 
-    // Do an immediate check
-    pollStatus();
+    if (redirectCountdown <= 0) {
+      onCancel();
+      return;
+    }
 
-    return () => {
-      if (pollRef.current) {
-        clearInterval(pollRef.current);
-      }
-    };
-  }, [pollStatus]);
+    const timer = setTimeout(() => {
+      setRedirectCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [status, redirectCountdown, onCancel]);
 
   if (status === 'rejected') {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
         <div className="bg-gray-800 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
           {/* Rejected icon */}
-          <div className="w-20 h-20 mx-auto mb-6 bg-red-500/20 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <div className="w-20 h-20 mx-auto mb-6 relative">
+            <div className="absolute inset-0 bg-red-500/20 rounded-full animate-ping" />
+            <div className="relative w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
           </div>
 
           <h2 className="text-xl font-semibold text-white mb-2">
             Request Denied
           </h2>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-400 mb-4">
             The host didn't allow you to join this meeting.
           </p>
+
+          <p className="text-gray-500 text-sm mb-6">
+            Redirecting in {redirectCountdown}s...
+          </p>
+
+          {/* Progress bar for countdown */}
+          <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden mb-6">
+            <div
+              className="h-full bg-red-500 rounded-full transition-all duration-1000 ease-linear"
+              style={{ width: `${(redirectCountdown / 5) * 100}%` }}
+            />
+          </div>
 
           <button
             onClick={onCancel}
             className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors font-medium"
           >
-            Go Back
+            Go Back Now
           </button>
         </div>
       </div>
@@ -158,20 +188,18 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({
           Waiting for {formatTime(elapsedTime)}
         </p>
 
+        {/* Connection status indicator */}
+        {readyState !== ReadyState.OPEN && (
+          <p className="text-yellow-400 text-xs mb-2">Reconnecting...</p>
+        )}
+
         {/* Subtle progress bar animation */}
         <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden mb-6">
           <div className="h-full bg-brand-500 rounded-full animate-pulse w-1/2" />
         </div>
 
         <button
-          onClick={async () => {
-            try {
-              await cancelLobbyRequest(requestId);
-            } catch (err) {
-              console.error('Failed to cancel lobby request:', err);
-            }
-            onCancel();
-          }}
+          onClick={handleCancel}
           className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors font-medium"
         >
           Cancel
