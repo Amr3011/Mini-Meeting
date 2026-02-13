@@ -27,7 +27,6 @@ interface LiveKitMeetingRoomProps {
  */
 const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   meetingCode,
-  userName,
   devicePreferences,
   token,
   livekitUrl,
@@ -60,7 +59,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
 
   const handleDisconnect = (reason?: DisconnectReason) => {
     let message = 'You left the meeting';
-    
+
     if (reason === DisconnectReason.SERVER_SHUTDOWN) {
       message = 'Meeting ended by host';
     } else if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
@@ -68,7 +67,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
     } else if (reason === DisconnectReason.ROOM_DELETED) {
       message = 'Meeting ended by host';
     }
-    
+
     setDisconnectReason(message);
   };
 
