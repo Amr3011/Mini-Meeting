@@ -5,10 +5,9 @@ import {
   ScreenSharePresets,
   DisconnectReason,
 } from 'livekit-client';
-import { useLiveKit } from '../../hooks/useLiveKit';
-import { Loading } from '../common/Loading';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { AdminControls } from './AdminControls';
+import { LobbyRequests } from './LobbyRequests';
 import { DisconnectMessage } from './DisconnectMessage';
 import type { DevicePreferences } from '../../pages/MeetingLobby';
 import { useState, useEffect, useMemo } from 'react';
@@ -17,6 +16,8 @@ interface LiveKitMeetingRoomProps {
   meetingCode: string;
   userName?: string;
   devicePreferences: DevicePreferences;
+  token: string;
+  livekitUrl: string;
   onDisconnect?: () => void;
 }
 
@@ -26,28 +27,17 @@ interface LiveKitMeetingRoomProps {
  */
 const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   meetingCode,
-  userName,
   devicePreferences,
+  token,
+  livekitUrl,
   onDisconnect,
 }) => {
-  const {
-    token,
-    livekitUrl,
-    isLoading,
-    error,
-  } = useLiveKit({
-    meetingCode,
-    userName,
-    autoConnect: true,
-  });
-
   const [disconnectReason, setDisconnectReason] = useState<string | null>(null);
 
   // Extract admin role from token metadata
   const isAdmin = useMemo(() => {
     if (!token) return false;
     try {
-      // Decode JWT token to get metadata
       const payload = JSON.parse(atob(token.split('.')[1]));
       const metadata = payload.metadata ? JSON.parse(payload.metadata) : {};
       return metadata.role === 'admin';
@@ -69,7 +59,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
 
   const handleDisconnect = (reason?: DisconnectReason) => {
     let message = 'You left the meeting';
-    
+
     if (reason === DisconnectReason.SERVER_SHUTDOWN) {
       message = 'Meeting ended by host';
     } else if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
@@ -77,27 +67,9 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
     } else if (reason === DisconnectReason.ROOM_DELETED) {
       message = 'Meeting ended by host';
     }
-    
+
     setDisconnectReason(message);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0f1219] via-[#111827] to-[#0f1219]">
-        <Loading text="Connecting to meeting..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-linear-to-br from-[#0f1219] via-[#111827] to-[#0f1219]">
-        <div className="max-w-md">
-          <ErrorMessage message={error} />
-        </div>
-      </div>
-    );
-  }
 
   if (!token || !livekitUrl) {
     return (
@@ -176,6 +148,10 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
           meetingCode={meetingCode}
           isAdmin={isAdmin}
           onEndMeeting={() => onDisconnect?.()}
+        />
+        <LobbyRequests
+          meetingCode={meetingCode}
+          isAdmin={isAdmin}
         />
       </LiveKitRoom>
     </div>

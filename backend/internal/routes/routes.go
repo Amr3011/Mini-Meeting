@@ -5,10 +5,11 @@ import (
 	"mini-meeting/internal/handlers"
 	"mini-meeting/internal/middleware"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, livekitHandler *handlers.LiveKitHandler, cfg *config.Config) {
+func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, livekitHandler *handlers.LiveKitHandler, lobbyHandler *handlers.LobbyHandler, lobbyWSHandler *handlers.LobbyWSHandler, cfg *config.Config) {
 	// API routes
 	api := app.Group("/api/v1")
 
@@ -51,4 +52,23 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	livekit.Post("/remove-participant", livekitHandler.RemoveParticipant)
 	livekit.Post("/mute-participant", livekitHandler.MuteParticipant)
 	livekit.Post("/end-meeting", livekitHandler.EndMeeting)
+
+	// Public lobby routes (HTTP — request to join + cancel)
+	publicLobby := api.Group("/lobby")
+	publicLobby.Post("/request", lobbyHandler.RequestToJoin)
+	publicLobby.Delete("/request", lobbyHandler.CancelRequest)
+
+	// Protected lobby routes (admin only — approve/reject via HTTP fallback)
+	lobby := api.Group("/lobby", middleware.AuthMiddleware(cfg))
+	lobby.Post("/respond", lobbyHandler.RespondToRequest)
+
+	// WebSocket lobby routes
+	app.Use("/ws", func(c *fiber.Ctx) error {
+		if websocket.IsWebSocketUpgrade(c) {
+			return c.Next()
+		}
+		return fiber.ErrUpgradeRequired
+	})
+	app.Get("/ws/lobby/visitor", websocket.New(lobbyWSHandler.HandleVisitor))
+	app.Get("/ws/lobby/admin", websocket.New(lobbyWSHandler.HandleAdmin))
 }

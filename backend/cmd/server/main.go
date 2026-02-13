@@ -73,9 +73,11 @@ func main() {
 	authHandler := handlers.NewAuthHandler(userService, cfg)
 	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
 	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, cfg)
+	lobbyHandler := handlers.NewLobbyHandler(livekitService, meetingService, userService, cfg)
+	lobbyWSHandler := handlers.NewLobbyWSHandler(livekitService, meetingService, userService, cfg)
 
 	// Setup routes
-	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, cfg)
+	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, cfg)
 
 	// Health check route
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {
