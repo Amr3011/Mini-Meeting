@@ -323,7 +323,7 @@ func (h *LobbyWSHandler) handleAdminRespond(meetingCode string, msg *WSRespondMs
 		Type:     WSTypeApproved,
 		Token:    token,
 		URL:      h.livekitService.GetURL(),
-		RoomName: lobbyReq.MeetingCode,
+		RoomCode: lobbyReq.MeetingCode,
 		Identity: lobbyReq.Identity,
 		UserName: lobbyReq.Name,
 	})

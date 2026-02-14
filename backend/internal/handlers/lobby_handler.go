@@ -97,7 +97,7 @@ func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
 		}
 		avatarURL = user.AvatarURL
 
-		identity = fmt.Sprintf("user_%d", userID)
+		identity = fmt.Sprintf("%s_%d", userName, userID)
 		metadata = fmt.Sprintf(`{"name":"%s","avatar":"%s","role":"%s"}`, userName, user.AvatarURL, userRole)
 	} else {
 		if req.UserName == "" {
@@ -108,7 +108,7 @@ func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
 
 		userName = req.UserName
 		userRole = "guest"
-		identity = fmt.Sprintf("guest_%d", c.Context().ConnID())
+		identity = fmt.Sprintf("%s_%d", userName, c.Context().ConnID())
 		metadata = fmt.Sprintf(`{"name":"%s","avatar":"","role":"%s"}`, userName, userRole)
 	}
 
@@ -128,7 +128,7 @@ func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
 			Status:    "auto_approved",
 			Token:     token,
 			URL:       h.livekitService.GetURL(),
-			RoomName:  req.MeetingCode,
+			RoomCode:  req.MeetingCode,
 			Identity:  identity,
 			UserName:  userName,
 		})

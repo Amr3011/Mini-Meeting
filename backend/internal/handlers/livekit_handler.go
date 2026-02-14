@@ -96,7 +96,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 			userName = req.UserName
 		}
 
-		identity = fmt.Sprintf("user_%d", userID)
+		identity = fmt.Sprintf("%s_%d", userName, userID)
 		metadata = fmt.Sprintf(`{"name":"%s","avatar":"%s","role":"%s"}`, userName, user.AvatarURL, userRole)
 	} else {
 		// Handle guest users
@@ -109,7 +109,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		userName = req.UserName
 		userRole = "guest"
 		// Generate a unique guest identity based on timestamp and random component
-		identity = fmt.Sprintf("guest_%d", c.Context().ConnID())
+		identity = fmt.Sprintf("%s_%d", userName, c.Context().ConnID())
 		metadata = fmt.Sprintf(`{"name":"%s","avatar":"","role":"%s"}`, userName, userRole)
 	}
 
@@ -131,7 +131,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 	response := types.GenerateTokenResponse{
 		Token:    token,
 		URL:      h.livekitService.GetURL(),
-		RoomName: req.MeetingCode,
+		RoomCode: req.MeetingCode,
 		Identity: identity,
 		UserName: userName,
 	}
