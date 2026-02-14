@@ -9,7 +9,7 @@ interface WaitingRoomProps {
   onApproved: (tokenData: {
     token: string;
     url: string;
-    room_name: string;
+    room_code: string;
     identity: string;
     user_name: string;
   }) => void;
@@ -42,7 +42,7 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({
           onApproved({
             token: data.token,
             url: data.url,
-            room_name: data.room_name,
+            room_code: data.room_code,
             identity: data.identity,
             user_name: data.user_name,
           });

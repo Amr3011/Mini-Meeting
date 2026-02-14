@@ -301,7 +301,7 @@ func (h *LobbyHandler) RespondToRequest(c *fiber.Ctx) error {
 		"type":      "approved",
 		"token":     token,
 		"url":       h.livekitService.GetURL(),
-		"room_name": lobbyReq.MeetingCode,
+		"room_code": lobbyReq.MeetingCode,
 		"identity":  lobbyReq.Identity,
 		"user_name": lobbyReq.Name,
 	})

@@ -28,7 +28,7 @@ export interface DevicePreferences {
 export interface TokenData {
   token: string;
   url: string;
-  room_name: string;
+  room_code: string;
   identity: string;
   user_name: string;
 }
@@ -136,7 +136,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) 
         onJoin(prefs, {
           token: response.token,
           url: response.url!,
-          room_name: response.room_name!,
+          room_code: response.room_code!,
           identity: response.identity!,
           user_name: response.user_name!,
         });

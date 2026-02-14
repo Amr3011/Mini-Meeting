@@ -48,7 +48,7 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
 
       setToken(response.token);
       setLivekitUrl(response.url);
-      setRoomName(response.room_name);
+      setRoomName(response.room_code);
       setIdentity(response.identity);
     } catch (err) {
       const axiosError = err as AxiosError<{ error?: string }>;

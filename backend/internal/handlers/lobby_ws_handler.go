@@ -59,7 +59,7 @@ type WSApprovedMsg struct {
 	Type     string `json:"type"`
 	Token    string `json:"token"`
 	URL      string `json:"url"`
-	RoomName string `json:"room_name"`
+	RoomCode string `json:"room_code"`
 	Identity string `json:"identity"`
 	UserName string `json:"user_name"`
 }
