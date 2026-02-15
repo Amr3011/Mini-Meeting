@@ -17,10 +17,11 @@ import (
 )
 
 type SummarizerService struct {
-	repo           *repositories.SummarizerRepository
-	meetingRepo    *repositories.MeetingRepository
-	livekitService *LiveKitService
-	cfg            *config.Config
+	repo                 *repositories.SummarizerRepository
+	meetingRepo          *repositories.MeetingRepository
+	livekitService       *LiveKitService
+	transcriptionService *TranscriptionService
+	cfg                  *config.Config
 
 	// Active rooms tracking for graceful shutdown
 	activeRooms map[uint]*lksdk.Room
@@ -34,14 +35,16 @@ func NewSummarizerService(
 	repo *repositories.SummarizerRepository,
 	meetingRepo *repositories.MeetingRepository,
 	livekitService *LiveKitService,
+	transcriptionService *TranscriptionService,
 	cfg *config.Config,
 ) *SummarizerService {
 	return &SummarizerService{
-		repo:           repo,
-		meetingRepo:    meetingRepo,
-		livekitService: livekitService,
-		cfg:            cfg,
-		activeRooms:    make(map[uint]*lksdk.Room),
+		repo:                 repo,
+		meetingRepo:          meetingRepo,
+		livekitService:       livekitService,
+		transcriptionService: transcriptionService,
+		cfg:                  cfg,
+		activeRooms:          make(map[uint]*lksdk.Room),
 	}
 }
 
@@ -336,4 +339,14 @@ func (s *SummarizerService) GetActiveSession(meetingID uint) (*models.Summarizer
 // GetSessionByID returns a session by its ID
 func (s *SummarizerService) GetSessionByID(sessionID uint) (*models.SummarizerSession, error) {
 	return s.repo.FindSessionByID(sessionID)
+}
+
+// TestTranscription checks if the transcription service is reachable
+func (s *SummarizerService) TestTranscription() error {
+	return s.transcriptionService.CheckHealth()
+}
+
+// TestTranscribeFile transcribes a specific file and returns the text
+func (s *SummarizerService) TestTranscribeFile(filePath string) (string, error) {
+	return s.transcriptionService.TranscribeChunk(filePath)
 }

@@ -15,6 +15,7 @@ type Config struct {
 	OAuth      OAuthConfig
 	LiveKit    LiveKitConfig
 	Summarizer SummarizerConfig
+	Whisper    WhisperConfig
 }
 
 type ServerConfig struct {
@@ -73,6 +74,12 @@ type SummarizerConfig struct {
 	CleanupAfterHours    int
 }
 
+type WhisperConfig struct {
+	URL            string
+	Timeout        string
+	MaxConcurrency int
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -123,6 +130,11 @@ func Load() (*Config, error) {
 			TempDir:              getEnv("SUMMARIZER_TEMP_DIR", "./tmp/summarizer"),
 			CleanupAfterHours:    getEnvAsInt("SUMMARIZER_CLEANUP_AFTER_HOURS", 24),
 		},
+		Whisper: WhisperConfig{
+			URL:            getEnv("WHISPER_URL", "http://localhost:9000"),
+			Timeout:        getEnv("WHISPER_TIMEOUT", "120s"),
+			MaxConcurrency: getEnvAsInt("WHISPER_MAX_CONCURRENCY", 2),
+		},
 	}
 
 	return config, nil
@@ -154,7 +166,7 @@ func getEnvAsInt(key string, defaultValue int) int {
 	if value == "" {
 		return defaultValue
 	}
-	
+
 	var intValue int
 	_, err := fmt.Sscanf(value, "%d", &intValue)
 	if err != nil {

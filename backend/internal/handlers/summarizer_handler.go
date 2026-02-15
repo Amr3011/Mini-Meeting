@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"mini-meeting/internal/services"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -124,6 +127,62 @@ func (h *SummarizerHandler) StopSummarizer(c *fiber.Ctx) error {
 			"started_at":   session.StartedAt,
 			"ended_at":     session.EndedAt,
 			"total_chunks": totalChunks,
+		},
+	})
+}
+
+// TestWhisper tests the connection to the Whisper service
+// GET /api/v1/summarizer/test-whisper
+func (h *SummarizerHandler) TestWhisper(c *fiber.Ctx) error {
+	if err := h.service.TestTranscription(); err != nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Whisper service is not reachable",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"status":  "ok",
+		"message": "Whisper service is reachable",
+	})
+}
+
+// TestTranscribe transcribes a specific file and saves the result to a .txt file
+// GET /api/v1/summarizer/test-transcribe?file=...
+func (h *SummarizerHandler) TestTranscribe(c *fiber.Ctx) error {
+	filePath := c.Query("file")
+	if filePath == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "file query parameter is required",
+		})
+	}
+
+	// Transcribe
+	text, err := h.service.TestTranscribeFile(filePath)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Transcription failed: %v", err),
+		})
+	}
+
+	// Save to .txt file in project root
+	outputFile := "test_transcription.txt"
+	if err := os.WriteFile(outputFile, []byte(text), 0644); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to save transcription to file: %v", err),
+		})
+	}
+
+	absPath, _ := filepath.Abs(outputFile)
+
+	return c.JSON(fiber.Map{
+		"status":  "ok",
+		"message": "Transcription successful",
+		"data": fiber.Map{
+			"text":        text,
+			"saved_to":    absPath,
+			"source_file": filePath,
 		},
 	})
 }

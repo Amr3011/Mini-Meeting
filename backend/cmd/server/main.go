@@ -68,7 +68,8 @@ func main() {
 	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
 	livekitService := services.NewLiveKitService(cfg)
-	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, livekitService, cfg)
+	transcriptionService := services.NewTranscriptionService(summarizerRepo, cfg)
+	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, livekitService, transcriptionService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
