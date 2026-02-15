@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	JWT      JWTConfig
-	OAuth    OAuthConfig
-	LiveKit  LiveKitConfig
+	Server     ServerConfig
+	Database   DatabaseConfig
+	Redis      RedisConfig
+	JWT        JWTConfig
+	OAuth      OAuthConfig
+	LiveKit    LiveKitConfig
+	Summarizer SummarizerConfig
 }
 
 type ServerConfig struct {
@@ -66,6 +67,12 @@ type LiveKitConfig struct {
 	URL       string
 }
 
+type SummarizerConfig struct {
+	ChunkDurationSeconds int
+	TempDir              string
+	CleanupAfterHours    int
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -111,6 +118,11 @@ func Load() (*Config, error) {
 			APISecret: getEnv("LIVEKIT_API_SECRET"),
 			URL:       getEnv("LIVEKIT_URL", "ws://localhost:7880"),
 		},
+		Summarizer: SummarizerConfig{
+			ChunkDurationSeconds: getEnvAsInt("SUMMARIZER_CHUNK_DURATION_SECONDS", 20),
+			TempDir:              getEnv("SUMMARIZER_TEMP_DIR", "./tmp/summarizer"),
+			CleanupAfterHours:    getEnvAsInt("SUMMARIZER_CLEANUP_AFTER_HOURS", 24),
+		},
 	}
 
 	return config, nil
@@ -135,4 +147,18 @@ func getEnv(key string, defaultValue ...string) string {
 		return defaultValue[0]
 	}
 	return value
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	
+	var intValue int
+	_, err := fmt.Sscanf(value, "%d", &intValue)
+	if err != nil {
+		return defaultValue
+	}
+	return intValue
 }

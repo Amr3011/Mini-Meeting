@@ -4,6 +4,9 @@ import type {
   MeetingResponse,
   MeetingsResponse,
   MeetingDeleteResponse,
+  SummarizerSession,
+  SummarizerStartResponse,
+  SummarizerStopResponse,
 } from "../../types/meeting.types";
 
 export const meetingService = {
@@ -53,4 +56,25 @@ export const meetingService = {
     const response = await apiClient.get<MeetingsResponse>("/meetings");
     return response.data.data;
   },
+
+  /**
+   * Start summarizer for a meeting
+   */
+  startSummarizer: async (meetingId: number): Promise<SummarizerSession> => {
+    const response = await apiClient.post<SummarizerStartResponse>(
+      `/meetings/${meetingId}/summarizer/start`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Stop summarizer for a meeting
+   */
+  stopSummarizer: async (meetingId: number): Promise<SummarizerSession> => {
+    const response = await apiClient.post<SummarizerStopResponse>(
+      `/meetings/${meetingId}/summarizer/stop`
+    );
+    return response.data.data;
+  },
 };
+

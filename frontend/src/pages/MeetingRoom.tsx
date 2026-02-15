@@ -13,6 +13,7 @@ interface MeetingRoomProps {
   token: string;
   livekitUrl: string;
   onLeave: () => void;
+  meetingId?: number;
 }
 
 export const MeetingRoom: React.FC<MeetingRoomProps> = ({
@@ -22,6 +23,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
   token,
   livekitUrl,
   onLeave,
+  meetingId,
 }) => {
   return (
     <LiveKitMeetingRoom
@@ -31,6 +33,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
       token={token}
       livekitUrl={livekitUrl}
       onDisconnect={onLeave}
+      meetingId={meetingId}
     />
   );
 };
+

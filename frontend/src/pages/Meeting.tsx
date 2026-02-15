@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MeetingLobby, type DevicePreferences, type TokenData } from "./MeetingLobby";
 import { MeetingRoom } from "./MeetingRoom";
 import { useAuth } from "../hooks/useAuth";
+import { meetingService } from "../services/api/meeting.service";
 
 /**
  * Meeting handles the entire meeting flow:
@@ -19,6 +20,22 @@ const Meeting: React.FC = () => {
   const [userName, setUserName] = useState<string>("");
   const [devicePreferences, setDevicePreferences] = useState<DevicePreferences | null>(null);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
+  const [meetingId, setMeetingId] = useState<number | null>(null);
+
+  // Fetch meeting data to get the meeting ID
+  useEffect(() => {
+    const fetchMeeting = async () => {
+      if (meetingCode) {
+        try {
+          const meeting = await meetingService.getMeetingByCode(meetingCode);
+          setMeetingId(meeting.id);
+        } catch (error) {
+          console.error('Failed to fetch meeting:', error);
+        }
+      }
+    };
+    fetchMeeting();
+  }, [meetingCode]);
 
   const handleJoinMeeting = (prefs: DevicePreferences, token: TokenData) => {
     const name = isAuthenticated && user
@@ -51,6 +68,7 @@ const Meeting: React.FC = () => {
         token={tokenData.token}
         livekitUrl={tokenData.url}
         onLeave={handleLeaveMeeting}
+        meetingId={meetingId || undefined}
       />
     );
   }
@@ -59,3 +77,4 @@ const Meeting: React.FC = () => {
 };
 
 export default Meeting;
+

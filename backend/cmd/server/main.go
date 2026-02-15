@@ -62,11 +62,13 @@ func main() {
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(database.GetDB())
 	meetingRepo := repositories.NewMeetingRepository(database.GetDB())
+	summarizerRepo := repositories.NewSummarizerRepository(database.GetDB())
 
 	// Initialize services
 	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
 	livekitService := services.NewLiveKitService(cfg)
+	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, livekitService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
@@ -75,9 +77,10 @@ func main() {
 	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, cfg)
 	lobbyHandler := handlers.NewLobbyHandler(livekitService, meetingService, userService, cfg)
 	lobbyWSHandler := handlers.NewLobbyWSHandler(livekitService, meetingService, userService, cfg)
+	summarizerHandler := handlers.NewSummarizerHandler(summarizerService)
 
 	// Setup routes
-	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, cfg)
+	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, summarizerHandler, cfg)
 
 	// Health check route
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {

@@ -8,6 +8,7 @@ import {
 import { ErrorMessage } from '../common/ErrorMessage';
 import { AdminControls } from './AdminControls';
 import { LobbyRequests } from './LobbyRequests';
+import { SummarizerControls } from './SummarizerControls';
 import { DisconnectMessage } from './DisconnectMessage';
 import type { DevicePreferences } from '../../pages/MeetingLobby';
 import { useState, useEffect, useMemo } from 'react';
@@ -19,6 +20,7 @@ interface LiveKitMeetingRoomProps {
   token: string;
   livekitUrl: string;
   onDisconnect?: () => void;
+  meetingId?: number; // Add meetingId prop
 }
 
 /**
@@ -31,6 +33,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   token,
   livekitUrl,
   onDisconnect,
+  meetingId,
 }) => {
   const [disconnectReason, setDisconnectReason] = useState<string | null>(null);
 
@@ -153,6 +156,12 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
           meetingCode={meetingCode}
           isAdmin={isAdmin}
         />
+        {meetingId && (
+          <SummarizerControls
+            meetingId={meetingId}
+            isAdmin={isAdmin}
+          />
+        )}
       </LiveKitRoom>
     </div>
   );

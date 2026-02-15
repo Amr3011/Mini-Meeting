@@ -21,3 +21,24 @@ export interface MeetingsResponse {
 export interface MeetingDeleteResponse {
   message: string;
 }
+
+// Summarizer types
+export interface SummarizerSession {
+  session_id: number;
+  meeting_id: number;
+  status: 'STARTED' | 'CAPTURED' | 'TRANSCRIBED' | 'SUMMARIZED' | 'FAILED';
+  started_at: string;
+  ended_at?: string;
+  total_chunks?: number;
+}
+
+export interface SummarizerStartResponse {
+  message: string;
+  data: SummarizerSession;
+}
+
+export interface SummarizerStopResponse {
+  message: string;
+  data: SummarizerSession;
+}
+
