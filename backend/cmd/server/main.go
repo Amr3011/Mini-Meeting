@@ -74,7 +74,7 @@ func main() {
 	userHandler := handlers.NewUserHandler(userService)
 	authHandler := handlers.NewAuthHandler(userService, cfg)
 	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
-	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, cfg)
+	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, summarizerService, cfg)
 	lobbyHandler := handlers.NewLobbyHandler(livekitService, meetingService, userService, cfg)
 	lobbyWSHandler := handlers.NewLobbyWSHandler(livekitService, meetingService, userService, cfg)
 	summarizerHandler := handlers.NewSummarizerHandler(summarizerService)

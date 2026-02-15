@@ -12,6 +12,7 @@ import { SummarizerControls } from './SummarizerControls';
 import { DisconnectMessage } from './DisconnectMessage';
 import type { DevicePreferences } from '../../pages/MeetingLobby';
 import { useState, useEffect, useMemo } from 'react';
+import { meetingService } from '../../services/api/meeting.service';
 
 interface LiveKitMeetingRoomProps {
   meetingCode: string;
@@ -61,6 +62,13 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   }, [disconnectReason, onDisconnect]);
 
   const handleDisconnect = (reason?: DisconnectReason) => {
+    // Stop summarizer if admin leaves
+    if (isAdmin && meetingId) {
+      meetingService.stopSummarizer(meetingId).catch(err =>
+        console.error('Failed to stop summarizer on disconnect:', err)
+      );
+    }
+
     let message = 'You left the meeting';
 
     if (reason === DisconnectReason.SERVER_SHUTDOWN) {
