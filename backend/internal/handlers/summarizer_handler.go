@@ -166,8 +166,8 @@ func (h *SummarizerHandler) TestTranscribe(c *fiber.Ctx) error {
 		})
 	}
 
-	// Save to .txt file in project root
-	outputFile := "test_transcription.txt"
+	// Save to .txt file in tmp folder
+	outputFile := "./tmp/test_transcription.txt"
 	if err := os.WriteFile(outputFile, []byte(text), 0644); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("Failed to save transcription to file: %v", err),
