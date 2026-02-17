@@ -172,5 +172,11 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 		fmt.Printf("Cleaned up audio files for session %d\n", sessionID)
 	}
 
+	if err := s.repo.DeleteChunksBySessionID(sessionID); err != nil {
+		fmt.Printf("Warning: Failed to cleanup session chunks from database %d: %v\n", sessionID, err)
+	} else {
+		fmt.Printf("Cleaned up audio chunks records from database for session %d\n", sessionID)
+	}
+
 	return nil
 }
