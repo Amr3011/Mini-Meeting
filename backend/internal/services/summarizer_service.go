@@ -17,10 +17,11 @@ import (
 )
 
 type SummarizerService struct {
-	repo           *repositories.SummarizerRepository
-	meetingRepo    *repositories.MeetingRepository
-	livekitService *LiveKitService
-	cfg            *config.Config
+	repo                 *repositories.SummarizerRepository
+	meetingRepo          *repositories.MeetingRepository
+	livekitService       *LiveKitService
+	transcriptionService *TranscriptionService
+	cfg                  *config.Config
 
 	// Active rooms tracking for graceful shutdown
 	activeRooms map[uint]*lksdk.Room
@@ -34,14 +35,16 @@ func NewSummarizerService(
 	repo *repositories.SummarizerRepository,
 	meetingRepo *repositories.MeetingRepository,
 	livekitService *LiveKitService,
+	transcriptionService *TranscriptionService,
 	cfg *config.Config,
 ) *SummarizerService {
 	return &SummarizerService{
-		repo:           repo,
-		meetingRepo:    meetingRepo,
-		livekitService: livekitService,
-		cfg:            cfg,
-		activeRooms:    make(map[uint]*lksdk.Room),
+		repo:                 repo,
+		meetingRepo:          meetingRepo,
+		livekitService:       livekitService,
+		transcriptionService: transcriptionService,
+		cfg:                  cfg,
+		activeRooms:          make(map[uint]*lksdk.Room),
 	}
 }
 
@@ -133,6 +136,14 @@ func (s *SummarizerService) StopSummarizer(sessionID uint, userID uint) (int64, 
 	if err != nil {
 		return 0, fmt.Errorf("failed to count chunks: %w", err)
 	}
+
+	// Trigger transcription in background
+	go func() {
+		fmt.Printf("Triggering background transcription for session %d\n", sessionID)
+		if err := s.transcriptionService.ProcessSession(sessionID); err != nil {
+			fmt.Printf("Failed to process session %d: %v\n", sessionID, err)
+		}
+	}()
 
 	return totalChunks, nil
 }
