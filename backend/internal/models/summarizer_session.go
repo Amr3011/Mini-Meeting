@@ -28,6 +28,7 @@ type SummarizerSessionStatus string
 const (
 	StatusStarted     SummarizerSessionStatus = "STARTED"     // Bot joined, capturing audio
 	StatusCaptured    SummarizerSessionStatus = "CAPTURED"    // Audio captured, ready for transcription
-	StatusTranscribed SummarizerSessionStatus = "TRANSCRIBED" // Text extracted, ready for summarization
+	StatusTranscribed SummarizerSessionStatus = "TRANSCRIBED" // Text extracted, ready for normalization
+	StatusNormalized  SummarizerSessionStatus = "NORMALIZED"  // Text normalized, ready for summarization
 	StatusSummarized  SummarizerSessionStatus = "SUMMARIZED"  // Final summary generated
 )

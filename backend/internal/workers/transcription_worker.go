@@ -12,17 +12,20 @@ type TranscriptionWorker struct {
 	repo                 *repositories.SummarizerRepository
 	transcriptionService *services.TranscriptionService
 	interval             time.Duration
+	stuckThreshold       time.Duration
 }
 
 func NewTranscriptionWorker(
 	repo *repositories.SummarizerRepository,
 	transcriptionService *services.TranscriptionService,
 	interval time.Duration,
+	stuckThreshold time.Duration,
 ) *TranscriptionWorker {
 	return &TranscriptionWorker{
 		repo:                 repo,
 		transcriptionService: transcriptionService,
 		interval:             interval,
+		stuckThreshold:       stuckThreshold,
 	}
 }
 
@@ -40,10 +43,9 @@ func (w *TranscriptionWorker) Start() {
 	}()
 }
 
+// processStuckSessions finds and processes sessions stuck in CAPTURED status
 func (w *TranscriptionWorker) processStuckSessions() {
-	// Find sessions that are CAPTURED but updated more than 15 minutes ago
-	stuckDuration := 15 * time.Minute
-	cutoffTime := time.Now().Add(-stuckDuration)
+	cutoffTime := time.Now().Add(-w.stuckThreshold)
 
 	sessions, err := w.repo.FindStuckSessions(models.StatusCaptured, cutoffTime)
 	if err != nil {
