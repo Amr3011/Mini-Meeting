@@ -72,7 +72,8 @@ func main() {
 	livekitService := services.NewLiveKitService(cfg)
 	transcriptionService := services.NewTranscriptionService(summarizerRepo, cfg)
 	normalizationService := services.NewNormalizationService(summarizerRepo)
-	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, livekitService, transcriptionService, cfg)
+	openRouterService := services.NewOpenRouterService(cfg)
+	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, livekitService, transcriptionService, openRouterService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
@@ -90,6 +91,9 @@ func main() {
 	// Normalization worker: Run every 30 seconds, process sessions stuck for > 2 minutes
 	normalizationWorker := workers.NewNormalizationWorker(summarizerRepo, normalizationService, 30*time.Second, 2*time.Minute)
 	go normalizationWorker.Start()
+	// Summarization worker: Run every 60 seconds, process sessions stuck for > 3 minutes
+	summarizationWorker := workers.NewSummarizationWorker(summarizerRepo, summarizerService, 60*time.Second, 3*time.Minute)
+	go summarizationWorker.Start()
 
 	// Setup routes
 	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, summarizerHandler, cfg)
