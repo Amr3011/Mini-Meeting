@@ -16,6 +16,7 @@ type Config struct {
 	LiveKit    LiveKitConfig
 	Summarizer SummarizerConfig
 	Whisper    WhisperConfig
+	OpenRouter OpenRouterConfig
 }
 
 type ServerConfig struct {
@@ -80,6 +81,14 @@ type WhisperConfig struct {
 	MaxConcurrency int
 }
 
+type OpenRouterConfig struct {
+	APIKey    string
+	BaseURL   string
+	Model     string
+	Timeout   string
+	MaxTokens int
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -134,6 +143,13 @@ func Load() (*Config, error) {
 			URL:            getEnv("WHISPER_URL", "http://localhost:9000"),
 			Timeout:        getEnv("WHISPER_TIMEOUT", "120s"),
 			MaxConcurrency: getEnvAsInt("WHISPER_MAX_CONCURRENCY", 2),
+		},
+		OpenRouter: OpenRouterConfig{
+			APIKey:    getEnv("OPEN_ROUTER_API_KEY"),
+			BaseURL:   getEnv("OPEN_ROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+			Model:     getEnv("OPEN_ROUTER_MODEL", "meta-llama/llama-3.2-3b-instruct:free"),
+			Timeout:   getEnv("OPEN_ROUTER_TIMEOUT", "300s"),
+			MaxTokens: getEnvAsInt("OPEN_ROUTER_MAX_TOKENS", 4096),
 		},
 	}
 

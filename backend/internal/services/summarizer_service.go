@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"mini-meeting/internal/config"
@@ -21,6 +22,7 @@ type SummarizerService struct {
 	meetingRepo          *repositories.MeetingRepository
 	livekitService       *LiveKitService
 	transcriptionService *TranscriptionService
+	openRouterService    *OpenRouterService
 	cfg                  *config.Config
 
 	// Active rooms tracking for graceful shutdown
@@ -36,6 +38,7 @@ func NewSummarizerService(
 	meetingRepo *repositories.MeetingRepository,
 	livekitService *LiveKitService,
 	transcriptionService *TranscriptionService,
+	openRouterService *OpenRouterService,
 	cfg *config.Config,
 ) *SummarizerService {
 	return &SummarizerService{
@@ -43,6 +46,7 @@ func NewSummarizerService(
 		meetingRepo:          meetingRepo,
 		livekitService:       livekitService,
 		transcriptionService: transcriptionService,
+		openRouterService:    openRouterService,
 		cfg:                  cfg,
 		activeRooms:          make(map[uint]*lksdk.Room),
 	}
@@ -328,13 +332,6 @@ func (s *SummarizerService) createChunkMetadata(sessionID uint, userIdentity str
 	return nil
 }
 
-// CleanupOldSessions removes audio files for sessions older than configured hours
-func (s *SummarizerService) CleanupOldSessions(hoursOld int) error {
-	// TODO: Implement cleanup logic for Phase B
-	// This will be called after transcription is complete
-	return nil
-}
-
 // GetActiveSession returns the active summarizer session for a meeting
 func (s *SummarizerService) GetActiveSession(meetingID uint) (*models.SummarizerSession, error) {
 	session, err := s.repo.FindActiveSessionByMeetingID(meetingID)
@@ -347,4 +344,64 @@ func (s *SummarizerService) GetActiveSession(meetingID uint) (*models.Summarizer
 // GetSessionByID returns a session by its ID
 func (s *SummarizerService) GetSessionByID(sessionID uint) (*models.SummarizerSession, error) {
 	return s.repo.FindSessionByID(sessionID)
+}
+
+// ProcessSummarization generates an AI-powered summary from a normalized transcript
+func (s *SummarizerService) ProcessSummarization(sessionID uint) error {
+	// 1. Get session and validate status
+	session, err := s.repo.FindSessionByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+
+	if session.Status != models.StatusNormalized {
+		// If already summarized, that's fine
+		if session.Summary != nil && *session.Summary != "" {
+			return nil
+		}
+		return fmt.Errorf("session is not in NORMALIZED state (current: %s)", session.Status)
+	}
+
+	// 2. Get the normalized transcript
+	if session.Transcript == nil || *session.Transcript == "" {
+		return fmt.Errorf("no normalized transcript found for session %d", sessionID)
+	}
+
+	transcript := *session.Transcript
+
+	fmt.Printf("Starting summarization for session %d (transcript length: %d chars)\n", sessionID, len(transcript))
+
+	// 3. Call OpenRouter to generate summary
+	ctx := context.Background()
+	req := SummarizationRequest{
+		Transcript:  transcript,
+		Temperature: 0.3, // Lower temperature for more focused, consistent summaries
+	}
+
+	resp, err := s.openRouterService.GenerateSummary(ctx, req)
+	if err != nil {
+		// Update session with error
+		errMsg := fmt.Sprintf("Failed to generate summary: %v", err)
+		s.repo.UpdateSessionStatus(sessionID, models.StatusNormalized, &errMsg, nil)
+		return fmt.Errorf("failed to generate summary: %w", err)
+	}
+
+	fmt.Printf("Summary generated for session %d (model: %s, tokens: %d)\n",
+		sessionID, resp.ModelUsed, resp.TotalTokens)
+
+	// 4. Update session status to SUMMARIZED
+	now := time.Now()
+	if err := s.repo.UpdateSessionStatus(sessionID, models.StatusSummarized, nil, &now); err != nil {
+		return fmt.Errorf("failed to update session status: %w", err)
+	}
+
+	// 5. Save the summary to the session
+	if err := s.repo.UpdateSessionSummary(sessionID, resp.Summary); err != nil {
+		return fmt.Errorf("failed to update session summary: %w", err)
+	}
+
+	fmt.Printf("Successfully summarized session %d (summary length: %d chars)\n",
+		sessionID, len(resp.Summary))
+
+	return nil
 }
