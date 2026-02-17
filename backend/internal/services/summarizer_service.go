@@ -348,13 +348,3 @@ func (s *SummarizerService) GetActiveSession(meetingID uint) (*models.Summarizer
 func (s *SummarizerService) GetSessionByID(sessionID uint) (*models.SummarizerSession, error) {
 	return s.repo.FindSessionByID(sessionID)
 }
-
-// TestTranscription checks if the transcription service is reachable
-func (s *SummarizerService) TestTranscription() error {
-	return s.transcriptionService.CheckHealth()
-}
-
-// TestTranscribeFile transcribes a specific file and returns the text
-func (s *SummarizerService) TestTranscribeFile(filePath string) (string, error) {
-	return s.transcriptionService.TranscribeChunk(filePath)
-}

@@ -43,11 +43,6 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	meetings.Post("/:id/summarizer/start", summarizerHandler.StartSummarizer)
 	meetings.Post("/:id/summarizer/stop", summarizerHandler.StopSummarizer)
 
-	// Summarizer admin/test routes
-	summarizer := api.Group("/summarizer")
-	summarizer.Get("/test-whisper", summarizerHandler.TestWhisper)
-	summarizer.Get("/test-transcribe", summarizerHandler.TestTranscribe)
-
 	// Admin-only meeting routes
 	meetings.Get("/", middleware.AdminMiddleware(), meetingHandler.GetAllMeetings)
 

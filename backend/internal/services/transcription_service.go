@@ -26,21 +26,6 @@ func NewTranscriptionService(repo *repositories.SummarizerRepository, cfg *confi
 	}
 }
 
-// CheckHealth checks if the Whisper service is up and running
-func (s *TranscriptionService) CheckHealth() error {
-	resp, err := http.Get(s.cfg.Whisper.URL + "/docs")
-	if err != nil {
-		return fmt.Errorf("whisper service unreachable: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("whisper service returned unexpected status: %d", resp.StatusCode)
-	}
-
-	return nil
-}
-
 // TranscribeChunk sends an audio file to the Whisper service and returns the transcribed text
 func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) {
 	file, err := os.Open(filePath)
