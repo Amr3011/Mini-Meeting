@@ -12,6 +12,6 @@ type Transcript struct {
 	EndTime      float64   `json:"end_time"`
 	CreatedAt    time.Time `json:"created_at"`
 
-	// Link to the audio chunk if available
-	ChunkID *uint `json:"chunk_id,omitempty"`
+	// Relations
+	Session SummarizerSession `gorm:"foreignKey:SessionID" json:"session,omitempty"`
 }

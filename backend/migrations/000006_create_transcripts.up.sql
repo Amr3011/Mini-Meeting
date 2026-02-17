@@ -1,4 +1,4 @@
-CREATE TABLE transcripts (
+CREATE TABLE IF NOT EXISTS transcripts (
     id SERIAL PRIMARY KEY,
     session_id INTEGER NOT NULL REFERENCES summarizer_sessions(id) ON DELETE CASCADE,
     user_identity TEXT NOT NULL,
@@ -9,5 +9,5 @@ CREATE TABLE transcripts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_transcripts_session_id ON transcripts(session_id);
-CREATE INDEX idx_transcripts_user_identity ON transcripts(user_identity);
+CREATE INDEX IF NOT EXISTS idx_transcripts_session_id ON transcripts(session_id);
+CREATE INDEX IF NOT EXISTS idx_transcripts_user_identity ON transcripts(user_identity);

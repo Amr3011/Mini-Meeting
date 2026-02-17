@@ -140,7 +140,6 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 			Text:         text,
 			StartTime:    chunk.DurationSeconds * float64(chunk.ChunkIndex), // Approximate start time
 			EndTime:      chunk.DurationSeconds * float64(chunk.ChunkIndex+1),
-			ChunkID:      &chunk.ID,
 		}
 
 		if err := s.repo.CreateTranscript(transcript); err != nil {

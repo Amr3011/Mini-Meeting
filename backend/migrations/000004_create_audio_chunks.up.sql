@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS audio_chunks (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_audio_chunks_session_id ON audio_chunks(session_id);
-CREATE INDEX idx_audio_chunks_user_identity ON audio_chunks(user_identity);
+CREATE INDEX IF NOT EXISTS idx_audio_chunks_session_id ON audio_chunks(session_id);
+CREATE INDEX IF NOT EXISTS idx_audio_chunks_user_identity ON audio_chunks(user_identity);

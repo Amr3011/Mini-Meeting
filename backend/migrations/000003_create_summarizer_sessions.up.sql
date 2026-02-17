@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS summarizer_sessions (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_summarizer_sessions_meeting_id ON summarizer_sessions(meeting_id);
-CREATE INDEX idx_summarizer_sessions_status ON summarizer_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_summarizer_sessions_meeting_id ON summarizer_sessions(meeting_id);
+CREATE INDEX IF NOT EXISTS idx_summarizer_sessions_status ON summarizer_sessions(status);
