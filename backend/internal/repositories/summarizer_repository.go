@@ -60,6 +60,12 @@ func (r *SummarizerRepository) FindSessionsByMeetingID(meetingID uint) ([]models
 	return sessions, err
 }
 
+func (r *SummarizerRepository) FindStuckSessions(status models.SummarizerSessionStatus, cutoffTime time.Time) ([]models.SummarizerSession, error) {
+	var sessions []models.SummarizerSession
+	err := r.db.Where("status = ? AND updated_at < ?", status, cutoffTime).Find(&sessions).Error
+	return sessions, err
+}
+
 // Audio chunk operations
 
 func (r *SummarizerRepository) CreateAudioChunk(chunk *models.AudioChunk) error {
@@ -90,4 +96,20 @@ func (r *SummarizerRepository) CountChunksBySessionID(sessionID uint) (int64, er
 
 func (r *SummarizerRepository) DeleteChunksBySessionID(sessionID uint) error {
 	return r.db.Where("session_id = ?", sessionID).Delete(&models.AudioChunk{}).Error
+}
+
+// Transcript operations
+
+func (r *SummarizerRepository) CreateTranscript(transcript *models.Transcript) error {
+	return r.db.Create(transcript).Error
+}
+
+func (r *SummarizerRepository) FindTranscriptsBySessionID(sessionID uint) ([]models.Transcript, error) {
+	var transcripts []models.Transcript
+	err := r.db.Where("session_id = ?", sessionID).Order("start_time ASC").Find(&transcripts).Error
+	return transcripts, err
+}
+
+func (r *SummarizerRepository) DeleteTranscriptsBySessionID(sessionID uint) error {
+	return r.db.Where("session_id = ?", sessionID).Delete(&models.Transcript{}).Error
 }

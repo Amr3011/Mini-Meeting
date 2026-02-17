@@ -137,6 +137,14 @@ func (s *SummarizerService) StopSummarizer(sessionID uint, userID uint) (int64, 
 		return 0, fmt.Errorf("failed to count chunks: %w", err)
 	}
 
+	// Trigger transcription in background
+	go func() {
+		fmt.Printf("Triggering background transcription for session %d\n", sessionID)
+		if err := s.transcriptionService.ProcessSession(sessionID); err != nil {
+			fmt.Printf("Failed to process session %d: %v\n", sessionID, err)
+		}
+	}()
+
 	return totalChunks, nil
 }
 

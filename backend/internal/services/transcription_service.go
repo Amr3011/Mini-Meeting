@@ -7,9 +7,11 @@ import (
 	"io"
 	"mime/multipart"
 	"mini-meeting/internal/config"
+	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
 	"net/http"
 	"os"
+	"time"
 )
 
 type TranscriptionService struct {
@@ -97,4 +99,94 @@ func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) 
 	}
 
 	return result.Text, nil
+}
+
+// ProcessSession transcribes all chunks for a given session
+func (s *TranscriptionService) ProcessSession(sessionID uint) error {
+	// 1. Get session and validate status
+	session, err := s.repo.FindSessionByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+
+	if session.Status != models.StatusCaptured {
+		// If already transcribed or summarized, that's fine, return nil
+		if session.Status == models.StatusTranscribed || session.Status == models.StatusSummarized {
+			return nil
+		}
+		return fmt.Errorf("session is not in CAPTURED state (current: %s)", session.Status)
+	}
+
+	// 2. Get all audio chunks
+	chunks, err := s.repo.FindChunksBySessionID(sessionID)
+	if err != nil {
+		return fmt.Errorf("failed to get chunks: %w", err)
+	}
+
+	if len(chunks) == 0 {
+		return fmt.Errorf("no audio chunks found for session %d", sessionID)
+	}
+
+	fmt.Printf("Starting transcription for session %d (%d chunks)\n", sessionID, len(chunks))
+
+	// 3. Process each chunk
+	// Note: Processing sequentially to avoid overloading CPU on small VPS (e.g., 2 vCPUs).
+	// Since Whisper is CPU-intensive, parallel processing could cause high load averages and system instability.
+	// For production environments with more cores/GPU, use a worker pool or semaphore pattern here.
+	successCount := 0
+	for _, chunk := range chunks {
+		fmt.Printf("Transcribing chunk %d for user %s...\n", chunk.ChunkIndex, chunk.UserIdentity)
+
+		text, err := s.TranscribeChunk(chunk.FilePath)
+		if err != nil {
+			fmt.Printf("Failed to transcribe chunk %d: %v\n", chunk.ID, err)
+			continue
+		}
+
+		if text == "" {
+			fmt.Printf("Empty transcript for chunk %d\n", chunk.ID)
+			continue
+		}
+
+		// Create transcript record
+		transcript := &models.Transcript{
+			SessionID:    sessionID,
+			UserIdentity: chunk.UserIdentity,
+			Text:         text,
+			StartTime:    chunk.DurationSeconds * float64(chunk.ChunkIndex), // Approximate start time
+			EndTime:      chunk.DurationSeconds * float64(chunk.ChunkIndex+1),
+			ChunkID:      &chunk.ID,
+		}
+
+		if err := s.repo.CreateTranscript(transcript); err != nil {
+			fmt.Printf("Failed to save transcript for chunk %d: %v\n", chunk.ID, err)
+			continue
+		}
+
+		successCount++
+	}
+
+	// 4. Update session status
+	if successCount == 0 {
+		errMsg := "Failed to transcribe any chunks"
+		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, nil)
+		return fmt.Errorf("%s", errMsg)
+	}
+
+	now := time.Now()
+	if err := s.repo.UpdateSessionStatus(sessionID, models.StatusTranscribed, nil, &now); err != nil {
+		return fmt.Errorf("failed to update session status: %w", err)
+	}
+
+	fmt.Printf("Successfully transcribed session %d (%d/%d chunks)\n", sessionID, successCount, len(chunks))
+
+	// 5. Cleanup Audio Files
+	sessionDir := fmt.Sprintf("%s/%d", s.cfg.Summarizer.TempDir, sessionID)
+	if err := os.RemoveAll(sessionDir); err != nil {
+		fmt.Printf("Warning: Failed to cleanup session directory %s: %v\n", sessionDir, err)
+	} else {
+		fmt.Printf("Cleaned up audio files for session %d\n", sessionID)
+	}
+
+	return nil
 }

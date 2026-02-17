@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"mini-meeting/internal/config"
 	"mini-meeting/internal/database"
@@ -10,6 +11,7 @@ import (
 	"mini-meeting/internal/repositories"
 	"mini-meeting/internal/routes"
 	"mini-meeting/internal/services"
+	"mini-meeting/internal/workers"
 	"mini-meeting/pkg/cache"
 
 	"github.com/gofiber/fiber/v2"
@@ -79,6 +81,11 @@ func main() {
 	lobbyHandler := handlers.NewLobbyHandler(livekitService, meetingService, userService, cfg)
 	lobbyWSHandler := handlers.NewLobbyWSHandler(livekitService, meetingService, userService, cfg)
 	summarizerHandler := handlers.NewSummarizerHandler(summarizerService)
+
+	// Initialize workers
+	// Run cleanup/safety net every 60 minutes
+	transcriptionWorker := workers.NewTranscriptionWorker(summarizerRepo, transcriptionService, 60*time.Minute)
+	transcriptionWorker.Start()
 
 	// Setup routes
 	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, summarizerHandler, cfg)
