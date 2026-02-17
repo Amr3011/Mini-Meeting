@@ -113,3 +113,7 @@ func (r *SummarizerRepository) FindTranscriptsBySessionID(sessionID uint) ([]mod
 func (r *SummarizerRepository) DeleteTranscriptsBySessionID(sessionID uint) error {
 	return r.db.Where("session_id = ?", sessionID).Delete(&models.Transcript{}).Error
 }
+
+func (r *SummarizerRepository) UpdateSessionTranscript(id uint, transcript string) error {
+	return r.db.Model(&models.SummarizerSession{}).Where("id = ?", id).Update("transcript", transcript).Error
+}
