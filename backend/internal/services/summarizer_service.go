@@ -73,6 +73,7 @@ func (s *SummarizerService) StartSummarizer(meetingID uint, userID uint) (*model
 	// Create new session
 	session := &models.SummarizerSession{
 		MeetingID: meetingID,
+		UserID:    userID,
 		Status:    models.StatusStarted,
 		StartedAt: time.Now(),
 	}

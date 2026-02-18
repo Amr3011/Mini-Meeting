@@ -7,18 +7,20 @@ import "time"
 // On failure, status remains at the failed stage with Error field populated
 type SummarizerSession struct {
 	ID         uint                    `gorm:"primaryKey" json:"id"`
-	MeetingID  uint                    `gorm:"not null" json:"meeting_id"`
+	MeetingID  uint                    `gorm:"not null" json:"-"`
+	UserID     uint                    `gorm:"not null" json:"-"`
 	Status     SummarizerSessionStatus `gorm:"not null;default:STARTED" json:"status"`
-	Transcript *string                 `json:"transcript,omitempty"`
-	Summary    *string                 `json:"summary,omitempty"`
-	Error      *string                 `json:"error,omitempty"` // Error message if failed at current status
+	Transcript *string                 `json:"transcript"`
+	Summary    *string                 `json:"summary"`
+	Error      *string                 `json:"-"`
 	StartedAt  time.Time               `gorm:"not null" json:"started_at"`
 	EndedAt    *time.Time              `json:"ended_at,omitempty"`
-	CreatedAt  time.Time               `json:"created_at"`
-	UpdatedAt  time.Time               `json:"updated_at"`
+	CreatedAt  time.Time               `json:"-"`
+	UpdatedAt  time.Time               `json:"-"`
 
 	// Relations
-	Meeting Meeting `gorm:"foreignKey:MeetingID" json:"meeting,omitempty"`
+	Meeting Meeting `gorm:"foreignKey:MeetingID" json:"-"`
+	User    User    `gorm:"foreignKey:UserID" json:"-"`
 }
 
 // Status constants for state machine
