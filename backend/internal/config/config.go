@@ -79,6 +79,7 @@ type SummarizerConfig struct {
 
 type WhisperConfig struct {
 	URL            string
+	Model          string
 	Timeout        string
 	MaxConcurrency int
 }
@@ -149,6 +150,7 @@ func Load() (*Config, error) {
 		},
 		Whisper: WhisperConfig{
 			URL:            getEnv("WHISPER_URL", "http://localhost:9000"),
+			Model:          getEnv("WHISPER_MODEL", "Systran/faster-whisper-medium"),
 			Timeout:        getEnv("WHISPER_TIMEOUT", "120s"),
 			MaxConcurrency: getEnvAsInt("WHISPER_MAX_CONCURRENCY", 2),
 		},

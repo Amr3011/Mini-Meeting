@@ -38,8 +38,7 @@ func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	// Create form file field
-	part, err := writer.CreateFormFile("audio_file", filePath)
+	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
 	if err != nil {
 		return "", fmt.Errorf("failed to create form file: %w", err)
 	}
@@ -49,13 +48,16 @@ func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) 
 		return "", fmt.Errorf("failed to copy file content: %w", err)
 	}
 
+	// Required: specify which model to use
+	if err := writer.WriteField("model", s.cfg.Whisper.Model); err != nil {
+		return "", fmt.Errorf("failed to write model field: %w", err)
+	}
+
 	if err := writer.Close(); err != nil {
 		return "", fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	// Send request to Whisper ASR webservice
-	// We use output=json to get structured data
-	url := fmt.Sprintf("%s/asr?task=transcribe&output=json", s.cfg.Whisper.URL)
+	url := fmt.Sprintf("%s/v1/audio/transcriptions", s.cfg.Whisper.URL)
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
@@ -75,7 +77,7 @@ func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) 
 		return "", fmt.Errorf("whisper service error (status %d): %s", resp.StatusCode, string(respBody))
 	}
 
-	// Parse JSON response
+	// Response format: {"text": "...", ...}
 	var result struct {
 		Text string `json:"text"`
 	}
