@@ -1,3 +1,13 @@
+// Summarizer session model
+export interface SummarizerSession {
+  id: number;
+  status: "CAPTURED" | "TRANSCRIBED" | "NORMALIZED" | "SUMMARIZED" | "FAILED";
+  transcript: string | null;
+  summary: string | null;
+  started_at: string;
+  ended_at: string | null;
+}
+
 // User model matching backend response
 export interface User {
   id: number;
@@ -8,6 +18,7 @@ export interface User {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
+  summarizer_sessions?: SummarizerSession[];
 }
 
 // Request types
