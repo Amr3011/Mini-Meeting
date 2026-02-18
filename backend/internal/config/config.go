@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 )
@@ -163,6 +164,12 @@ func Load() (*Config, error) {
 			SenderEmail: getEnv("BREVO_SENDER_EMAIL", "noreply@mini-meeting.app"),
 			SenderName:  getEnv("BREVO_SENDER_NAME", "Mini Meeting"),
 		},
+	}
+
+	// Resolve TempDir to an absolute path so it works regardless of the
+	// process working directory (e.g. when run via systemd on a VPS).
+	if absDir, err := filepath.Abs(config.Summarizer.TempDir); err == nil {
+		config.Summarizer.TempDir = absDir
 	}
 
 	return config, nil

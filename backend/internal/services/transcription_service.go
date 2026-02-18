@@ -11,6 +11,7 @@ import (
 	"mini-meeting/internal/repositories"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -165,7 +166,7 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	fmt.Printf("Successfully transcribed session %d (%d/%d chunks)\n", sessionID, successCount, len(chunks))
 
 	// 5. Cleanup Audio Files
-	sessionDir := fmt.Sprintf("%s/%d", s.cfg.Summarizer.TempDir, sessionID)
+	sessionDir := filepath.Join(s.cfg.Summarizer.TempDir, fmt.Sprintf("%d", sessionID))
 	if err := os.RemoveAll(sessionDir); err != nil {
 		fmt.Printf("Warning: Failed to cleanup session directory %s: %v\n", sessionDir, err)
 	} else {
