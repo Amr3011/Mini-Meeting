@@ -7,6 +7,12 @@ const STATUS_CONFIG: Record<
   SummarizerSession["status"],
   { label: string; color: string; bg: string; dot: string }
 > = {
+  STARTED: {
+    label: "Recording",
+    color: "text-yellow-700",
+    bg: "bg-yellow-50",
+    dot: "bg-yellow-500",
+  },
   CAPTURED: {
     label: "Captured",
     color: "text-blue-700",
@@ -31,12 +37,6 @@ const STATUS_CONFIG: Record<
     bg: "bg-green-50",
     dot: "bg-green-500",
   },
-  FAILED: {
-    label: "Failed",
-    color: "text-red-700",
-    bg: "bg-red-50",
-    dot: "bg-red-500",
-  },
 };
 
 function formatDate(dateStr: string) {
@@ -49,8 +49,10 @@ function formatDate(dateStr: string) {
   });
 }
 
-function StatusBadge({ status }: { status: SummarizerSession["status"] }) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.FAILED;
+function StatusBadge({ status, hasError }: { status: SummarizerSession["status"]; hasError: boolean }) {
+  const cfg = hasError
+    ? { label: "Failed", color: "text-red-700", bg: "bg-red-50", dot: "bg-red-500" }
+    : STATUS_CONFIG[status];
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.color}`}
@@ -131,7 +133,7 @@ export default function Sessions() {
                   </div>
 
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <StatusBadge status={session.status} />
+                    <StatusBadge status={session.status} hasError={!!session.error} />
                     {/* Arrow */}
                     <svg
                       className="w-4 h-4 text-gray-400 group-hover:text-brand-500 group-hover:translate-x-0.5 transition-all duration-200"
@@ -156,7 +158,7 @@ export default function Sessions() {
                       const steps = ["CAPTURED", "TRANSCRIBED", "NORMALIZED", "SUMMARIZED"];
                       const currentIdx = steps.indexOf(session.status);
                       const stepIdx = steps.indexOf(step);
-                      const isActive = stepIdx <= currentIdx && session.status !== "FAILED";
+                      const isActive = stepIdx <= currentIdx && !session.error;
                       return (
                         <div
                           key={step}
