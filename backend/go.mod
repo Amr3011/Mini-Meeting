@@ -19,6 +19,7 @@ require (
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/google/uuid v1.6.0
 	github.com/pion/webrtc/v4 v4.2.3
+	github.com/tiktoken-go/tokenizer v0.7.0
 )
 
 require (
@@ -85,7 +86,6 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20250924091648-bce9a52d7761 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
-	github.com/tiktoken-go/tokenizer v0.7.0 // indirect
 	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.69.0 // indirect

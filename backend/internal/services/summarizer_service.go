@@ -20,9 +20,11 @@ import (
 type SummarizerService struct {
 	repo                 *repositories.SummarizerRepository
 	meetingRepo          *repositories.MeetingRepository
+	userRepo             *repositories.UserRepository
 	livekitService       *LiveKitService
 	transcriptionService *TranscriptionService
 	openRouterService    *OpenRouterService
+	emailService         *EmailService
 	cfg                  *config.Config
 
 	// Active rooms tracking for graceful shutdown
@@ -36,17 +38,21 @@ type SummarizerService struct {
 func NewSummarizerService(
 	repo *repositories.SummarizerRepository,
 	meetingRepo *repositories.MeetingRepository,
+	userRepo *repositories.UserRepository,
 	livekitService *LiveKitService,
 	transcriptionService *TranscriptionService,
 	openRouterService *OpenRouterService,
+	emailService *EmailService,
 	cfg *config.Config,
 ) *SummarizerService {
 	return &SummarizerService{
 		repo:                 repo,
 		meetingRepo:          meetingRepo,
+		userRepo:             userRepo,
 		livekitService:       livekitService,
 		transcriptionService: transcriptionService,
 		openRouterService:    openRouterService,
+		emailService:         emailService,
 		cfg:                  cfg,
 		activeRooms:          make(map[uint]*lksdk.Room),
 	}
@@ -403,6 +409,18 @@ func (s *SummarizerService) ProcessSummarization(sessionID uint) error {
 
 	fmt.Printf("Successfully summarized session %d (summary length: %d chars)\n",
 		sessionID, len(resp.Summary))
+
+	// 6. Fire email notification (non-blocking)
+	go func() {
+		user, err := s.userRepo.FindByID(session.UserID)
+		if err != nil {
+			fmt.Printf("EmailNotification: failed to fetch user for session %d: %v\n", sessionID, err)
+			return
+		}
+		if err := s.emailService.SendSessionReadyEmail(user.Email, user.Name, sessionID); err != nil {
+			fmt.Printf("EmailNotification: failed to send email for session %d: %v\n", sessionID, err)
+		}
+	}()
 
 	return nil
 }

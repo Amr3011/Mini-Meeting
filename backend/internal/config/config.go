@@ -17,6 +17,7 @@ type Config struct {
 	Summarizer SummarizerConfig
 	Whisper    WhisperConfig
 	OpenRouter OpenRouterConfig
+	Brevo      BrevoConfig
 }
 
 type ServerConfig struct {
@@ -89,6 +90,12 @@ type OpenRouterConfig struct {
 	MaxTokens int
 }
 
+type BrevoConfig struct {
+	APIKey      string
+	SenderEmail string
+	SenderName  string
+}
+
 func Load() (*Config, error) {
 	// Load .env file if it exists
 	_ = godotenv.Load()
@@ -150,6 +157,11 @@ func Load() (*Config, error) {
 			Model:     getEnv("OPEN_ROUTER_MODEL", "meta-llama/llama-3.2-3b-instruct:free"),
 			Timeout:   getEnv("OPEN_ROUTER_TIMEOUT", "300s"),
 			MaxTokens: getEnvAsInt("OPEN_ROUTER_MAX_TOKENS", 4096),
+		},
+		Brevo: BrevoConfig{
+			APIKey:      getEnv("BRAVO_API_KEY"),
+			SenderEmail: getEnv("BREVO_SENDER_EMAIL", "noreply@mini-meeting.app"),
+			SenderName:  getEnv("BREVO_SENDER_NAME", "Mini Meeting"),
 		},
 	}
 

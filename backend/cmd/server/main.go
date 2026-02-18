@@ -73,7 +73,8 @@ func main() {
 	transcriptionService := services.NewTranscriptionService(summarizerRepo, cfg)
 	normalizationService := services.NewNormalizationService(summarizerRepo)
 	openRouterService := services.NewOpenRouterService(cfg)
-	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, livekitService, transcriptionService, openRouterService, cfg)
+	emailService := services.NewEmailService(cfg)
+	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, userRepo, livekitService, transcriptionService, openRouterService, emailService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
