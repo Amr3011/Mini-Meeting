@@ -14,7 +14,7 @@ type LobbyJoinResponse struct {
 	// Only set when auto-approved (admin)
 	Token    string `json:"token,omitempty"`
 	URL      string `json:"url,omitempty"`
-	RoomName string `json:"room_name,omitempty"`
+	RoomCode string `json:"room_code,omitempty"`
 	Identity string `json:"identity,omitempty"`
 	UserName string `json:"user_name,omitempty"`
 }

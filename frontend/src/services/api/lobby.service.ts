@@ -9,7 +9,7 @@ export interface LobbyJoinResponse {
   // Only present when auto_approved (admin)
   token?: string;
   url?: string;
-  room_name?: string;
+  room_code?: string;
   identity?: string;
   user_name?: string;
 }

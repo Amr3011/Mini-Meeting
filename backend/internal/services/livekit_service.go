@@ -35,13 +35,13 @@ func NewLiveKitService(cfg *config.Config) *LiveKitService {
 }
 
 // CreateJoinToken creates a token with role-based permissions
-// roomName should be the meeting code from the database
+// RoomCode should be the meeting code from the database
 // identity is the user ID as string
 // userName is the display name for the participant
 // userRole is the user's role (admin, user, etc.)
 // metadata can include user name, avatar, etc.
 func (s *LiveKitService) CreateJoinToken(
-	roomName string,
+	RoomCode string,
 	identity string,
 	userName string,
 	userRole string,
@@ -59,7 +59,7 @@ func (s *LiveKitService) CreateJoinToken(
 	// Base grant - all users can join, publish, and subscribe
 	grant := &auth.VideoGrant{
 		RoomJoin:       true,
-		Room:           roomName,
+		Room:           RoomCode,
 		CanPublish:     &[]bool{true}[0],
 		CanSubscribe:   &[]bool{true}[0],
 		CanPublishData: &[]bool{true}[0], // For chat/data messages
@@ -78,7 +78,7 @@ func (s *LiveKitService) CreateJoinToken(
 		grant.CanUpdateOwnMetadata = &canUpdateMetadata
 	}
 
-	at.AddGrant(grant)
+	at.SetVideoGrant(grant)
 
 	// Token valid for 24 hours
 	at.SetValidFor(24 * time.Hour)
@@ -92,9 +92,9 @@ func (s *LiveKitService) CreateJoinToken(
 }
 
 // RemoveParticipant removes a participant from a room (kick)
-func (s *LiveKitService) RemoveParticipant(roomName string, participantIdentity string) error {
+func (s *LiveKitService) RemoveParticipant(RoomCode string, participantIdentity string) error {
 	_, err := s.roomService.RemoveParticipant(context.Background(), &livekit.RoomParticipantIdentity{
-		Room:     roomName,
+		Room:     RoomCode,
 		Identity: participantIdentity,
 	})
 	if err != nil {
@@ -104,9 +104,9 @@ func (s *LiveKitService) RemoveParticipant(roomName string, participantIdentity 
 }
 
 // ListParticipants lists all participants in a room
-func (s *LiveKitService) ListParticipants(roomName string) ([]*livekit.ParticipantInfo, error) {
+func (s *LiveKitService) ListParticipants(RoomCode string) ([]*livekit.ParticipantInfo, error) {
 	response, err := s.roomService.ListParticipants(context.Background(), &livekit.ListParticipantsRequest{
-		Room: roomName,
+		Room: RoomCode,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list participants: %w", err)
@@ -124,9 +124,9 @@ func (s *LiveKitService) ListRooms() ([]*livekit.Room, error) {
 }
 
 // DeleteRoom deletes a room
-func (s *LiveKitService) DeleteRoom(roomName string) error {
+func (s *LiveKitService) DeleteRoom(RoomCode string) error {
 	_, err := s.roomService.DeleteRoom(context.Background(), &livekit.DeleteRoomRequest{
-		Room: roomName,
+		Room: RoomCode,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete room: %w", err)
@@ -135,9 +135,9 @@ func (s *LiveKitService) DeleteRoom(roomName string) error {
 }
 
 // MuteParticipantTrack mutes a specific track for a participant
-func (s *LiveKitService) MuteParticipantTrack(roomName string, participantIdentity string, trackSid string, muted bool) error {
+func (s *LiveKitService) MuteParticipantTrack(RoomCode string, participantIdentity string, trackSid string, muted bool) error {
 	_, err := s.roomService.MutePublishedTrack(context.Background(), &livekit.MuteRoomTrackRequest{
-		Room:     roomName,
+		Room:     RoomCode,
 		Identity: participantIdentity,
 		TrackSid: trackSid,
 		Muted:    muted,
@@ -149,9 +149,9 @@ func (s *LiveKitService) MuteParticipantTrack(roomName string, participantIdenti
 }
 
 // UpdateParticipantMetadata updates participant metadata
-func (s *LiveKitService) UpdateParticipantMetadata(roomName string, participantIdentity string, metadata string) error {
+func (s *LiveKitService) UpdateParticipantMetadata(RoomCode string, participantIdentity string, metadata string) error {
 	_, err := s.roomService.UpdateParticipant(context.Background(), &livekit.UpdateParticipantRequest{
-		Room:     roomName,
+		Room:     RoomCode,
 		Identity: participantIdentity,
 		Metadata: metadata,
 	})
@@ -162,9 +162,9 @@ func (s *LiveKitService) UpdateParticipantMetadata(roomName string, participantI
 }
 
 // UpdateRoomMetadata updates room metadata
-func (s *LiveKitService) UpdateRoomMetadata(roomName string, metadata string) error {
+func (s *LiveKitService) UpdateRoomMetadata(RoomCode string, metadata string) error {
 	_, err := s.roomService.UpdateRoomMetadata(context.Background(), &livekit.UpdateRoomMetadataRequest{
-		Room:     roomName,
+		Room:     RoomCode,
 		Metadata: metadata,
 	})
 	if err != nil {
@@ -176,4 +176,38 @@ func (s *LiveKitService) UpdateRoomMetadata(roomName string, metadata string) er
 // GetURL returns the LiveKit WebSocket URL
 func (s *LiveKitService) GetURL() string {
 	return s.url
+}
+
+// CreateBotToken creates a token for the summarizer bot hidden from other participants with audio-only subscription
+func (s *LiveKitService) CreateBotToken(RoomCode string, sessionID uint) (string, error) {
+	at := auth.NewAccessToken(s.apiKey, s.apiSecret)
+
+	// Bot identity and metadata
+	botIdentity := fmt.Sprintf("summarizer-bot-%d", sessionID)
+	at.SetIdentity(botIdentity)
+	at.SetName("Summarizer Bot")
+	at.SetMetadata(fmt.Sprintf(`{"type":"bot","session_id":%d}`, sessionID))
+
+	// Bot can only subscribe to audio, cannot publish
+	canPublish := false
+	canSubscribe := true
+	grant := &auth.VideoGrant{
+		RoomJoin:     true,
+		Room:         RoomCode,
+		CanPublish:   &canPublish,
+		CanSubscribe: &canSubscribe,
+		Hidden:       true,
+	}
+
+	at.SetVideoGrant(grant)
+
+	// Token valid for 24 hours
+	at.SetValidFor(24 * time.Hour)
+
+	token, err := at.ToJWT()
+	if err != nil {
+		return "", fmt.Errorf("failed to generate bot token: %w", err)
+	}
+
+	return token, nil
 }

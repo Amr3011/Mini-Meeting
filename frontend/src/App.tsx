@@ -17,6 +17,8 @@ const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const OAuthSuccess = lazy(() => import("./pages/OAuthSuccess"));
 const OAuthError = lazy(() => import("./pages/OAuthError"));
 const Meeting = lazy(() => import("./pages/Meeting"));
+const Sessions = lazy(() => import("./pages/Sessions"));
+const SessionDetail = lazy(() => import("./pages/SessionDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading component for lazy-loaded routes
@@ -32,12 +34,12 @@ const LoadingFallback = () => (
 // Wrapper component to validate meeting code format
 const MeetingCodeValidator = () => {
   const { meetingCode } = useParams<{ meetingCode: string }>();
-  
+
   // Validate meeting code format (xxx-xxxx-xxx)
   if (!meetingCode || !isValidMeetingCode(meetingCode)) {
     return <NotFound />;
   }
-  
+
   return <Meeting />;
 };
 
@@ -48,57 +50,75 @@ function App() {
         <AuthProvider>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* OAuth callback routes */}
-          <Route path="/auth/oauth-success" element={<OAuthSuccess />} />
-          <Route path="/auth/oauth-error" element={<OAuthError />} />
+              {/* Public Routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }
-          />
+              {/* OAuth callback routes */}
+              <Route path="/auth/oauth-success" element={<OAuthSuccess />} />
+              <Route path="/auth/oauth-error" element={<OAuthError />} />
 
-          {/* Admin only routes */}
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminUsers />
-              </ProtectedRoute>
-            }
-          />
+              {/* Protected routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* 404 - Not Found page */}
-          <Route path="/404" element={<NotFound />} />
+              {/* Admin only routes */}
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminUsers />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* Meeting route - accessible to everyone (authenticated and guests) */}
-          {/* Must be after all specific routes as it's a dynamic catch-all */}
-          {/* Validates meeting code format before rendering */}
-          <Route path="/:meetingCode" element={<MeetingCodeValidator />} />
+              {/* 404 - Not Found page */}
+              <Route path="/404" element={<NotFound />} />
 
-          {/* 404 - catch all unmatched routes */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+              {/* Sessions routes - must be before /:meetingCode catch-all */}
+              <Route
+                path="/sessions"
+                element={
+                  <ProtectedRoute>
+                    <Sessions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/sessions/:id"
+                element={
+                  <ProtectedRoute>
+                    <SessionDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Meeting route - accessible to everyone (authenticated and guests) */}
+              {/* Must be after all specific routes as it's a dynamic catch-all */}
+              {/* Validates meeting code format before rendering */}
+              <Route path="/:meetingCode" element={<MeetingCodeValidator />} />
+
+              {/* 404 - catch all unmatched routes */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </Suspense>
-      </AuthProvider>
-    </BrowserRouter>
+        </AuthProvider>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

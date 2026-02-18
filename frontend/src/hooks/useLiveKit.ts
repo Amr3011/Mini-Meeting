@@ -11,7 +11,7 @@ interface UseLiveKitOptions {
 interface UseLiveKitReturn {
   token: string | null;
   livekitUrl: string | null;
-  roomName: string | null;
+  roomCode: string | null;
   identity: string | null;
   isLoading: boolean;
   error: string | null;
@@ -29,7 +29,7 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
 
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
-  const [roomName, setRoomName] = useState<string | null>(null);
+  const [roomCode, setroomCode] = useState<string | null>(null);
   const [identity, setIdentity] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
 
       setToken(response.token);
       setLivekitUrl(response.url);
-      setRoomName(response.room_name);
+      setroomCode(response.room_code);
       setIdentity(response.identity);
     } catch (err) {
       const axiosError = err as AxiosError<{ error?: string }>;
@@ -63,7 +63,7 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
   const disconnect = useCallback(() => {
     setToken(null);
     setLivekitUrl(null);
-    setRoomName(null);
+    setroomCode(null);
     setIdentity(null);
     setError(null);
   }, []);
@@ -81,7 +81,7 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
   return {
     token,
     livekitUrl,
-    roomName,
+    roomCode,
     identity,
     isLoading,
     error,

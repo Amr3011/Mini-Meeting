@@ -3,7 +3,7 @@ import apiClient from './client';
 export interface LiveKitTokenResponse {
   token: string;
   url: string;
-  room_name: string;
+  room_code: string;
   identity: string;
   user_name: string;
 }

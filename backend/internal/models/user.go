@@ -12,6 +12,9 @@ type User struct {
 	AvatarURL  string    `gorm:"" json:"avatar_url"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+
+	// Relations
+	SummarizerSessions []SummarizerSession `gorm:"foreignKey:UserID" json:"summarizer_sessions"`
 }
 
 type Provider string

@@ -9,7 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, livekitHandler *handlers.LiveKitHandler, lobbyHandler *handlers.LobbyHandler, lobbyWSHandler *handlers.LobbyWSHandler, cfg *config.Config) {
+func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler *handlers.AuthHandler, meetingHandler *handlers.MeetingHandler, livekitHandler *handlers.LiveKitHandler, lobbyHandler *handlers.LobbyHandler, lobbyWSHandler *handlers.LobbyWSHandler, summarizerHandler *handlers.SummarizerHandler, cfg *config.Config) {
 	// API routes
 	api := app.Group("/api/v1")
 
@@ -38,6 +38,10 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	meetings.Get("/my", meetingHandler.GetMyMeetings)
 	meetings.Get("/:id", meetingHandler.GetMeeting)
 	meetings.Delete("/:id", meetingHandler.DeleteMeeting)
+
+	// Summarizer routes (protected)
+	meetings.Post("/:id/summarizer/start", summarizerHandler.StartSummarizer)
+	meetings.Post("/:id/summarizer/stop", summarizerHandler.StopSummarizer)
 
 	// Admin-only meeting routes
 	meetings.Get("/", middleware.AdminMiddleware(), meetingHandler.GetAllMeetings)

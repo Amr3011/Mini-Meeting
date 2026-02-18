@@ -1,6 +1,7 @@
 import apiClient from "./client";
 import type {
   User,
+  SummarizerSession,
   UserResponse,
   PaginatedUsersResponse,
   UpdateUserRequest,
@@ -62,6 +63,18 @@ export const userService = {
   updateUser: async (id: number, data: UpdateUserRequest): Promise<User> => {
     const response = await apiClient.patch<UserUpdateResponse>(`/users/${id}`, data);
     return response.data.data;
+  },
+
+  /**
+   * Get a specific summarizer session by ID for the current user
+   */
+  getSession: async (id: number): Promise<SummarizerSession> => {
+    const user = await userService.getCurrentUser();
+    const session = user.summarizer_sessions?.find((s) => s.id === id);
+    if (!session) {
+      throw new Error(`Session ${id} not found`);
+    }
+    return session;
   },
 
   /**

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"mini-meeting/internal/config"
 	"mini-meeting/internal/database"
@@ -10,6 +11,7 @@ import (
 	"mini-meeting/internal/repositories"
 	"mini-meeting/internal/routes"
 	"mini-meeting/internal/services"
+	"mini-meeting/internal/workers"
 	"mini-meeting/pkg/cache"
 
 	"github.com/gofiber/fiber/v2"
@@ -62,22 +64,40 @@ func main() {
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(database.GetDB())
 	meetingRepo := repositories.NewMeetingRepository(database.GetDB())
+	summarizerRepo := repositories.NewSummarizerRepository(database.GetDB())
 
 	// Initialize services
 	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
 	livekitService := services.NewLiveKitService(cfg)
+	transcriptionService := services.NewTranscriptionService(summarizerRepo, cfg)
+	normalizationService := services.NewNormalizationService(summarizerRepo)
+	openRouterService := services.NewOpenRouterService(cfg)
+	emailService := services.NewEmailService(cfg)
+	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, userRepo, livekitService, transcriptionService, openRouterService, emailService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
 	authHandler := handlers.NewAuthHandler(userService, cfg)
 	meetingHandler := handlers.NewMeetingHandler(meetingService, cfg)
-	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, cfg)
+	livekitHandler := handlers.NewLiveKitHandler(livekitService, meetingService, userService, summarizerService, cfg)
 	lobbyHandler := handlers.NewLobbyHandler(livekitService, meetingService, userService, cfg)
 	lobbyWSHandler := handlers.NewLobbyWSHandler(livekitService, meetingService, userService, cfg)
+	summarizerHandler := handlers.NewSummarizerHandler(summarizerService)
+
+	// Initialize workers
+	// Transcription worker: Run every 60 minutes, process sessions stuck for > 15 minutes
+	transcriptionWorker := workers.NewTranscriptionWorker(summarizerRepo, transcriptionService, 60*time.Minute, 15*time.Minute)
+	go transcriptionWorker.Start()
+	// Normalization worker: Run every 30 seconds, process sessions stuck for > 2 minutes
+	normalizationWorker := workers.NewNormalizationWorker(summarizerRepo, normalizationService, 30*time.Second, 2*time.Minute)
+	go normalizationWorker.Start()
+	// Summarization worker: Run every 60 seconds, process sessions stuck for > 3 minutes
+	summarizationWorker := workers.NewSummarizationWorker(summarizerRepo, summarizerService, 60*time.Second, 3*time.Minute)
+	go summarizationWorker.Start()
 
 	// Setup routes
-	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, cfg)
+	routes.SetupRoutes(app, userHandler, authHandler, meetingHandler, livekitHandler, lobbyHandler, lobbyWSHandler, summarizerHandler, cfg)
 
 	// Health check route
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {

@@ -13,23 +13,26 @@ import (
 )
 
 type LiveKitHandler struct {
-	livekitService *services.LiveKitService
-	meetingService *services.MeetingService
-	userService    *services.UserService
-	config         *config.Config
+	livekitService    *services.LiveKitService
+	meetingService    *services.MeetingService
+	userService       *services.UserService
+	summarizerService *services.SummarizerService
+	config            *config.Config
 }
 
 func NewLiveKitHandler(
 	livekitService *services.LiveKitService,
 	meetingService *services.MeetingService,
 	userService *services.UserService,
+	summarizerService *services.SummarizerService,
 	cfg *config.Config,
 ) *LiveKitHandler {
 	return &LiveKitHandler{
-		livekitService: livekitService,
-		meetingService: meetingService,
-		userService:    userService,
-		config:         cfg,
+		livekitService:    livekitService,
+		meetingService:    meetingService,
+		userService:       userService,
+		summarizerService: summarizerService,
+		config:            cfg,
 	}
 }
 
@@ -96,7 +99,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 			userName = req.UserName
 		}
 
-		identity = fmt.Sprintf("user_%d", userID)
+		identity = fmt.Sprintf("%s_%d", userName, userID)
 		metadata = fmt.Sprintf(`{"name":"%s","avatar":"%s","role":"%s"}`, userName, user.AvatarURL, userRole)
 	} else {
 		// Handle guest users
@@ -109,7 +112,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		userName = req.UserName
 		userRole = "guest"
 		// Generate a unique guest identity based on timestamp and random component
-		identity = fmt.Sprintf("guest_%d", c.Context().ConnID())
+		identity = fmt.Sprintf("%s_%d", userName, c.Context().ConnID())
 		metadata = fmt.Sprintf(`{"name":"%s","avatar":"","role":"%s"}`, userName, userRole)
 	}
 
@@ -131,7 +134,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 	response := types.GenerateTokenResponse{
 		Token:    token,
 		URL:      h.livekitService.GetURL(),
-		RoomName: req.MeetingCode,
+		RoomCode: req.MeetingCode,
 		Identity: identity,
 		UserName: userName,
 	}
@@ -296,6 +299,15 @@ func (h *LiveKitHandler) EndMeeting(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "Only meeting creator can end the meeting",
 		})
+	}
+
+	// Check for active summarizer session and stop it if running
+	session, err := h.summarizerService.GetActiveSession(meeting.ID)
+	if err == nil && session != nil {
+		// Stop the summarizer session
+		// We ignore errors here as the scheduled task would clean it up anyway,
+		// but we try to close it gracefully
+		_, _ = h.summarizerService.StopSummarizer(session.ID, userID)
 	}
 
 	// Delete the LiveKit room (this will disconnect all participants)

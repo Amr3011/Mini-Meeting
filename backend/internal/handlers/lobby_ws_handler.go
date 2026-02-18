@@ -59,7 +59,7 @@ type WSApprovedMsg struct {
 	Type     string `json:"type"`
 	Token    string `json:"token"`
 	URL      string `json:"url"`
-	RoomName string `json:"room_name"`
+	RoomCode string `json:"room_code"`
 	Identity string `json:"identity"`
 	UserName string `json:"user_name"`
 }
@@ -323,7 +323,7 @@ func (h *LobbyWSHandler) handleAdminRespond(meetingCode string, msg *WSRespondMs
 		Type:     WSTypeApproved,
 		Token:    token,
 		URL:      h.livekitService.GetURL(),
-		RoomName: lobbyReq.MeetingCode,
+		RoomCode: lobbyReq.MeetingCode,
 		Identity: lobbyReq.Identity,
 		UserName: lobbyReq.Name,
 	})
