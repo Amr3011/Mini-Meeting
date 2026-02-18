@@ -112,7 +112,17 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	}
 
 	if len(chunks) == 0 {
-		return fmt.Errorf("no audio chunks found for session %d", sessionID)
+		errMsg := "Session stopped immediately — no audio chunks were captured"
+		now := time.Now()
+		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, &now)
+		return fmt.Errorf("%s", errMsg)
+	}
+
+	if len(chunks) <= 2 {
+		errMsg := fmt.Sprintf("Session stopped too quickly — only %d audio chunk(s) captured, not enough speech to transcribe", len(chunks))
+		now := time.Now()
+		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, &now)
+		return fmt.Errorf("%s", errMsg)
 	}
 
 	fmt.Printf("Starting transcription for session %d (%d chunks)\n", sessionID, len(chunks))
@@ -155,8 +165,9 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 
 	// 4. Update session status
 	if successCount == 0 {
-		errMsg := "Failed to transcribe any chunks"
-		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, nil)
+		errMsg := "Failed to transcribe any chunks — all audio segments were empty or unreadable"
+		now := time.Now()
+		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, &now)
 		return fmt.Errorf("%s", errMsg)
 	}
 

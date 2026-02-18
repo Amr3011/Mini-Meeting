@@ -3,8 +3,8 @@ package models
 import "time"
 
 // SummarizerSession represents a meeting summarization session
-// Status flow: STARTED → CAPTURED → TRANSCRIBED → SUMMARIZED
-// On failure, status remains at the failed stage with Error field populated
+// Status flow: STARTED → CAPTURED → TRANSCRIBED → NORMALIZED → SUMMARIZED
+// On failure, status remains at the failed stage and the Error field is populated
 type SummarizerSession struct {
 	ID         uint                    `gorm:"primaryKey" json:"id"`
 	MeetingID  uint                    `gorm:"not null" json:"-"`
@@ -12,7 +12,7 @@ type SummarizerSession struct {
 	Status     SummarizerSessionStatus `gorm:"not null;default:STARTED" json:"status"`
 	Transcript *string                 `json:"transcript"`
 	Summary    *string                 `json:"summary"`
-	Error      *string                 `json:"-"`
+	Error      *string                 `json:"error"`
 	StartedAt  time.Time               `gorm:"not null" json:"started_at"`
 	EndedAt    *time.Time              `json:"ended_at,omitempty"`
 	CreatedAt  time.Time               `json:"-"`

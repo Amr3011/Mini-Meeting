@@ -1,7 +1,8 @@
 // Summarizer session model
 export interface SummarizerSession {
   id: number;
-  status: "CAPTURED" | "TRANSCRIBED" | "NORMALIZED" | "SUMMARIZED" | "FAILED";
+  status: "STARTED" | "CAPTURED" | "TRANSCRIBED" | "NORMALIZED" | "SUMMARIZED";
+  error: string | null;
   transcript: string | null;
   summary: string | null;
   started_at: string;

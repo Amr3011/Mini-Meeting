@@ -8,6 +8,12 @@ const STATUS_CONFIG: Record<
   SummarizerSession["status"],
   { label: string; color: string; bg: string; dot: string }
 > = {
+  STARTED: {
+    label: "Recording",
+    color: "text-yellow-700",
+    bg: "bg-yellow-50",
+    dot: "bg-yellow-500",
+  },
   CAPTURED: {
     label: "Captured",
     color: "text-blue-700",
@@ -32,12 +38,6 @@ const STATUS_CONFIG: Record<
     bg: "bg-green-50",
     dot: "bg-green-500",
   },
-  FAILED: {
-    label: "Failed",
-    color: "text-red-700",
-    bg: "bg-red-50",
-    dot: "bg-red-500",
-  },
 };
 
 function formatDate(dateStr: string | null) {
@@ -52,8 +52,10 @@ function formatDate(dateStr: string | null) {
   });
 }
 
-function StatusBadge({ status }: { status: SummarizerSession["status"] }) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.FAILED;
+function StatusBadge({ status, hasError }: { status: SummarizerSession["status"]; hasError: boolean }) {
+  const cfg = hasError
+    ? { label: "Failed", color: "text-red-700", bg: "bg-red-50", dot: "bg-red-500" }
+    : STATUS_CONFIG[status];
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold ${cfg.bg} ${cfg.color}`}
@@ -81,8 +83,8 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <button
       onClick={handleCopy}
       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${copied
-          ? "bg-green-50 text-green-700 border border-green-200"
-          : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200"
+        ? "bg-green-50 text-green-700 border border-green-200"
+        : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200"
         }`}
     >
       {copied ? (
@@ -255,7 +257,7 @@ export default function SessionDetail() {
                     <h1 className="text-2xl font-bold text-gray-900">Session {session.id}</h1>
                   </div>
                 </div>
-                <StatusBadge status={session.status} />
+                <StatusBadge status={session.status} hasError={!!session.error} />
               </div>
 
               {/* Meta info */}
@@ -285,59 +287,89 @@ export default function SessionDetail() {
                     Processing Progress
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {(["CAPTURED", "TRANSCRIBED", "NORMALIZED", "SUMMARIZED"] as const).map((step) => {
-                    const steps = ["CAPTURED", "TRANSCRIBED", "NORMALIZED", "SUMMARIZED"];
-                    const currentIdx = steps.indexOf(session.status);
-                    const stepIdx = steps.indexOf(step);
-                    const isActive = stepIdx <= currentIdx && session.status !== "FAILED";
-                    return (
-                      <div key={step} className="flex-1 flex flex-col items-center gap-1">
-                        <div
-                          className={`h-1.5 w-full rounded-full transition-colors duration-300 ${isActive ? "bg-brand-500" : "bg-gray-100"
-                            }`}
-                        />
-                        <span className="text-[10px] text-gray-400 hidden sm:block">{step[0] + step.slice(1).toLowerCase()}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+                {session.error ? (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl border border-red-100">
+                    <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    <p className="text-xs text-red-600 font-medium">
+                      Failed at <span className="font-bold">{session.status}</span> stage
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    {(["CAPTURED", "TRANSCRIBED", "NORMALIZED", "SUMMARIZED"] as const).map((step) => {
+                      const steps = ["CAPTURED", "TRANSCRIBED", "NORMALIZED", "SUMMARIZED"];
+                      const currentIdx = steps.indexOf(session.status);
+                      const stepIdx = steps.indexOf(step);
+                      const isActive = stepIdx <= currentIdx;
+                      return (
+                        <div key={step} className="flex-1 flex flex-col items-center gap-1">
+                          <div
+                            className={`h-1.5 w-full rounded-full transition-colors duration-300 ${isActive ? "bg-brand-500" : "bg-gray-100"
+                              }`}
+                          />
+                          <span className="text-[10px] text-gray-400 hidden sm:block">{step[0] + step.slice(1).toLowerCase()}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Error notice */}
+            {session.error && (
+              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex items-start gap-4">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-red-800 mb-1">Session could not be processed</h3>
+                  <p className="text-sm text-red-600">{session.error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Transcript */}
-            <ContentSection
-              title="Transcript"
-              content={session.transcript}
-              copyLabel="Transcript"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              }
-            />
+            {!session.error && (
+              <ContentSection
+                title="Transcript"
+                content={session.transcript}
+                copyLabel="Transcript"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                }
+              />
+            )}
 
             {/* Summary */}
-            <ContentSection
-              title="Summary"
-              content={session.summary}
-              copyLabel="Summary"
-              icon={
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              }
-            />
+            {!session.error && (
+              <ContentSection
+                title="Summary"
+                content={session.summary}
+                copyLabel="Summary"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                }
+              />
+            )}
           </div>
         )}
       </div>
