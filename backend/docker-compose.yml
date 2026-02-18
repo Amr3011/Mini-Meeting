@@ -10,6 +10,9 @@ services:
     environment:
       - PORT=8080
       - ENV=production
+      - SUMMARIZER_TEMP_DIR=/data/summarizer
+    volumes:
+      - summarizer-tmp:/data/summarizer
     networks:
       - mini-meeting-network
 
@@ -31,3 +34,4 @@ networks:
 
 volumes:
   nginx-logs:
+  summarizer-tmp:
