@@ -16,6 +16,40 @@ export const LobbyRequests: React.FC<LobbyRequestsProps> = ({
   const [hasNewRequests, setHasNewRequests] = useState(false);
   const prevCountRef = useRef(0);
 
+  // Synthesize a short bell-like chime using the Web Audio API
+  const playNotificationSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+      const playTone = (frequency: number, startTime: number, duration: number, gainValue: number) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(frequency, startTime);
+
+        gainNode.gain.setValueAtTime(gainValue, startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
+      };
+
+      const now = ctx.currentTime;
+      playTone(880, now, 0.4, 0.35);        // A5 — first note
+      playTone(1108.73, now + 0.15, 0.5, 0.25); // C#6 — second note (harmony)
+
+      // Clean up the AudioContext after the sound finishes
+      setTimeout(() => ctx.close(), 800);
+    } catch (err) {
+      // Silently ignore if AudioContext is not available
+      console.warn('Could not play notification sound:', err);
+    }
+  }, []);
+
   // Build WebSocket URL (only connect if admin)
   const wsUrl = isAdmin ? getAdminWsUrl(meetingCode) : null;
 
@@ -36,9 +70,10 @@ export const LobbyRequests: React.FC<LobbyRequestsProps> = ({
             // A new visitor is waiting
             setRequests((prev) => {
               const updated = [...prev, data.request];
-              // Show notification
+              // Show notification and play sound
               if (updated.length > prevCountRef.current) {
                 setHasNewRequests(true);
+                playNotificationSound();
                 setTimeout(() => setHasNewRequests(false), 3000);
               }
               prevCountRef.current = updated.length;
@@ -60,7 +95,7 @@ export const LobbyRequests: React.FC<LobbyRequestsProps> = ({
         console.error('Failed to parse WS message:', err);
       }
     },
-    []
+    [playNotificationSound]
   );
 
   const { sendJsonMessage, readyState } = useWebSocket(wsUrl, {
