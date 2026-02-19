@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { useSummarizer } from '../../hooks/useSummarizer';
 
@@ -16,6 +16,19 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
   isAdmin,
 }) => {
   const { session, isActive, isLoading, error, startSummarizer, stopSummarizer } = useSummarizer();
+  const [showCapturedMessage, setShowCapturedMessage] = useState(false);
+
+  useEffect(() => {
+    if (session?.status === 'CAPTURED') {
+      setShowCapturedMessage(true);
+      const timer = setTimeout(() => {
+        setShowCapturedMessage(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowCapturedMessage(false);
+    }
+  }, [session?.status]);
 
   // Only show to admin/host
   if (!isAdmin) {
@@ -88,7 +101,7 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
         )}
 
         {/* Session info */}
-        {session && session.status === 'CAPTURED' && (
+        {showCapturedMessage && session && session.status === 'CAPTURED' && (
           <div className="bg-blue-500/20 border border-blue-500/50 text-blue-200 px-4 py-2 rounded-lg text-sm">
             ✓ Recording complete we will notify you when the summary is ready
           </div>
