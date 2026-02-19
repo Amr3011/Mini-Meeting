@@ -228,6 +228,35 @@ func (h *LiveKitHandler) ListParticipants(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+// GetParticipantCount returns the number of participants in a meeting (public)
+func (h *LiveKitHandler) GetParticipantCount(c *fiber.Ctx) error {
+	meetingCode := c.Query("meeting_code")
+	if meetingCode == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "meeting_code is required",
+		})
+	}
+
+	// Verify meeting exists in DB
+	_, err := h.meetingService.GetMeetingByCode(meetingCode)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Meeting not found",
+		})
+	}
+
+	// List participants from LiveKit
+	participants, err := h.livekitService.ListParticipants(meetingCode)
+	count := 0
+	if err == nil {
+		count = len(participants)
+	}
+
+	return c.JSON(fiber.Map{
+		"count": count,
+	})
+}
+
 // MuteParticipant mutes/unmutes a specific track for a participant (admin only)
 func (h *LiveKitHandler) MuteParticipant(c *fiber.Ctx) error {
 	userID, ok := c.Locals("userID").(uint)

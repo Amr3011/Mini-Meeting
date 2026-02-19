@@ -49,6 +49,7 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	// Public LiveKit routes (accessible to guests for joining meetings)
 	publicLiveKit := api.Group("/livekit")
 	publicLiveKit.Post("/token", livekitHandler.GenerateToken)
+	publicLiveKit.Get("/participants/count", livekitHandler.GetParticipantCount)
 
 	// Protected LiveKit routes (require authentication)
 	livekit := api.Group("/livekit", middleware.AuthMiddleware(cfg))

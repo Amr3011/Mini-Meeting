@@ -14,6 +14,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useLobbyDevices } from "../hooks/useLobbyDevices";
 import { meetingService } from "../services/api/meeting.service";
 import { requestToJoin } from "../services/api/lobby.service";
+import { getParticipantCount } from "../services/api/livekit.service";
 import type { Meeting } from "../types/meeting.types";
 import { ERROR_MESSAGES } from "../utils/constants";
 
@@ -45,6 +46,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) 
 
   // Meeting state
   const [meetingData, setMeetingData] = useState<Meeting | null>(null);
+  const [participantCount, setParticipantCount] = useState<number | null>(null);
   const [displayName, setDisplayName] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -80,6 +82,13 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) 
         setLoading(true);
         const meeting = await meetingService.getMeetingByCode(meetingCode);
         setMeetingData(meeting);
+
+        try {
+          const count = await getParticipantCount(meetingCode);
+          setParticipantCount(count);
+        } catch (err) {
+          console.warn("Failed to get participant count:", err);
+        }
       } catch (err) {
         console.error("Failed to verify meeting:", err);
         const axiosError = err as { response?: { status: number } };
@@ -423,7 +432,10 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({ onJoin, onCancel }) 
 
             {/* Meeting info bar */}
             {meetingData && (
-              <MeetingInfoBar meetingCode={meetingData.meeting_code} />
+              <MeetingInfoBar
+                meetingCode={meetingData.meeting_code}
+                participantCount={participantCount}
+              />
             )}
           </div>
         </div>

@@ -116,3 +116,19 @@ export const endMeeting = async (meetingCode: string): Promise<void> => {
     meeting_code: meetingCode,
   });
 };
+
+/**
+ * Get the number of participants in a meeting (public)
+ * @param meetingCode - The meeting code
+ */
+export const getParticipantCount = async (
+  meetingCode: string
+): Promise<number> => {
+  const response = await apiClient.get<{ count: number }>(
+    `/livekit/participants/count`,
+    {
+      params: { meeting_code: meetingCode },
+    }
+  );
+  return response.data.count;
+};
