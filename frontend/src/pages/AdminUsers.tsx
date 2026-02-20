@@ -12,128 +12,75 @@ import type { AxiosError } from "axios";
 import type { ApiError } from "../types/auth.types";
 import { useAuth } from "../hooks/useAuth";
 
-// Session storage keys
-const STORAGE_KEY = 'adminUsersState';
-
-// Helper to get cached state
-const getCachedState = (search: string) => {
-  try {
-    const cached = sessionStorage.getItem(`${STORAGE_KEY}_${search}`);
-    return cached ? JSON.parse(cached) : null;
-  } catch {
-    return null;
-  }
-};
-
-// Helper to save state
-const saveState = (state: {
-  users: User[];
-  currentPage: number;
-  pageSize: number;
-  totalUsers: number;
-  totalPages: number;
-  search: string;
-}) => {
-  try {
-    sessionStorage.setItem(`${STORAGE_KEY}_${state.search}`, JSON.stringify(state));
-  } catch {
-    // Ignore storage errors
-  }
-};
-
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const cachedState = getCachedState(searchTerm);
-  const hasFetchedRef = useRef(false);
-  
-  const [users, setUsers] = useState<User[]>(cachedState?.users || []);
-  const [isLoading, setIsLoading] = useState(!cachedState);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const lastFetchedKeyRef = useRef("");
+
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
-  
+
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(cachedState?.currentPage || 1);
-  const [pageSize, setPageSize] = useState(cachedState?.pageSize || 10);
-  const [totalUsers, setTotalUsers] = useState(cachedState?.totalUsers || 0);
-  const [totalPages, setTotalPages] = useState(cachedState?.totalPages || 0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // Fetch users
   const fetchUsers = async (force = false) => {
-    // Prevent duplicate calls in strict mode
-    if (!force && hasFetchedRef.current) {
+    const paramsKey = `${currentPage}-${pageSize}-${debouncedSearch}`;
+
+    // Prevent duplicate calls with the same parameters (unless forced)
+    if (!force && paramsKey === lastFetchedKeyRef.current) {
       return;
     }
-    
-    hasFetchedRef.current = true;
+
+    lastFetchedKeyRef.current = paramsKey;
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const data = await userService.getAllUsers(currentPage, pageSize, searchTerm);
+      const data = await userService.getAllUsers(currentPage, pageSize, debouncedSearch);
       setUsers(data.data);
       setTotalUsers(data.total);
       setTotalPages(data.total_pages);
-      
-      // Save to session storage
-      saveState({
-        users: data.data,
-        currentPage,
-        pageSize,
-        totalUsers: data.total,
-        totalPages: data.total_pages,
-        search: searchTerm,
-      });
     } catch (err) {
       const axiosError = err as AxiosError<ApiError>;
       setError(
         axiosError.response?.data?.message ||
-          "Failed to fetch users. Please try again."
+        "Failed to fetch users. Please try again."
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle search input change with debounce
+  // 1. Debounce the search term
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Reset to page 1 when search term changes
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-      } else {
-        hasFetchedRef.current = false;
-        fetchUsers();
-      }
-    }, 500); // 500ms debounce
-
+      setDebouncedSearch(searchTerm);
+    }, 500);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
+  // 2. Reset to page 1 when search changes
   useEffect(() => {
-    // If we have cached data that matches current page/pageSize/search, don't refetch
-    const cached = getCachedState(searchTerm);
-    if (
-      cached &&
-      cached.currentPage === currentPage &&
-      cached.pageSize === pageSize &&
-      cached.search === searchTerm &&
-      cached.users.length > 0 &&
-      !hasFetchedRef.current
-    ) {
-      // Mark as fetched to prevent duplicate calls
-      hasFetchedRef.current = true;
-      return;
+    if (currentPage !== 1) {
+      setCurrentPage(1);
     }
-    
-    // Reset fetch flag and fetch new data
-    hasFetchedRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  // 3. Centralized fetch effect
+  useEffect(() => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, debouncedSearch]);
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
@@ -147,7 +94,6 @@ export default function AdminUsers() {
     setActionLoading(true);
     try {
       await userService.deleteUser(selectedUser.id);
-      hasFetchedRef.current = false;
       await fetchUsers(true);
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
@@ -155,7 +101,7 @@ export default function AdminUsers() {
       const axiosError = err as AxiosError<ApiError>;
       setError(
         axiosError.response?.data?.message ||
-          "Failed to delete user. Please try again."
+        "Failed to delete user. Please try again."
       );
     } finally {
       setActionLoading(false);
@@ -287,13 +233,12 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.provider === "google"
-                              ? "bg-red-100 text-red-800"
-                              : user.provider === "github"
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.provider === "google"
+                            ? "bg-red-100 text-red-800"
+                            : user.provider === "github"
                               ? "bg-gray-800 text-white"
                               : "bg-blue-100 text-blue-800"
-                          }`}
+                            }`}
                         >
                           {user.provider.charAt(0).toUpperCase() + user.provider.slice(1)}
                         </span>

@@ -51,7 +51,7 @@ export default function Profile() {
       const axiosError = err as AxiosError<ApiError>;
       setError(
         axiosError.response?.data?.message ||
-          "Failed to update name. Please try again."
+        "Failed to update name. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -159,6 +159,26 @@ export default function Profile() {
                 </label>
                 <div className="flex items-center">
                   <p className="text-lg text-gray-900">{user?.email}</p>
+                </div>
+              </div>
+
+              {/* Login Method */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Login Method
+                </label>
+                <div className="flex">
+                  {user?.provider === "github" ? (
+                    <span className="inline-flex items-center px-4 py-1 rounded-full text-sm font-bold bg-[#111827] text-white">
+                      Github
+                    </span>
+                  ) : user?.provider === "google" ? (
+                    <span className="inline-flex items-center px-4 py-1 rounded-full text-sm font-bold bg-[#fef2f2] text-[#991b1b]">
+                      Google
+                    </span>
+                  ) : (
+                    <p className="text-lg text-gray-900 capitalize">{user?.provider}</p>
+                  )}
                 </div>
               </div>
 
