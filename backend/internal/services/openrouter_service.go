@@ -84,21 +84,6 @@ type ChatCompletionResponse struct {
 	} `json:"usage"`
 }
 
-// SummarizationRequest contains the parameters for generating a meeting summary
-type SummarizationRequest struct {
-	Transcript  string  // The normalized transcript to summarize
-	Temperature float64 // Optional: controls randomness (0.0 to 1.0)
-}
-
-// SummarizationResponse contains the generated summary and metadata
-type SummarizationResponse struct {
-	Summary      string // The generated summary
-	ModelUsed    string // The model that was used
-	PromptTokens int    // Number of tokens in the prompt
-	OutputTokens int    // Number of tokens in the response
-	TotalTokens  int    // Total tokens used
-}
-
 // GenerateSummary generates a structured meeting summary from a transcript using OpenRouter
 func (s *OpenRouterService) GenerateSummary(ctx context.Context, req SummarizationRequest) (*SummarizationResponse, error) {
 	if s.config.APIKey == "" {
