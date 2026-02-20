@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
 import { Layout } from "../components/layout/Layout";
-import type { SummarizerSession } from "../types/user.types";
+import { userService } from "../services/api/user.service";
+import type { SummarizerSession, SummarizerSessionList } from "../types/user.types";
 
 const STATUS_CONFIG: Record<
   SummarizerSession["status"],
@@ -64,14 +65,32 @@ function StatusBadge({ status, hasError }: { status: SummarizerSession["status"]
 }
 
 export default function Sessions() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const sessions = user?.summarizer_sessions ?? [];
+  const [sessions, setSessions] = useState<SummarizerSessionList[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 10;
 
-  // Sort newest first
-  const sorted = [...sessions].sort(
-    (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
-  );
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchSessions(controller.signal);
+    return () => controller.abort();
+  }, [page]);
+
+  const fetchSessions = async (signal?: AbortSignal) => {
+    setIsLoading(true);
+    try {
+      const response = await userService.getSessions(page, pageSize, signal);
+      setSessions(response.data);
+      setTotalPages(response.total_pages);
+    } catch (error: any) {
+      if (error.name === "CanceledError" || error.name === "AbortError") return;
+      console.error("Failed to fetch sessions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Layout>
@@ -84,7 +103,12 @@ export default function Sessions() {
           </p>
         </div>
 
-        {sorted.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand-600 mb-4" />
+            <p className="text-gray-400 text-sm">Loading sessions...</p>
+          </div>
+        ) : sessions.length === 0 ? (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mb-4">
@@ -109,7 +133,7 @@ export default function Sessions() {
           </div>
         ) : (
           <div className="grid gap-4">
-            {sorted.map((session, idx) => (
+            {sessions.map((session, idx) => (
               <button
                 key={session.id}
                 onClick={() => navigate(`/sessions/${session.id}`)}
@@ -171,6 +195,29 @@ export default function Sessions() {
                 </div>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!isLoading && totalPages > 1 && (
+          <div className="flex justify-center mt-8 gap-2">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2 text-sm font-medium text-gray-700">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

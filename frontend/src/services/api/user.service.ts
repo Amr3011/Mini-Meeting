@@ -8,6 +8,7 @@ import type {
   UserUpdateResponse,
   CreateUserRequest,
   UserDeleteResponse,
+  PaginatedSessionsResponse,
 } from "../../types/user.types";
 
 export const userService = {
@@ -66,15 +67,35 @@ export const userService = {
   },
 
   /**
-   * Get a specific summarizer session by ID for the current user
+   * Get all summarizer sessions with pagination
    */
-  getSession: async (id: number): Promise<SummarizerSession> => {
-    const user = await userService.getCurrentUser();
-    const session = user.summarizer_sessions?.find((s) => s.id === id);
-    if (!session) {
-      throw new Error(`Session ${id} not found`);
-    }
-    return session;
+  getSessions: async (
+    page: number = 1,
+    pageSize: number = 10,
+    signal?: AbortSignal
+  ): Promise<PaginatedSessionsResponse> => {
+    const response = await apiClient.get<PaginatedSessionsResponse>("/sessions", {
+      params: { page, page_size: pageSize },
+      signal,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get a specific summarizer session by ID
+   */
+  getSession: async (id: number, signal?: AbortSignal): Promise<SummarizerSession> => {
+    const response = await apiClient.get<{ data: SummarizerSession }>(`/sessions/${id}`, {
+      signal,
+    });
+    return response.data.data;
+  },
+
+  /**
+   * Delete a summarizer session by ID
+   */
+  deleteSession: async (id: number): Promise<void> => {
+    await apiClient.delete(`/sessions/${id}`);
   },
 
   /**

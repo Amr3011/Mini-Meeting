@@ -20,7 +20,7 @@ func (r *UserRepository) Create(user *models.User) error {
 
 func (r *UserRepository) FindByID(id uint) (*models.User, error) {
 	var user models.User
-	err := r.db.Preload("SummarizerSessions").First(&user, id).Error
+	err := r.db.First(&user, id).Error
 	if err != nil {
 		return nil, err
 	}

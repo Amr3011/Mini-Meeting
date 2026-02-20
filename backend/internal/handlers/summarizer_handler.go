@@ -127,3 +127,97 @@ func (h *SummarizerHandler) StopSummarizer(c *fiber.Ctx) error {
 		},
 	})
 }
+
+// GetSessions retrieves a paginated list of sessions for the authenticated user
+// GET /api/v1/sessions?page=1&page_size=10
+func (h *SummarizerHandler) GetSessions(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	page := c.QueryInt("page", 1)
+	pageSize := c.QueryInt("page_size", 10)
+
+	response, err := h.service.GetSessions(userID, page, pageSize)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(response)
+}
+
+// GetSession retrieves a specific session by ID
+// GET /api/v1/sessions/:id
+func (h *SummarizerHandler) GetSession(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid session ID",
+		})
+	}
+
+	session, err := h.service.GetSession(uint(id), userID)
+	if err != nil {
+		statusCode := fiber.StatusInternalServerError
+		if err.Error() == "session not found" {
+			statusCode = fiber.StatusNotFound
+		} else if err.Error() == "unauthorized: session does not belong to user" {
+			statusCode = fiber.StatusForbidden
+		}
+		return c.Status(statusCode).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"data": session,
+	})
+}
+
+// DeleteSession deletes a session by ID
+// DELETE /api/v1/sessions/:id
+func (h *SummarizerHandler) DeleteSession(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uint)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	id, err := strconv.ParseUint(c.Params("id"), 10, 32)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid session ID",
+		})
+	}
+
+	if err := h.service.DeleteSession(uint(id), userID); err != nil {
+		statusCode := fiber.StatusInternalServerError
+		// Check for error substring since it's wrapped
+		errMsg := err.Error()
+		if len(errMsg) >= 17 && errMsg[:17] == "session not found" {
+			statusCode = fiber.StatusNotFound
+		} else if errMsg == "unauthorized: session does not belong to user" {
+			statusCode = fiber.StatusForbidden
+		}
+		return c.Status(statusCode).JSON(fiber.Map{
+			"error": errMsg,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Session deleted successfully",
+	})
+}

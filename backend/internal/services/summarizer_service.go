@@ -2,11 +2,13 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mini-meeting/internal/config"
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
+	"mini-meeting/internal/types"
 	"os"
 	"path/filepath"
 	"sync"
@@ -421,6 +423,104 @@ func (s *SummarizerService) ProcessSummarization(sessionID uint) error {
 			fmt.Printf("EmailNotification: failed to send email for session %d: %v\n", sessionID, err)
 		}
 	}()
+
+	return nil
+}
+
+// GetSessions returns a paginated list of sessions for a user
+func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types.PaginatedSessionsResponse, error) {
+	// Set default values
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 10
+	}
+
+	sessions, total, err := s.repo.FindAllByUserIDPaginated(userID, page, pageSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch sessions: %w", err)
+	}
+
+	// Map models to response type
+	sessionList := make([]types.SessionsList, len(sessions))
+	for i, session := range sessions {
+		sessionList[i] = types.SessionsList{
+			ID:        session.ID,
+			Status:    session.Status,
+			Error:     session.Error,
+			StartedAt: session.StartedAt,
+		}
+	}
+
+	// Calculate total pages
+	totalPages := int(total) / pageSize
+	if int(total)%pageSize > 0 {
+		totalPages++
+	}
+
+	return &types.PaginatedSessionsResponse{
+		Data:       sessionList,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
+}
+
+// GetSession retrieves a specific session for a user (verifying ownership)
+func (s *SummarizerService) GetSession(sessionID, userID uint) (*types.SessionResponse, error) {
+	session, err := s.repo.FindSessionByID(sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	if session.UserID != userID {
+		return nil, errors.New("unauthorized: session does not belong to user")
+	}
+
+	return &types.SessionResponse{
+		ID:         session.ID,
+		Status:     session.Status,
+		Error:      session.Error,
+		Transcript: session.Transcript,
+		Summary:    session.Summary,
+		StartedAt:  session.StartedAt,
+		EndedAt:    session.EndedAt,
+	}, nil
+}
+
+// DeleteSession deletes a session (verifying ownership)
+func (s *SummarizerService) DeleteSession(sessionID, userID uint) error {
+	session, err := s.repo.FindSessionByID(sessionID)
+	if err != nil {
+		return fmt.Errorf("session not found: %w", err)
+	}
+
+	if session.UserID != userID {
+		return errors.New("unauthorized: session does not belong to user")
+	}
+
+	// 1. Delete audio files from file system
+	sessionDir := filepath.Join(s.cfg.Summarizer.TempDir, fmt.Sprintf("%d", sessionID))
+	if err := os.RemoveAll(sessionDir); err != nil {
+		fmt.Printf("Warning: failed to delete audio files for session %d: %v\n", sessionID, err)
+	}
+
+	// 2. Delete chunks for this session in database
+	if err := s.repo.DeleteChunksBySessionID(sessionID); err != nil {
+		return fmt.Errorf("failed to delete chunks: %w", err)
+	}
+
+	// 3. Delete transcripts for this session in database
+	if err := s.repo.DeleteTranscriptsBySessionID(sessionID); err != nil {
+		return fmt.Errorf("failed to delete transcripts: %w", err)
+	}
+
+	// 4. Finally delete the session record itself
+	if err := s.repo.DeleteSession(sessionID); err != nil {
+		return fmt.Errorf("failed to delete session: %w", err)
+	}
 
 	return nil
 }

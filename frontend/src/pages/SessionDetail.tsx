@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Layout } from "../components/layout/Layout";
 import { userService } from "../services/api/user.service";
 import type { SummarizerSession } from "../types/user.types";
+import { Modal } from "../components/common/Modal";
+import { Button } from "../components/common/Button";
 
 const STATUS_CONFIG: Record<
   SummarizerSession["status"],
@@ -168,9 +170,13 @@ function ContentSection({
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [session, setSession] = useState<SummarizerSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const sessionId = Number(id);
@@ -180,12 +186,38 @@ export default function SessionDetail() {
       return;
     }
 
+    const controller = new AbortController();
+
     userService
-      .getSession(sessionId)
+      .getSession(sessionId, controller.signal)
       .then(setSession)
-      .catch((err: Error) => setError(err.message || "Session not found."))
-      .finally(() => setIsLoading(false));
+      .catch((err: any) => {
+        if (err.name === "CanceledError" || err.name === "AbortError") return;
+        setError(err.message || "Session not found.");
+      })
+      .finally(() => {
+        if (controller.signal.aborted) return;
+        setIsLoading(false);
+      });
+
+    return () => controller.abort();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!session) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await userService.deleteSession(session.id);
+      setShowDeleteModal(false);
+      navigate("/sessions");
+    } catch (err: any) {
+      console.error("Failed to delete session:", err);
+      setDeleteError(err.message || "Failed to delete session. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <Layout>
@@ -257,7 +289,31 @@ export default function SessionDetail() {
                     <h1 className="text-2xl font-bold text-gray-900">Session {session.id}</h1>
                   </div>
                 </div>
-                <StatusBadge status={session.status} hasError={!!session.error} />
+                <div className="flex items-center gap-2">
+                  {!session.error && (
+                    <button
+                      onClick={() => setShowDeleteModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
+                      title="Delete Session"
+                    >
+                      <svg
+                        className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      <span className="text-xs font-medium">Delete</span>
+                    </button>
+                  )}
+                  <StatusBadge status={session.status} hasError={!!session.error} />
+                </div>
               </div>
 
               {/* Meta info */}
@@ -320,15 +376,26 @@ export default function SessionDetail() {
 
             {/* Error notice */}
             {session.error && (
-              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex items-start gap-4">
-                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-red-800 mb-1">Session could not be processed</h3>
-                  <p className="text-sm text-red-600">{session.error}</p>
+              <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex flex-col sm:flex-row items-start gap-4">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-red-800 mb-1">Session could not be processed</h3>
+                    <p className="text-sm text-red-600 mb-3">{session.error}</p>
+                    <button
+                      onClick={() => setShowDeleteModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 text-red-700 text-xs font-medium rounded-lg hover:bg-red-50 transition-colors shadow-sm"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete Session
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -373,6 +440,53 @@ export default function SessionDetail() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => !isDeleting && setShowDeleteModal(false)}
+        title="Delete Session"
+        type="danger"
+        size="sm"
+        footer={
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button
+              variant="ghost"
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              isLoading={isDeleting}
+              leftIcon={
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              }
+            >
+              Delete Session
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete this session? This action cannot be undone and all data associated with it will be permanently removed.
+          </p>
+
+          {deleteError && (
+            <div className="p-3 bg-red-50 border border-red-100 rounded-lg flex items-center gap-2 text-red-600">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-xs font-medium">{deleteError}</p>
+            </div>
+          )}
+        </div>
+      </Modal>
     </Layout>
   );
 }

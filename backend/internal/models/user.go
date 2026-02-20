@@ -11,10 +11,7 @@ type User struct {
 	ProviderID string    `gorm:"index" json:"-"`
 	AvatarURL  string    `gorm:"" json:"avatar_url"`
 	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-
-	// Relations
-	SummarizerSessions []SummarizerSession `gorm:"foreignKey:UserID" json:"summarizer_sessions"`
+	UpdatedAt  time.Time `json:"-"`
 }
 
 type Provider string

@@ -66,7 +66,28 @@ func (r *SummarizerRepository) FindStuckSessions(status models.SummarizerSession
 	return sessions, err
 }
 
-// Audio chunk operations
+func (r *SummarizerRepository) FindAllByUserIDPaginated(userID uint, page, pageSize int) ([]models.SummarizerSession, int64, error) {
+	var sessions []models.SummarizerSession
+	var total int64
+
+	query := r.db.Model(&models.SummarizerSession{}).Where("user_id = ?", userID)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+	err := query.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&sessions).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return sessions, total, nil
+}
+
+func (r *SummarizerRepository) DeleteSession(id uint) error {
+	return r.db.Delete(&models.SummarizerSession{}, id).Error
+}
 
 func (r *SummarizerRepository) CreateAudioChunk(chunk *models.AudioChunk) error {
 	return r.db.Create(chunk).Error

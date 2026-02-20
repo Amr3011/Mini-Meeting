@@ -43,6 +43,12 @@ func SetupRoutes(app *fiber.App, userHandler *handlers.UserHandler, authHandler 
 	meetings.Post("/:id/summarizer/start", summarizerHandler.StartSummarizer)
 	meetings.Post("/:id/summarizer/stop", summarizerHandler.StopSummarizer)
 
+	// Session management routes (protected)
+	sessions := api.Group("/sessions", middleware.AuthMiddleware(cfg))
+	sessions.Get("/", summarizerHandler.GetSessions)
+	sessions.Get("/:id", summarizerHandler.GetSession)
+	sessions.Delete("/:id", summarizerHandler.DeleteSession)
+
 	// Admin-only meeting routes
 	meetings.Get("/", middleware.AdminMiddleware(), meetingHandler.GetAllMeetings)
 
