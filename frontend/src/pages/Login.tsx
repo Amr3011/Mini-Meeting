@@ -60,9 +60,9 @@ export default function Login() {
           {/* Features */}
           <div className="space-y-4 w-full max-w-md">
             {[
+              { icon: '✓', text: 'AI Transcription' },
+              { icon: '✓', text: 'Smart Session Summaries' },
               { icon: '✓', text: 'HD Video & Audio Quality' },
-              { icon: '✓', text: 'Screen Sharing' },
-              { icon: '✓', text: 'Secure End-to-End Encryption' },
               { icon: '✓', text: 'Unlimited Meeting Duration' },
             ].map((feature, i) => (
               <div

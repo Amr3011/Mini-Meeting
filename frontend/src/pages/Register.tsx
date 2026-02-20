@@ -61,9 +61,10 @@ export default function Register() {
           <div className="space-y-4 w-full max-w-md">
             {[
               { icon: '💳', text: 'Free, no credit card required' },
-              { icon: '🔒', text: 'Secure and private meetings' },
-              { icon: '🎥', text: 'HD video and crystal clear audio' },
+              { icon: '📝', text: 'AI Meeting Transcription' },
+              { icon: '✨', text: 'AI-powered Summaries' },
               { icon: '💬', text: 'Screen sharing and Real-time chat' },
+              { icon: '🔒', text: 'Secure and private meetings' },
             ].map((feature, i) => (
               <div
                 key={i}

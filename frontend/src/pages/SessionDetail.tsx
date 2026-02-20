@@ -400,6 +400,25 @@ export default function SessionDetail() {
               </div>
             )}
 
+            {/* Summary */}
+            {!session.error && (
+              <ContentSection
+                title="Summary"
+                content={session.summary}
+                copyLabel="Summary"
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                }
+              />
+            )}
+
             {/* Transcript */}
             {!session.error && (
               <ContentSection
@@ -419,24 +438,6 @@ export default function SessionDetail() {
               />
             )}
 
-            {/* Summary */}
-            {!session.error && (
-              <ContentSection
-                title="Summary"
-                content={session.summary}
-                copyLabel="Summary"
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
-                }
-              />
-            )}
           </div>
         )}
       </div>
