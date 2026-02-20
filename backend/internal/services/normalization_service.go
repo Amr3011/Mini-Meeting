@@ -9,12 +9,14 @@ import (
 )
 
 type NormalizationService struct {
-	repo *repositories.SummarizerRepository
+	repo                 *repositories.SummarizerRepository
+	summarizationService *SummarizationService
 }
 
-func NewNormalizationService(repo *repositories.SummarizerRepository) *NormalizationService {
+func NewNormalizationService(repo *repositories.SummarizerRepository, summarizationService *SummarizationService) *NormalizationService {
 	return &NormalizationService{
-		repo: repo,
+		repo:                 repo,
+		summarizationService: summarizationService,
 	}
 }
 
@@ -80,6 +82,14 @@ func (s *NormalizationService) ProcessSession(sessionID uint) error {
 
 	fmt.Printf("Successfully normalized session %d (%d segments merged into %d)\n",
 		sessionID, len(transcripts), len(mergedSegments))
+
+	// Trigger summarization in background
+	go func() {
+		fmt.Printf("Triggering background summarization for session %d\n", sessionID)
+		if err := s.summarizationService.ProcessSummarization(sessionID); err != nil {
+			fmt.Printf("Failed to process session %d: %v\n", sessionID, err)
+		}
+	}()
 
 	return nil
 }

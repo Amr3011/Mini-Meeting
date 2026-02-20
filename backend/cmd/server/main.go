@@ -70,11 +70,14 @@ func main() {
 	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
 	livekitService := services.NewLiveKitService(cfg)
-	transcriptionService := services.NewTranscriptionService(summarizerRepo, cfg)
-	normalizationService := services.NewNormalizationService(summarizerRepo)
 	openRouterService := services.NewOpenRouterService(cfg)
 	emailService := services.NewEmailService(cfg)
-	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, userRepo, livekitService, transcriptionService, openRouterService, emailService, cfg)
+
+	// Dependency chain: SummarizationService <- NormalizationService <- TranscriptionService <- SummarizerService
+	summarizationService := services.NewSummarizationService(summarizerRepo, userRepo, openRouterService, emailService, cfg)
+	normalizationService := services.NewNormalizationService(summarizerRepo, summarizationService)
+	transcriptionService := services.NewTranscriptionService(summarizerRepo, normalizationService, cfg)
+	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, userRepo, livekitService, transcriptionService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
@@ -89,11 +92,11 @@ func main() {
 	// Transcription worker: Run every 60 minutes, process sessions stuck for > 15 minutes
 	transcriptionWorker := workers.NewTranscriptionWorker(summarizerRepo, transcriptionService, 60*time.Minute, 15*time.Minute)
 	go transcriptionWorker.Start()
-	// Normalization worker: Run every 30 seconds, process sessions stuck for > 2 minutes
-	normalizationWorker := workers.NewNormalizationWorker(summarizerRepo, normalizationService, 30*time.Second, 2*time.Minute)
+	// Normalization worker: Run every 60 minutes, process sessions stuck for > 15 minutes
+	normalizationWorker := workers.NewNormalizationWorker(summarizerRepo, normalizationService, 60*time.Minute, 15*time.Minute)
 	go normalizationWorker.Start()
-	// Summarization worker: Run every 60 seconds, process sessions stuck for > 3 minutes
-	summarizationWorker := workers.NewSummarizationWorker(summarizerRepo, summarizerService, 60*time.Second, 3*time.Minute)
+	// Summarization worker: Run every 60 minutes, process sessions stuck for > 15 minutes
+	summarizationWorker := workers.NewSummarizationWorker(summarizerRepo, summarizationService, 60*time.Minute, 15*time.Minute)
 	go summarizationWorker.Start()
 
 	// Setup routes

@@ -16,14 +16,16 @@ import (
 )
 
 type TranscriptionService struct {
-	repo *repositories.SummarizerRepository
-	cfg  *config.Config
+	repo                 *repositories.SummarizerRepository
+	normalizationService *NormalizationService
+	cfg                  *config.Config
 }
 
-func NewTranscriptionService(repo *repositories.SummarizerRepository, cfg *config.Config) *TranscriptionService {
+func NewTranscriptionService(repo *repositories.SummarizerRepository, normalizationService *NormalizationService, cfg *config.Config) *TranscriptionService {
 	return &TranscriptionService{
-		repo: repo,
-		cfg:  cfg,
+		repo:                 repo,
+		normalizationService: normalizationService,
+		cfg:                  cfg,
 	}
 }
 
@@ -191,6 +193,14 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	} else {
 		fmt.Printf("Cleaned up audio chunks records from database for session %d\n", sessionID)
 	}
+
+	// Trigger normalization in background
+	go func() {
+		fmt.Printf("Triggering background normalization for session %d\n", sessionID)
+		if err := s.normalizationService.ProcessSession(sessionID); err != nil {
+			fmt.Printf("Failed to process session %d: %v\n", sessionID, err)
+		}
+	}()
 
 	return nil
 }

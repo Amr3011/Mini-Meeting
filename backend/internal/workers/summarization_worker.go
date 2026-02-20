@@ -9,23 +9,23 @@ import (
 )
 
 type SummarizationWorker struct {
-	repo              *repositories.SummarizerRepository
-	summarizerService *services.SummarizerService
-	interval          time.Duration
-	stuckThreshold    time.Duration
+	repo                 *repositories.SummarizerRepository
+	summarizationService *services.SummarizationService
+	interval             time.Duration
+	stuckThreshold       time.Duration
 }
 
 func NewSummarizationWorker(
 	repo *repositories.SummarizerRepository,
-	summarizerService *services.SummarizerService,
+	summarizationService *services.SummarizationService,
 	interval time.Duration,
 	stuckThreshold time.Duration,
 ) *SummarizationWorker {
 	return &SummarizationWorker{
-		repo:              repo,
-		summarizerService: summarizerService,
-		interval:          interval,
-		stuckThreshold:    stuckThreshold,
+		repo:                 repo,
+		summarizationService: summarizationService,
+		interval:             interval,
+		stuckThreshold:       stuckThreshold,
 	}
 }
 
@@ -64,7 +64,7 @@ func (w *SummarizationWorker) processStuckSessions() {
 
 		fmt.Printf("SummarizationWorker: Processing session %d\n", session.ID)
 
-		if err := w.summarizerService.ProcessSummarization(session.ID); err != nil {
+		if err := w.summarizationService.ProcessSummarization(session.ID); err != nil {
 			fmt.Printf("SummarizationWorker: Failed to summarize session %d: %v\n", session.ID, err)
 		}
 	}
