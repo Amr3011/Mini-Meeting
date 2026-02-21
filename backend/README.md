@@ -1,60 +1,26 @@
 # Backend
+# Mini-Meeting Backend 🚀
 
-Go-based REST API for Mini-Meeting video conferencing platform.
+Go-based REST API for Mini-Meeting.
 
-## Tech Stack
-
-- **Go** - Backend language
-- **PostgreSQL** - Database
-- **Redis** - Caching & state management
+## 🛠️ Tech Stack
+- **Go 1.24+**
+- **GORM** (PostgreSQL)
 - **LiveKit** - Real-time video infrastructure
-- **JWT** - Authentication
-- **OAuth 2.0** - Google & GitHub login
-- **Docker** - Containerization
+- **JWT & OAuth 2.0** (Google & GitHub)
+- **Faster-Whisper** (Local AI Transcription)
 
-## Features
+## 🚀 Quick Start
+For the full development setup, please refer to the [Root README](../README.md).
 
-- User authentication (OAuth + JWT)
-- Meeting management (create, join)
-- LiveKit integration for video rooms
-- Token generation for secure meeting access
-- User profile management
-
-## Quick Start
-
+To run the backend locally:
 ```bash
-# Run with Docker
-docker-compose up
-
-# Run locally (requires PostgreSQL & Redis)
+go mod download
+# Copy .env.example to .env and fill in secrets
 go run cmd/server/main.go
-
-# Run with hot reload
+# Or with hot-reload:
 air
 ```
 
-## Environment Variables
-
-See `.env.example` or `docker-compose.yml` for required configuration:
-
-- Database credentials
-- Redis connection
-- LiveKit server details
-- OAuth client IDs/secrets
-- JWT secret
-
-## API Structure
-
-- `/api/auth/*` - Authentication endpoints
-- `/api/meetings/*` - Meeting operations
-- `/api/users/*` - User management
-- `/api/livekit/*` - Video room tokens
-
-## Database Migrations
-
-```bash
-# Create migration
-./create-migration.sh migration_name
-
-# Migrations run automatically on startup
-```
+## 🔄 Migrations
+Read [./migrations/README.md](./migrations/README.md) for instructions on creating and running migrations.

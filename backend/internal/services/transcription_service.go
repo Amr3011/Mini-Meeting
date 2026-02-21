@@ -67,10 +67,17 @@ func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) 
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	client := &http.Client{}
+	timeout, err := time.ParseDuration(s.cfg.Whisper.Timeout)
+	if err != nil {
+		timeout = 120 * time.Second
+	}
+
+	client := &http.Client{
+		Timeout: timeout,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("failed to execute request: %w", err)
+		return "", fmt.Errorf("failed to execute request (timeout: %v): %w", timeout, err)
 	}
 	defer resp.Body.Close()
 

@@ -10,9 +10,11 @@ GORM's `AutoMigrate()` **cannot** drop or modify columns. This migration system 
 
 ```powershell
 # Windows
+cd backend
 .\create-migration.ps1 "your_migration_name"
 
 # Linux/Mac
+cd backend
 ./create-migration.sh "your_migration_name"
 ```
 

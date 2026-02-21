@@ -1,50 +1,27 @@
-# Frontend
+# Mini-Meeting Frontend ⚛️
 
-React + TypeScript web application for Mini-Meeting video conferencing.
+React + TypeScript web application for Mini-Meeting.
 
-## Tech Stack
+## 🛠️ Tech Stack
+- **React 18** (Vite)
+- **TypeScript**
+- **TailwindCSS**
+- **LiveKit React Components**
 
-- **React** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool & dev server
-- **TailwindCSS** - Styling
-- **LiveKit React** - Video components
-- **Context API** - State management
-- **React Router** - Navigation
+## 🚀 Quick Start
+For the full development setup, please refer to the [Root README](../README.md).
 
-## Features
-
-- OAuth authentication (Google & GitHub)
-- Meeting creation
-- Real-time video conferencing
-- Device selection (camera/microphone)
-- Meeting lobby with preview
-- Responsive design
-- Error boundaries & loading states
-- Admin user management
-
-## Quick Start
-
+To run the frontend locally:
 ```bash
-# Install dependencies
 npm install
-
-# Run development server
+# Setup .env (see root .env.example)
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
-## Environment Variables
-
-Create `.env` file:
-
+## 🌐 Environment Variables
+Required in `.env`:
 ```
-VITE_API_URL=http://localhost:8080
+VITE_API_BASE_URL=http://localhost:3000/api/v1
 ```
 
 ## Project Structure
@@ -60,13 +37,3 @@ VITE_API_URL=http://localhost:8080
 - `services/` - API integration
 - `types/` - TypeScript definitions
 - `utils/` - Helper functions
-
-## Key Routes
-
-- `/` - Landing page
-- `/login` - Login page
-- `/dashboard` - User dashboard
-- `/meeting/:id` - Meeting lobby
-- `/room/:id` - Meeting room
-- `/profile` - User profile
-- `/admin/users` - Admin panel
