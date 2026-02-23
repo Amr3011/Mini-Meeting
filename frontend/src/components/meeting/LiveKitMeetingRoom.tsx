@@ -1,18 +1,37 @@
-import { LiveKitRoom, VideoConference } from '@livekit/components-react';
-import '@livekit/components-styles';
+import {
+  LiveKitRoom,
+  RoomAudioRenderer,
+  GridLayout,
+  FocusLayout,
+  FocusLayoutContainer,
+  CarouselLayout,
+  useTracks,
+  useParticipants,
+  LayoutContextProvider,
+  Chat,
+} from "@livekit/components-react";
+import "@livekit/components-styles";
+import "./ChatSidebar.css";
+import "./Sidebar.css";
+import "./ScreenShareLayout.css";
 import {
   VideoPresets,
   ScreenSharePresets,
   DisconnectReason,
-} from 'livekit-client';
-import { ErrorMessage } from '../common/ErrorMessage';
-import { AdminControls } from './AdminControls';
-import { LobbyRequests } from './LobbyRequests';
-import { SummarizerControls } from './SummarizerControls';
-import { DisconnectMessage } from './DisconnectMessage';
-import type { DevicePreferences } from '../../pages/MeetingLobby';
-import { useState, useEffect, useMemo } from 'react';
-import { meetingService } from '../../services/api/meeting.service';
+  Track,
+} from "livekit-client";
+import { ErrorMessage } from "../common/ErrorMessage";
+import { AdminControls } from "./AdminControls";
+import { LobbyRequests } from "./LobbyRequests";
+import { SummarizerControls } from "./SummarizerControls";
+import { DisconnectMessage } from "./DisconnectMessage";
+import { CustomControlBar } from "./CustomControlBar";
+import { MeetingHeader } from "./MeetingHeader";
+import { SidebarPanel } from "./SidebarPanel";
+import { CustomParticipantTile } from "./CustomParticipantTile";
+import type { DevicePreferences } from "../../pages/MeetingLobby";
+import { useState, useEffect, useMemo } from "react";
+import { meetingService } from "../../services/api/meeting.service";
 
 interface LiveKitMeetingRoomProps {
   meetingCode: string;
@@ -42,11 +61,11 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   const isAdmin = useMemo(() => {
     if (!token) return false;
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(token.split(".")[1]));
       const metadata = payload.metadata ? JSON.parse(payload.metadata) : {};
-      return metadata.role === 'admin';
+      return metadata.role === "admin";
     } catch (e) {
-      console.error('Failed to parse token metadata:', e);
+      console.error("Failed to parse token metadata:", e);
       return false;
     }
   }, [token]);
@@ -64,19 +83,21 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
   const handleDisconnect = (reason?: DisconnectReason) => {
     // Stop summarizer if admin leaves
     if (isAdmin && meetingId) {
-      meetingService.stopSummarizer(meetingId).catch(err =>
-        console.error('Failed to stop summarizer on disconnect:', err)
-      );
+      meetingService
+        .stopSummarizer(meetingId)
+        .catch((err) =>
+          console.error("Failed to stop summarizer on disconnect:", err),
+        );
     }
 
-    let message = 'You left the meeting';
+    let message = "You left the meeting";
 
     if (reason === DisconnectReason.SERVER_SHUTDOWN) {
-      message = 'Meeting ended by host';
+      message = "Meeting ended by host";
     } else if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
-      message = 'You were removed from the meeting';
+      message = "You were removed from the meeting";
     } else if (reason === DisconnectReason.ROOM_DELETED) {
-      message = 'Meeting ended by host';
+      message = "Meeting ended by host";
     }
 
     setDisconnectReason(message);
@@ -107,7 +128,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
         video={devicePreferences.videoEnabled}
         onDisconnected={handleDisconnect}
         data-lk-theme="default"
-        style={{ height: '100%' }}
+        style={{ height: "100%" }}
         options={{
           // --- Publish settings ---
           publishDefaults: {
@@ -117,9 +138,9 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
             videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
 
             // VP9 with SVC gives better quality at lower bitrates than VP8
-            videoCodec: 'vp9',
+            videoCodec: "vp9",
             // SVC scalability mode: 3 spatial layers, 3 temporal layers
-            scalabilityMode: 'L3T3_KEY',
+            scalabilityMode: "L3T3_KEY",
             // Auto-fallback to VP8 for browsers that don't support VP9
             backupCodec: true,
 
@@ -134,9 +155,7 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
               maxBitrate: 3_000_000, // 3 Mbps
               maxFramerate: 30,
             },
-            screenShareSimulcastLayers: [
-              ScreenSharePresets.h720fps15,
-            ],
+            screenShareSimulcastLayers: [ScreenSharePresets.h720fps15],
 
             // Audio: higher quality preset
             dtx: true, // Discontinuous transmission saves bandwidth in silence
@@ -154,24 +173,277 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
           adaptiveStream: true,
         }}
       >
-        <VideoConference />
-        <AdminControls
+        <MeetingView
           meetingCode={meetingCode}
           isAdmin={isAdmin}
-          onEndMeeting={() => onDisconnect?.()}
+          meetingId={meetingId}
+          onDisconnect={onDisconnect}
         />
-        <LobbyRequests
-          meetingCode={meetingCode}
-          isAdmin={isAdmin}
-        />
-        {meetingId && (
-          <SummarizerControls
-            meetingId={meetingId}
-            isAdmin={isAdmin}
-          />
-        )}
       </LiveKitRoom>
     </div>
+  );
+};
+
+/**
+ * Meeting View Component with custom control bar
+ */
+interface MeetingViewProps {
+  meetingCode: string;
+  isAdmin: boolean;
+  meetingId?: number;
+  onDisconnect?: () => void;
+}
+
+const MeetingView: React.FC<MeetingViewProps> = ({
+  meetingCode,
+  isAdmin,
+  meetingId,
+  onDisconnect,
+}) => {
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+
+  return (
+    <div className="lk-video-conference" style={{ height: "100%" }}>
+      <LayoutContextProvider>
+        <MeetingContent
+          meetingCode={meetingCode}
+          isAdmin={isAdmin}
+          meetingId={meetingId}
+          onDisconnect={onDisconnect}
+          isAdminPanelOpen={isAdminPanelOpen}
+          setIsAdminPanelOpen={setIsAdminPanelOpen}
+        />
+      </LayoutContextProvider>
+    </div>
+  );
+};
+
+const MeetingContent: React.FC<
+  MeetingViewProps & {
+    isAdminPanelOpen: boolean;
+    setIsAdminPanelOpen: (open: boolean) => void;
+  }
+> = ({
+  meetingCode,
+  isAdmin,
+  meetingId,
+  onDisconnect,
+  isAdminPanelOpen,
+  setIsAdminPanelOpen,
+}) => {
+  const participants = useParticipants();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const tracks = useTracks(
+    [
+      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.ScreenShare, withPlaceholder: false },
+    ],
+    { onlySubscribed: false },
+  );
+
+  // Check if there's a screen share active
+  const hasScreenShare = tracks.some(
+    (track) => track.source === Track.Source.ScreenShare,
+  );
+
+  const toggleAdmin = () => {
+    if (isAdminPanelOpen) {
+      setIsAdminPanelOpen(false);
+    } else {
+      setIsChatOpen(false); // إغلاق Chat
+      setIsAdminPanelOpen(true);
+    }
+  };
+
+  const toggleChat = () => {
+    if (isChatOpen) {
+      setIsChatOpen(false);
+    } else {
+      setIsAdminPanelOpen(false);
+      setIsChatOpen(true);
+    }
+  };
+
+  return (
+    <>
+      <RoomAudioRenderer />
+
+      {/* Main Layout - Flex container */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        {/* Top Header Bar */}
+        <MeetingHeader
+          isAdmin={isAdmin}
+          isAdminPanelOpen={isAdminPanelOpen}
+          participants={participants}
+          onAdminToggle={toggleAdmin}
+        />
+
+        {/* Content Area - Video + Sidebars */}
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          {/* Video Section */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              minWidth: 0,
+            }}
+          >
+            {/* Video Grid + Sidebars Container */}
+            <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+              {/* Video Grid */}
+              <div
+                className="lk-video-conference-inner"
+                style={{ flex: 1, minWidth: 0 }}
+              >
+                <div
+                  className="lk-grid-layout-wrapper"
+                  style={{ height: "100%" }}
+                >
+                  {hasScreenShare ? (
+                    <FocusLayoutContainer>
+                      <CarouselLayout tracks={tracks}>
+                        <CustomParticipantTile />
+                      </CarouselLayout>
+                      <FocusLayout
+                        trackRef={tracks.find(
+                          (t) => t.source === Track.Source.ScreenShare,
+                        )}
+                      />
+                    </FocusLayoutContainer>
+                  ) : (
+                    <GridLayout tracks={tracks}>
+                      <CustomParticipantTile />
+                    </GridLayout>
+                  )}
+                </div>
+              </div>
+
+              {/* Chat Panel */}
+              {isChatOpen && (
+                <SidebarPanel
+                  title="In-call messages"
+                  onClose={() => setIsChatOpen(false)}
+                >
+                  <Chat
+                    style={{
+                      flex: 1,
+                      width: "100%",
+                      height: "100%",
+                      minHeight: 0,
+                      overflow: "hidden",
+                    }}
+                  />
+                </SidebarPanel>
+              )}
+
+              {/* Admin Panel */}
+              {isAdminPanelOpen && (
+                <SidebarPanel
+                  title="Admin Controls"
+                  onClose={() => setIsAdminPanelOpen(false)}
+                >
+                  <div
+                    style={{
+                      flex: 1,
+                      overflow: "hidden",
+                      display: "flex",
+                      flexDirection: "column",
+                      minHeight: 0,
+                    }}
+                  >
+                    <AdminControls
+                      meetingCode={meetingCode}
+                      isAdmin={isAdmin}
+                      onEndMeeting={() => onDisconnect?.()}
+                      isOpen={true}
+                      onClose={() => {}}
+                      hideHeader={true}
+                    />
+                  </div>
+                </SidebarPanel>
+              )}
+            </div>
+
+            {/* Control Bar - Full Width تحت خالص */}
+            <div
+              className="lk-control-bar-wrapper"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                padding: "0 16px",
+              }}
+            >
+              {/* Summarizer Controls - أقصى اليسار */}
+              <div style={{ flexShrink: 0 }}>
+                {meetingId && (
+                  <SummarizerControls
+                    meetingId={meetingId}
+                    isAdmin={isAdmin}
+                    inline={true}
+                  />
+                )}
+              </div>
+
+              {/* Media Controls - في النص */}
+              <CustomControlBar />
+
+              {/* Chat Button - أقصى اليمين */}
+              <div style={{ flexShrink: 0 }}>
+                <button
+                  className="lk-button"
+                  onClick={toggleChat}
+                  title="Toggle Chat"
+                  aria-pressed={isChatOpen}
+                  style={{
+                    backgroundColor: isChatOpen
+                      ? "var(--lk-accent)"
+                      : "var(--lk-bg2)",
+                    border: "1px solid var(--lk-border-color)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  <span className="lk-button-label">Chat</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Lobby Requests */}
+      <LobbyRequests meetingCode={meetingCode} isAdmin={isAdmin} />
+    </>
   );
 };
 
