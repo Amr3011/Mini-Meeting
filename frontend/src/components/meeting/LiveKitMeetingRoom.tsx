@@ -238,7 +238,6 @@ const MeetingContent: React.FC<
     { onlySubscribed: false },
   );
 
-  // Toggle admin panel - إغلاق Chat لو مفتوح
   const toggleAdmin = () => {
     if (isAdminPanelOpen) {
       setIsAdminPanelOpen(false);
@@ -248,12 +247,11 @@ const MeetingContent: React.FC<
     }
   };
 
-  // Toggle chat - إغلاق Admin لو مفتوح
   const toggleChat = () => {
     if (isChatOpen) {
       setIsChatOpen(false);
     } else {
-      setIsAdminPanelOpen(false); // إغلاق Admin
+      setIsAdminPanelOpen(false); 
       setIsChatOpen(true);
     }
   };
