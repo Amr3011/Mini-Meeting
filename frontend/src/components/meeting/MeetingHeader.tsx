@@ -23,11 +23,11 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
-        padding: "6px 12px",
+        padding: "4px 12px",
         backgroundColor: "var(--lk-bg2)",
         borderBottom: "1px solid var(--lk-border-color)",
         gap: "8px",
-        minHeight: "40px",
+        minHeight: "32px",
       }}
     >
       {/* Admin Button */}
@@ -44,13 +44,14 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
             border: "1px solid var(--lk-border-color)",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
             position: "relative",
-            padding: "6px 10px",
-            fontSize: "13px",
+            padding: "6px",
+            minWidth: "32px",
+            minHeight: "32px",
           }}
         >
           <svg
-            width="16"
-            height="16"
+            width="18"
+            height="18"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -63,9 +64,6 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
               d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
             />
           </svg>
-          <span className="lk-button-label" style={{ fontSize: "13px" }}>
-            Admin
-          </span>
           {participantCount > 0 && (
             <span
               className="lk-button-badge"

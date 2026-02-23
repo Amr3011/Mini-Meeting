@@ -394,9 +394,9 @@ export const CustomControlBar: React.FC = () => {
             showIcon={true}
             style={
               {
-                width: "100px",
+                width: "70px",
                 minHeight: "48px",
-                padding: "8px 16px",
+                padding: "8px 12px",
               } as React.CSSProperties
             }
           />
@@ -411,9 +411,10 @@ export const CustomControlBar: React.FC = () => {
             color: "#fff",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            minHeight: "40px",
+            justifyContent: "center",
+            padding: "8px 12px",
+            minWidth: "60px",
+            minHeight: "48px",
           }}
           title="Leave Meeting"
         >
@@ -432,7 +433,6 @@ export const CustomControlBar: React.FC = () => {
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" x2="9" y1="12" y2="12" />
           </svg>
-          <span>Leave</span>
         </button>
       </div>
     </div>
