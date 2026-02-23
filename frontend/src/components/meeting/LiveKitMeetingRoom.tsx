@@ -2,7 +2,9 @@ import {
   LiveKitRoom,
   RoomAudioRenderer,
   GridLayout,
-  ParticipantTile,
+  FocusLayout,
+  FocusLayoutContainer,
+  CarouselLayout,
   useTracks,
   useParticipants,
   LayoutContextProvider,
@@ -11,6 +13,7 @@ import {
 import "@livekit/components-styles";
 import "./ChatSidebar.css";
 import "./Sidebar.css";
+import "./ScreenShareLayout.css";
 import {
   VideoPresets,
   ScreenSharePresets,
@@ -25,6 +28,7 @@ import { DisconnectMessage } from "./DisconnectMessage";
 import { CustomControlBar } from "./CustomControlBar";
 import { MeetingHeader } from "./MeetingHeader";
 import { SidebarPanel } from "./SidebarPanel";
+import { CustomParticipantTile } from "./CustomParticipantTile";
 import type { DevicePreferences } from "../../pages/MeetingLobby";
 import { useState, useEffect, useMemo } from "react";
 import { meetingService } from "../../services/api/meeting.service";
@@ -238,6 +242,11 @@ const MeetingContent: React.FC<
     { onlySubscribed: false },
   );
 
+  // Check if there's a screen share active
+  const hasScreenShare = tracks.some(
+    (track) => track.source === Track.Source.ScreenShare,
+  );
+
   const toggleAdmin = () => {
     if (isAdminPanelOpen) {
       setIsAdminPanelOpen(false);
@@ -273,7 +282,7 @@ const MeetingContent: React.FC<
         <MeetingHeader
           isAdmin={isAdmin}
           isAdminPanelOpen={isAdminPanelOpen}
-          participantCount={participants.length}
+          participants={participants}
           onAdminToggle={toggleAdmin}
         />
 
@@ -305,9 +314,22 @@ const MeetingContent: React.FC<
                   className="lk-grid-layout-wrapper"
                   style={{ height: "100%" }}
                 >
-                  <GridLayout tracks={tracks}>
-                    <ParticipantTile />
-                  </GridLayout>
+                  {hasScreenShare ? (
+                    <FocusLayoutContainer>
+                      <CarouselLayout tracks={tracks}>
+                        <CustomParticipantTile />
+                      </CarouselLayout>
+                      <FocusLayout
+                        trackRef={tracks.find(
+                          (t) => t.source === Track.Source.ScreenShare,
+                        )}
+                      />
+                    </FocusLayoutContainer>
+                  ) : (
+                    <GridLayout tracks={tracks}>
+                      <CustomParticipantTile />
+                    </GridLayout>
+                  )}
                 </div>
               </div>
 
