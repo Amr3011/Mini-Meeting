@@ -1,5 +1,11 @@
 /* Custom styles for screen share layout */
 
+/* Add rounded corners to all participant tiles */
+.lk-participant-tile {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
 /* Make all carousel items (participants) the same size when screen sharing */
 .lk-focus-layout .lk-carousel > * {
   width: 150px !important;
