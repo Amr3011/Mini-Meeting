@@ -282,7 +282,7 @@ const MeetingContent: React.FC<
         <MeetingHeader
           isAdmin={isAdmin}
           isAdminPanelOpen={isAdminPanelOpen}
-          participantCount={participants.length}
+          participants={participants}
           onAdminToggle={toggleAdmin}
         />
 

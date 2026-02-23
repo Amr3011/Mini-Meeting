@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { Participant } from "livekit-client";
 
 interface MeetingHeaderProps {
   isAdmin: boolean;
   isAdminPanelOpen: boolean;
-  participantCount: number;
+  participants: Participant[];
   onAdminToggle: () => void;
 }
 
@@ -14,9 +15,31 @@ interface MeetingHeaderProps {
 export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
   isAdmin,
   isAdminPanelOpen,
-  participantCount,
+  participants,
   onAdminToggle,
 }) => {
+  // Extract participant avatars from metadata
+  const participantAvatars = useMemo(() => {
+    return participants
+      .slice(0, 3) // Show max 3 avatars
+      .map((p) => {
+        try {
+          const metadata = p.metadata ? JSON.parse(p.metadata) : null;
+          return {
+            name: p.name || p.identity,
+            avatar: metadata?.avatar || "",
+          };
+        } catch (e) {
+          return {
+            name: p.name || p.identity,
+            avatar: "",
+          };
+        }
+      });
+  }, [participants]);
+
+  const participantCount = participants.length;
+
   return (
     <div
       style={{
@@ -30,7 +53,7 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
         minHeight: "32px",
       }}
     >
-      {/* Admin Button */}
+      {/* Admin Button - Google Meet Style */}
       {isAdmin && (
         <button
           className="lk-button"
@@ -43,48 +66,69 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
               : "var(--lk-bg2)",
             border: "1px solid var(--lk-border-color)",
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-            position: "relative",
-            padding: "6px",
-            minWidth: "32px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 12px",
             minHeight: "32px",
+            borderRadius: "16px",
           }}
         >
-          <svg
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            strokeWidth="2"
-            style={{ flexShrink: 0 }}
+          {/* Overlapping Avatar Circles */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginLeft: "-4px",
+            }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
-          {participantCount > 0 && (
-            <span
-              className="lk-button-badge"
-              style={{
-                position: "absolute",
-                top: "-3px",
-                right: "-3px",
-                backgroundColor: "var(--lk-accent)",
-                color: "white",
-                fontSize: "9px",
-                fontWeight: "600",
-                padding: "1px 4px",
-                borderRadius: "8px",
-                minWidth: "16px",
-                textAlign: "center",
-                lineHeight: "1.2",
-              }}
-            >
-              {participantCount}
-            </span>
-          )}
+            {participantAvatars.map((p, index) => (
+              <div
+                key={index}
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  border: "2px solid var(--lk-bg2)",
+                  backgroundColor: "var(--lk-bg3)",
+                  marginLeft: index > 0 ? "-8px" : "0",
+                  zIndex: participantAvatars.length - index,
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "10px",
+                  fontWeight: "600",
+                  color: "var(--lk-fg)",
+                }}
+              >
+                {p.avatar ? (
+                  <img
+                    src={p.avatar}
+                    alt={p.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <span>{p.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Participant Count */}
+          <span
+            style={{
+              fontSize: "14px",
+              fontWeight: "500",
+              color: "var(--lk-fg)",
+            }}
+          >
+            {participantCount}
+          </span>
         </button>
       )}
     </div>
