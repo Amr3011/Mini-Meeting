@@ -71,51 +71,52 @@ export const CustomControlBar: React.FC = () => {
       {/* Center Group - Media Controls + Leave في النص */}
       <div className="lk-button-group" style={{ gap: "12px" }}>
         {/* Microphone Button with Dropdown */}
-        <div style={{ position: "relative" }} ref={audioMenuRef}>
+        <div
+          style={{ position: "relative", display: "flex" }}
+          ref={audioMenuRef}
+        >
+          {/* Main Toggle Button */}
+          <TrackToggle
+            source={Track.Source.Microphone}
+            showIcon={true}
+            style={
+              {
+                minWidth: "48px",
+                minHeight: "48px",
+                borderTopRightRadius: "0",
+                borderBottomRightRadius: "0",
+                borderRight: "none",
+              } as React.CSSProperties
+            }
+          />
+          {/* Dropdown Menu Button */}
           <button
-            className="lk-button lk-button-menu"
+            className="lk-button"
             onClick={() => setShowAudioMenu(!showAudioMenu)}
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "4px",
               backgroundColor: "var(--lk-bg2)",
-              minWidth: "56px",
+              minWidth: "22px",
               minHeight: "48px",
+              borderTopLeftRadius: "0",
+              borderBottomLeftRadius: "0",
+              padding: "0",
+              marginLeft: "-1px",
             }}
-            title={
-              isAudioEnabled
-                ? "Microphone (On) - Click to select device"
-                : "Microphone (Off) - Click to select device"
-            }
+            title="Select microphone device"
           >
+            {/* Chevron Down Icon */}
             <svg
-              width="20"
-              height="20"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
             >
-              {isAudioEnabled ? (
-                <>
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" x2="12" y1="19" y2="22" />
-                </>
-              ) : (
-                <>
-                  <line x1="2" x2="22" y1="2" y2="22" />
-                  <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2" />
-                  <path d="M5 10v2a7 7 0 0 0 12 5" />
-                  <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33" />
-                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12" />
-                  <line x1="12" x2="12" y1="19" y2="22" />
-                </>
-              )}
+              <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
 
@@ -231,47 +232,52 @@ export const CustomControlBar: React.FC = () => {
         </div>
 
         {/* Camera Button with Dropdown */}
-        <div style={{ position: "relative" }} ref={videoMenuRef}>
+        <div
+          style={{ position: "relative", display: "flex" }}
+          ref={videoMenuRef}
+        >
+          {/* Main Toggle Button */}
+          <TrackToggle
+            source={Track.Source.Camera}
+            showIcon={true}
+            style={
+              {
+                minWidth: "48px",
+                minHeight: "48px",
+                borderTopRightRadius: "0",
+                borderBottomRightRadius: "0",
+                borderRight: "none",
+              } as React.CSSProperties
+            }
+          />
+          {/* Dropdown Menu Button */}
           <button
-            className="lk-button lk-button-menu"
+            className="lk-button"
             onClick={() => setShowVideoMenu(!showVideoMenu)}
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "4px",
               backgroundColor: "var(--lk-bg2)",
-              minWidth: "56px",
+              minWidth: "22px",
               minHeight: "48px",
+              borderTopLeftRadius: "0",
+              borderBottomLeftRadius: "0",
+              padding: "0",
+              marginLeft: "-1px",
             }}
-            title={
-              isVideoEnabled
-                ? "Camera (On) - Click to select device"
-                : "Camera (Off) - Click to select device"
-            }
+            title="Select camera device"
           >
+            {/* Chevron Down Icon */}
             <svg
-              width="20"
-              height="20"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
             >
-              {isVideoEnabled ? (
-                <>
-                  <path d="m22 8-6 4 6 4V8Z" />
-                  <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
-                </>
-              ) : (
-                <>
-                  <path d="m22 8-6 4 6 4V8Z" />
-                  <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
-                  <line x1="2" x2="22" y1="2" y2="22" />
-                </>
-              )}
+              <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
 
