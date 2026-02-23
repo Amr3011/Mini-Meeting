@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from "react";
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -9,6 +10,7 @@ import {
   useParticipants,
   LayoutContextProvider,
   Chat,
+  useChat,
 } from "@livekit/components-react";
 import "@livekit/components-styles";
 import "./ChatSidebar.css";
@@ -30,7 +32,6 @@ import { MeetingHeader } from "./MeetingHeader";
 import { SidebarPanel } from "./SidebarPanel";
 import { CustomParticipantTile } from "./CustomParticipantTile";
 import type { DevicePreferences } from "../../pages/MeetingLobby";
-import { useState, useEffect, useMemo } from "react";
 import { meetingService } from "../../services/api/meeting.service";
 
 interface LiveKitMeetingRoomProps {
@@ -233,6 +234,11 @@ const MeetingContent: React.FC<
 }) => {
   const participants = useParticipants();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { chatMessages } = useChat();
+  const [lastReadMessageCount, setLastReadMessageCount] = useState(0);
+
+  // Calculate unread messages
+  const unreadCount = chatMessages.length - lastReadMessageCount;
 
   const tracks = useTracks(
     [
@@ -241,6 +247,13 @@ const MeetingContent: React.FC<
     ],
     { onlySubscribed: false },
   );
+
+  // Mark messages as read when chat is open
+  useEffect(() => {
+    if (isChatOpen) {
+      setLastReadMessageCount(chatMessages.length);
+    }
+  }, [isChatOpen, chatMessages.length]);
 
   // Check if there's a screen share active
   const hasScreenShare = tracks.some(
@@ -333,8 +346,8 @@ const MeetingContent: React.FC<
                 </div>
               </div>
 
-              {/* Chat Panel */}
-              {isChatOpen && (
+              {/* Chat Panel - Always mounted to preserve messages */}
+              <div style={{ display: isChatOpen ? "flex" : "none" }}>
                 <SidebarPanel
                   title="In-call messages"
                   onClose={() => setIsChatOpen(false)}
@@ -349,7 +362,7 @@ const MeetingContent: React.FC<
                     }}
                   />
                 </SidebarPanel>
-              )}
+              </div>
 
               {/* Admin Panel */}
               {isAdminPanelOpen && (
@@ -416,6 +429,7 @@ const MeetingContent: React.FC<
                       ? "var(--lk-accent)"
                       : "var(--lk-bg2)",
                     border: "1px solid var(--lk-border-color)",
+                    position: "relative",
                   }}
                 >
                   <svg
@@ -434,6 +448,27 @@ const MeetingContent: React.FC<
                     />
                   </svg>
                   <span className="lk-button-label">Chat</span>
+                  {/* Unread message badge */}
+                  {!isChatOpen && unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-3px",
+                        right: "-3px",
+                        backgroundColor: "#dc2626",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "600",
+                        padding: "2px 6px",
+                        borderRadius: "10px",
+                        minWidth: "20px",
+                        textAlign: "center",
+                        lineHeight: "1.2",
+                      }}
+                    >
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>

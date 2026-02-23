@@ -4,6 +4,7 @@ import {
   useEnsureParticipant,
   ParticipantTile,
   ParticipantName,
+  useIsSpeaking,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 
@@ -13,6 +14,7 @@ import { Track } from "livekit-client";
 export const CustomParticipantTile: React.FC = () => {
   const trackRef = useEnsureTrackRef();
   const participant = useEnsureParticipant();
+  const isSpeaking = useIsSpeaking(participant);
 
   // Parse metadata to get avatar URL
   const metadata = useMemo(() => {
@@ -46,6 +48,11 @@ export const CustomParticipantTile: React.FC = () => {
         height: "100%",
         borderRadius: "12px",
         overflow: "hidden",
+        border: isSpeaking ? "3px solid #3b82f6" : "3px solid transparent",
+        boxShadow: isSpeaking
+          ? "0 0 20px rgba(59, 130, 246, 0.6), 0 0 40px rgba(59, 130, 246, 0.3)"
+          : "none",
+        transition: "all 0.05s ease-out",
       }}
     >
       {/* Use default ParticipantTile */}
