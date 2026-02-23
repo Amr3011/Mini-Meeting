@@ -32,11 +32,7 @@ export const SidebarPanel: React.FC<SidebarPanelProps> = ({
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <h3 className="sidebar-title">{title}</h3>
-        <button
-          className="sidebar-close-btn"
-          onClick={onClose}
-          title="Close"
-        >
+        <button className="sidebar-close-btn" onClick={onClose} title="Close">
           <svg
             width="20"
             height="20"
