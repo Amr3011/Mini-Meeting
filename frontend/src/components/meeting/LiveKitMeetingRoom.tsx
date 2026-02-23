@@ -405,10 +405,7 @@ const MeetingContent: React.FC<
               }}
             >
               {/* Summarizer Controls - أقصى اليسار */}
-              <div
-                style={{ flexShrink: 0, order: 1 }}
-                className="hidden md:block"
-              >
+              <div style={{ flexShrink: 0, order: 1 }}>
                 {meetingId && (
                   <SummarizerControls
                     meetingId={meetingId}
