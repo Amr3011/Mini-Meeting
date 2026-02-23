@@ -1,0 +1,18 @@
+.adminButton {
+  position: relative;
+}
+
+.adminBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--lk-accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+}
