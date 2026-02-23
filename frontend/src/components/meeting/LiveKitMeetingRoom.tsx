@@ -251,7 +251,7 @@ const MeetingContent: React.FC<
     if (isChatOpen) {
       setIsChatOpen(false);
     } else {
-      setIsAdminPanelOpen(false); 
+      setIsAdminPanelOpen(false);
       setIsChatOpen(true);
     }
   };
@@ -358,11 +358,62 @@ const MeetingContent: React.FC<
             </div>
 
             {/* Control Bar - Full Width تحت خالص */}
-            <div className="lk-control-bar-wrapper">
-              <CustomControlBar
-                isChatOpen={isChatOpen}
-                onChatToggle={toggleChat}
-              />
+            <div
+              className="lk-control-bar-wrapper"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                padding: "0 16px",
+              }}
+            >
+              {/* Summarizer Controls - أقصى اليسار */}
+              <div style={{ flexShrink: 0 }}>
+                {meetingId && (
+                  <SummarizerControls
+                    meetingId={meetingId}
+                    isAdmin={isAdmin}
+                    inline={true}
+                  />
+                )}
+              </div>
+
+              {/* Media Controls - في النص */}
+              <CustomControlBar />
+
+              {/* Chat Button - أقصى اليمين */}
+              <div style={{ flexShrink: 0 }}>
+                <button
+                  className="lk-button"
+                  onClick={toggleChat}
+                  title="Toggle Chat"
+                  aria-pressed={isChatOpen}
+                  style={{
+                    backgroundColor: isChatOpen
+                      ? "var(--lk-accent)"
+                      : "var(--lk-bg2)",
+                    border: "1px solid var(--lk-border-color)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    style={{ flexShrink: 0 }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  <span className="lk-button-label">Chat</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -370,11 +421,6 @@ const MeetingContent: React.FC<
 
       {/* Lobby Requests */}
       <LobbyRequests meetingCode={meetingCode} isAdmin={isAdmin} />
-
-      {/* Summarizer Controls */}
-      {meetingId && (
-        <SummarizerControls meetingId={meetingId} isAdmin={isAdmin} />
-      )}
     </>
   );
 };

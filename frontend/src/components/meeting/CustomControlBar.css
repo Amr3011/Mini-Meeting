@@ -1,0 +1,29 @@
+/* Dropdown menu animation */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Ensure all control bar buttons have the same size, except share screen */
+.lk-button-group .lk-button:not([data-lk-source="screen_share"]),
+.lk-button-group button {
+  min-width: 48px !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Allow share screen button to be wider */
+.lk-button-group .lk-button[data-lk-source="screen_share"] {
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

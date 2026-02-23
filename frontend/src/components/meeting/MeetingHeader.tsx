@@ -33,7 +33,7 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
       {/* Admin Button */}
       {isAdmin && (
         <button
-          className="lk-button lk-button-menu"
+          className="lk-button"
           onClick={onAdminToggle}
           title={`Admin Controls (${participantCount} participants)`}
           aria-pressed={isAdminPanelOpen}

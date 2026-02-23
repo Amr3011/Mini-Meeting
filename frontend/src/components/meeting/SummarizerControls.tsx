@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
-import { useSummarizer } from '../../hooks/useSummarizer';
+import React, { useState, useEffect } from "react";
+import { Mic, MicOff, Loader2 } from "lucide-react";
+import { useSummarizer } from "../../hooks/useSummarizer";
 
 interface SummarizerControlsProps {
   meetingId: number;
   isAdmin: boolean;
+  inline?: boolean; // For inline display in control bar
 }
 
 /**
@@ -14,12 +15,20 @@ interface SummarizerControlsProps {
 export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
   meetingId,
   isAdmin,
+  inline = false,
 }) => {
-  const { session, isActive, isLoading, error, startSummarizer, stopSummarizer } = useSummarizer();
+  const {
+    session,
+    isActive,
+    isLoading,
+    error,
+    startSummarizer,
+    stopSummarizer,
+  } = useSummarizer();
   const [showCapturedMessage, setShowCapturedMessage] = useState(false);
 
   useEffect(() => {
-    if (session?.status === 'CAPTURED') {
+    if (session?.status === "CAPTURED") {
       setShowCapturedMessage(true);
       const timer = setTimeout(() => {
         setShowCapturedMessage(false);
@@ -43,10 +52,72 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
         await startSummarizer(meetingId);
       }
     } catch (err) {
-      console.error('Summarizer toggle error:', err);
+      console.error("Summarizer toggle error:", err);
     }
   };
 
+  // Inline mode for control bar
+  if (inline) {
+    return (
+      <button
+        onClick={handleToggle}
+        disabled={isLoading}
+        className="lk-button"
+        style={{
+          backgroundColor: isActive ? "var(--lk-accent)" : "var(--lk-bg2)",
+          border: "1px solid var(--lk-border-color)",
+          color: "var(--lk-fg)",
+          cursor: isLoading ? "not-allowed" : "pointer",
+          opacity: isLoading ? 0.5 : 1,
+        }}
+        title={isActive ? "Stop Listening" : "Listen to Summarize"}
+      >
+        {isLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin" style={{ flexShrink: 0 }} />
+        ) : isActive ? (
+          <>
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+              style={{ flexShrink: 0 }}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
+            </svg>
+            <span className="lk-button-label">Recording...</span>
+          </>
+        ) : (
+          <>
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth="2"
+              style={{ flexShrink: 0 }}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
+            </svg>
+            <span className="lk-button-label">Summarize</span>
+          </>
+        )}
+      </button>
+    );
+  }
+
+  // Original floating mode
   return (
     <div className="fixed bottom-24 right-6 z-50">
       <div className="flex flex-col items-end gap-2">
@@ -72,14 +143,15 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
           className={`
             group relative flex items-center gap-3 px-5 py-3 rounded-xl font-medium
             transition-all duration-200 shadow-lg
-            ${isActive
-              ? 'bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white'
-              : 'bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white'
+            ${
+              isActive
+                ? "bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+                : "bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
             }
-            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl hover:scale-105'}
+            ${isLoading ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:scale-105"}
             disabled:opacity-50 disabled:cursor-not-allowed
           `}
-          title={isActive ? 'Stop Listening' : 'Listen to Summarize'}
+          title={isActive ? "Stop Listening" : "Listen to Summarize"}
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -89,7 +161,11 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
             <Mic className="w-5 h-5" />
           )}
           <span className="text-sm font-semibold">
-            {isLoading ? 'Processing...' : isActive ? 'Stop Listening' : 'Listen to Summarize'}
+            {isLoading
+              ? "Processing..."
+              : isActive
+                ? "Stop Listening"
+                : "Listen to Summarize"}
           </span>
         </button>
 
@@ -101,7 +177,7 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
         )}
 
         {/* Session info */}
-        {showCapturedMessage && session && session.status === 'CAPTURED' && (
+        {showCapturedMessage && session && session.status === "CAPTURED" && (
           <div className="bg-blue-500/20 border border-blue-500/50 text-blue-200 px-4 py-2 rounded-lg text-sm">
             ✓ Recording complete we will notify you when the summary is ready
           </div>

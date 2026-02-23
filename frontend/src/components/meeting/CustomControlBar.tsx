@@ -1,66 +1,440 @@
-import React from "react";
-import { TrackToggle, DisconnectButton } from "@livekit/components-react";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  TrackToggle,
+  DisconnectButton,
+  useMediaDeviceSelect,
+  useTracks,
+  useRoomContext,
+} from "@livekit/components-react";
 import { Track } from "livekit-client";
-
-interface CustomControlBarProps {
-  isChatOpen: boolean;
-  onChatToggle: () => void;
-}
+import "./CustomControlBar.css";
 
 /**
  * Custom Control Bar Component
- * Media controls + Leave centered, Chat at far right
+ * Media controls + Leave centered
  */
-export const CustomControlBar: React.FC<CustomControlBarProps> = ({
-  isChatOpen,
-  onChatToggle,
-}) => {
+export const CustomControlBar: React.FC = () => {
+  const [showAudioMenu, setShowAudioMenu] = useState(false);
+  const [showVideoMenu, setShowVideoMenu] = useState(false);
+  const audioMenuRef = useRef<HTMLDivElement>(null);
+  const videoMenuRef = useRef<HTMLDivElement>(null);
+
+  const room = useRoomContext();
+
+  const {
+    devices: audioDevices,
+    activeDeviceId: activeAudioDevice,
+    setActiveMediaDevice: setActiveAudio,
+  } = useMediaDeviceSelect({ kind: "audioinput" });
+  const {
+    devices: videoDevices,
+    activeDeviceId: activeVideoDevice,
+    setActiveMediaDevice: setActiveVideo,
+  } = useMediaDeviceSelect({ kind: "videoinput" });
+
+  const audioTracks = useTracks([Track.Source.Microphone]);
+  const videoTracks = useTracks([Track.Source.Camera]);
+
+  const isAudioEnabled =
+    audioTracks.length > 0 && audioTracks[0].publication?.isMuted === false;
+  const isVideoEnabled =
+    videoTracks.length > 0 && videoTracks[0].publication?.isMuted === false;
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        audioMenuRef.current &&
+        !audioMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowAudioMenu(false);
+      }
+      if (
+        videoMenuRef.current &&
+        !videoMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowVideoMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div
       className="lk-control-bar"
       style={{
         justifyContent: "center",
-        position: "relative",
       }}
     >
       {/* Center Group - Media Controls + Leave في النص */}
       <div className="lk-button-group" style={{ gap: "12px" }}>
-        <TrackToggle source={Track.Source.Microphone} showIcon={true} />
-        <TrackToggle source={Track.Source.Camera} showIcon={true} />
-        <TrackToggle source={Track.Source.ScreenShare} showIcon={true} />
-        <DisconnectButton>Leave</DisconnectButton>
-      </div>
+        {/* Microphone Button with Dropdown */}
+        <div style={{ position: "relative" }} ref={audioMenuRef}>
+          <button
+            className="lk-button lk-button-menu"
+            onClick={() => setShowAudioMenu(!showAudioMenu)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              backgroundColor: "var(--lk-bg2)",
+              minWidth: "56px",
+              minHeight: "48px",
+            }}
+            title={
+              isAudioEnabled
+                ? "Microphone (On) - Click to select device"
+                : "Microphone (Off) - Click to select device"
+            }
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {isAudioEnabled ? (
+                <>
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" x2="12" y1="19" y2="22" />
+                </>
+              ) : (
+                <>
+                  <line x1="2" x2="22" y1="2" y2="22" />
+                  <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2" />
+                  <path d="M5 10v2a7 7 0 0 0 12 5" />
+                  <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33" />
+                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12" />
+                  <line x1="12" x2="12" y1="19" y2="22" />
+                </>
+              )}
+            </svg>
+          </button>
 
-      {/* Chat - أقصى اليمين */}
-      <button
-        className="lk-button lk-button-menu"
-        onClick={onChatToggle}
-        title="Toggle Chat"
-        aria-pressed={isChatOpen}
-        style={{
-          position: "absolute",
-          right: "16px",
-          backgroundColor: isChatOpen ? "var(--lk-accent)" : "var(--lk-bg2)",
-          border: "1px solid var(--lk-border-color)",
-        }}
-      >
-        <svg
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          style={{ flexShrink: 0 }}
+          {/* Dropdown Menu */}
+          {showAudioMenu && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 8px)",
+                left: "0",
+                backgroundColor: "var(--lk-bg2)",
+                border: "1px solid var(--lk-border-color)",
+                borderRadius: "12px",
+                padding: "6px",
+                minWidth: "240px",
+                maxWidth: "320px",
+                boxShadow:
+                  "0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2)",
+                zIndex: 1000,
+                animation: "slideUpFade 0.2s ease-out",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              {audioDevices.map((device) => (
+                <button
+                  key={device.deviceId}
+                  onClick={() => {
+                    setActiveAudio(device.deviceId);
+                    setShowAudioMenu(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "10px 12px",
+                    backgroundColor:
+                      device.deviceId === activeAudioDevice
+                        ? "var(--lk-accent)"
+                        : "transparent",
+                    color:
+                      device.deviceId === activeAudioDevice
+                        ? "#fff"
+                        : "var(--lk-fg)",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight:
+                      device.deviceId === activeAudioDevice ? "500" : "400",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    position: "relative",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (device.deviceId !== activeAudioDevice) {
+                      e.currentTarget.style.backgroundColor = "var(--lk-bg3)";
+                      e.currentTarget.style.transform = "translateX(4px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (device.deviceId !== activeAudioDevice) {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.transform = "translateX(0)";
+                    }
+                  }}
+                >
+                  {/* Device Icon */}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ flexShrink: 0, opacity: 0.7 }}
+                  >
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" x2="12" y1="19" y2="22" />
+                  </svg>
+
+                  {/* Device Label */}
+                  <span
+                    style={{
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {device.label || "Default Microphone"}
+                  </span>
+
+                  {/* Checkmark for active device */}
+                  {device.deviceId === activeAudioDevice && (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Camera Button with Dropdown */}
+        <div style={{ position: "relative" }} ref={videoMenuRef}>
+          <button
+            className="lk-button lk-button-menu"
+            onClick={() => setShowVideoMenu(!showVideoMenu)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              backgroundColor: "var(--lk-bg2)",
+              minWidth: "56px",
+              minHeight: "48px",
+            }}
+            title={
+              isVideoEnabled
+                ? "Camera (On) - Click to select device"
+                : "Camera (Off) - Click to select device"
+            }
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {isVideoEnabled ? (
+                <>
+                  <path d="m22 8-6 4 6 4V8Z" />
+                  <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+                </>
+              ) : (
+                <>
+                  <path d="m22 8-6 4 6 4V8Z" />
+                  <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+                  <line x1="2" x2="22" y1="2" y2="22" />
+                </>
+              )}
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          {showVideoMenu && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 8px)",
+                left: "0",
+                backgroundColor: "var(--lk-bg2)",
+                border: "1px solid var(--lk-border-color)",
+                borderRadius: "12px",
+                padding: "6px",
+                minWidth: "240px",
+                maxWidth: "320px",
+                boxShadow:
+                  "0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2)",
+                zIndex: 1000,
+                animation: "slideUpFade 0.2s ease-out",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              {videoDevices.map((device) => (
+                <button
+                  key={device.deviceId}
+                  onClick={() => {
+                    setActiveVideo(device.deviceId);
+                    setShowVideoMenu(false);
+                  }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "10px 12px",
+                    backgroundColor:
+                      device.deviceId === activeVideoDevice
+                        ? "var(--lk-accent)"
+                        : "transparent",
+                    color:
+                      device.deviceId === activeVideoDevice
+                        ? "#fff"
+                        : "var(--lk-fg)",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight:
+                      device.deviceId === activeVideoDevice ? "500" : "400",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    position: "relative",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (device.deviceId !== activeVideoDevice) {
+                      e.currentTarget.style.backgroundColor = "var(--lk-bg3)";
+                      e.currentTarget.style.transform = "translateX(4px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (device.deviceId !== activeVideoDevice) {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.transform = "translateX(0)";
+                    }
+                  }}
+                >
+                  {/* Device Icon */}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    style={{ flexShrink: 0, opacity: 0.7 }}
+                  >
+                    <path d="m22 8-6 4 6 4V8Z" />
+                    <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+                  </svg>
+
+                  {/* Device Label */}
+                  <span
+                    style={{
+                      flex: 1,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {device.label || "Default Camera"}
+                  </span>
+
+                  {/* Checkmark for active device */}
+                  {device.deviceId === activeVideoDevice && (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div
+          style={{ display: "flex", alignItems: "center" }}
+          title="Share Screen"
         >
-          <path
+          <TrackToggle
+            source={Track.Source.ScreenShare}
+            showIcon={true}
+            style={
+              {
+                width: "100px",
+                minHeight: "48px",
+                padding: "8px 16px",
+              } as React.CSSProperties
+            }
+          />
+        </div>
+
+        {/* Custom Leave Button with Door Icon */}
+        <button
+          className="lk-button lk-disconnect-button"
+          onClick={() => room?.disconnect()}
+          style={{
+            backgroundColor: "var(--lk-danger-color, #dc2626)",
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            minHeight: "40px",
+          }}
+          title="Leave Meeting"
+        >
+          {/* Door/Exit Icon */}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-          />
-        </svg>
-        <span className="lk-button-label">Chat</span>
-      </button>
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" x2="9" y1="12" y2="12" />
+          </svg>
+          <span>Leave</span>
+        </button>
+      </div>
     </div>
   );
 };
