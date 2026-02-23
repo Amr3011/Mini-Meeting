@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Participant } from "livekit-client";
+import "./MeetingHeader.css";
 
 interface MeetingHeaderProps {
   isAdmin: boolean;
@@ -42,11 +43,12 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
 
   return (
     <div
+      className="meeting-header"
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
-        padding: "4px 12px",
+        padding: "4px 8px",
         backgroundColor: "var(--lk-bg2)",
         borderBottom: "1px solid var(--lk-border-color)",
         gap: "8px",
@@ -56,7 +58,7 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
       {/* Admin Button - Google Meet Style */}
       {isAdmin && (
         <button
-          className="lk-button"
+          className="lk-button admin-button"
           onClick={onAdminToggle}
           title={`Admin Controls (${participantCount} participants)`}
           aria-pressed={isAdminPanelOpen}
@@ -68,36 +70,38 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "6px 12px",
-            minHeight: "32px",
-            borderRadius: "16px",
+            gap: "6px",
+            padding: "4px 10px",
+            minHeight: "28px",
+            borderRadius: "14px",
           }}
         >
           {/* Overlapping Avatar Circles */}
           <div
+            className="admin-avatars"
             style={{
               display: "flex",
               alignItems: "center",
-              marginLeft: "-4px",
+              marginLeft: "-2px",
             }}
           >
             {participantAvatars.map((p, index) => (
               <div
                 key={index}
+                className="admin-avatar"
                 style={{
-                  width: "24px",
-                  height: "24px",
+                  width: "20px",
+                  height: "20px",
                   borderRadius: "50%",
                   border: "2px solid var(--lk-bg2)",
                   backgroundColor: "var(--lk-bg3)",
-                  marginLeft: index > 0 ? "-8px" : "0",
+                  marginLeft: index > 0 ? "-6px" : "0",
                   zIndex: participantAvatars.length - index,
                   overflow: "hidden",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: "10px",
+                  fontSize: "8px",
                   fontWeight: "600",
                   color: "var(--lk-fg)",
                 }}

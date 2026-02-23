@@ -27,3 +27,90 @@
   align-items: center !important;
   justify-content: center !important;
 }
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  /* Smaller buttons on mobile */
+  .lk-button-group .lk-button:not([data-lk-source="screen_share"]),
+  .lk-button-group button {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    padding: 6px !important;
+  }
+
+  .lk-button-group .lk-button[data-lk-source="screen_share"] {
+    min-height: 40px !important;
+    width: 56px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Reduce gap between buttons on mobile */
+  .lk-button-group {
+    gap: 6px !important;
+  }
+
+  /* Hide button labels on small screens */
+  .lk-button-label {
+    display: none !important;
+  }
+
+  /* Adjust control bar wrapper padding */
+  .lk-control-bar-wrapper {
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  /* Adjust split button arrow */
+  .lk-button-group > div > button[style*="minWidth: 22px"] {
+    min-width: 18px !important;
+    min-height: 40px !important;
+  }
+
+  /* Adjust main toggle buttons in split buttons */
+  .lk-button-group > div > .lk-button {
+    min-width: 36px !important;
+    min-height: 40px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens - even smaller buttons */
+  .lk-button-group .lk-button:not([data-lk-source="screen_share"]),
+  .lk-button-group button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 4px !important;
+  }
+
+  .lk-button-group .lk-button[data-lk-source="screen_share"] {
+    min-height: 36px !important;
+    width: 48px !important;
+    padding: 4px 6px !important;
+  }
+
+  .lk-button-group {
+    gap: 4px !important;
+  }
+
+  .lk-control-bar-wrapper {
+    padding: 6px !important;
+    gap: 4px !important;
+  }
+
+  /* Adjust split button components for extra small screens */
+  .lk-button-group > div > button[style*="minWidth: 22px"] {
+    min-width: 16px !important;
+    min-height: 36px !important;
+  }
+
+  .lk-button-group > div > .lk-button {
+    min-width: 32px !important;
+    min-height: 36px !important;
+  }
+
+  /* Smaller SVG icons on extra small screens */
+  .lk-button svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}

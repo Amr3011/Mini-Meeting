@@ -399,12 +399,16 @@ const MeetingContent: React.FC<
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: "16px",
-                padding: "0 16px",
+                gap: "8px",
+                padding: "8px 12px",
+                flexWrap: "wrap",
               }}
             >
               {/* Summarizer Controls - أقصى اليسار */}
-              <div style={{ flexShrink: 0 }}>
+              <div
+                style={{ flexShrink: 0, order: 1 }}
+                className="hidden md:block"
+              >
                 {meetingId && (
                   <SummarizerControls
                     meetingId={meetingId}
@@ -415,10 +419,20 @@ const MeetingContent: React.FC<
               </div>
 
               {/* Media Controls - في النص */}
-              <CustomControlBar />
+              <div
+                style={{
+                  flex: "1 1 auto",
+                  display: "flex",
+                  justifyContent: "center",
+                  order: 2,
+                  minWidth: 0,
+                }}
+              >
+                <CustomControlBar />
+              </div>
 
               {/* Chat Button - أقصى اليمين */}
-              <div style={{ flexShrink: 0 }}>
+              <div style={{ flexShrink: 0, order: 3 }}>
                 <button
                   className="lk-button"
                   onClick={toggleChat}
@@ -447,7 +461,7 @@ const MeetingContent: React.FC<
                       d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                     />
                   </svg>
-                  <span className="lk-button-label">Chat</span>
+                  <span className="lk-button-label hidden sm:inline">Chat</span>
                   {/* Unread message badge */}
                   {!isChatOpen && unreadCount > 0 && (
                     <span

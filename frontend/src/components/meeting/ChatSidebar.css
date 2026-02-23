@@ -125,3 +125,66 @@
   color: var(--lk-fg2);
   font-size: 14px;
 }
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  .lk-chat-messages {
+    padding: 12px 16px !important;
+  }
+
+  .lk-chat-entry {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+  }
+
+  .lk-chat-entry .lk-chat-entry-author {
+    font-size: 12px;
+  }
+
+  .lk-chat-entry .lk-chat-entry-message {
+    font-size: 13px;
+  }
+
+  .lk-chat-form {
+    padding: 12px 16px !important;
+  }
+
+  .lk-chat-form-input,
+  .lk-chat-form input[type="text"] {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lk-chat-messages {
+    padding: 10px 12px !important;
+  }
+
+  .lk-chat-entry {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+  }
+
+  .lk-chat-entry .lk-chat-entry-author {
+    font-size: 11px;
+  }
+
+  .lk-chat-entry .lk-chat-entry-message {
+    font-size: 12px;
+  }
+
+  .lk-chat-entry .lk-chat-entry-timestamp {
+    font-size: 10px;
+  }
+
+  .lk-chat-form {
+    padding: 10px 12px !important;
+  }
+
+  .lk-chat-form-input,
+  .lk-chat-form input[type="text"] {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}

@@ -63,13 +63,16 @@ export const CustomControlBar: React.FC = () => {
 
   return (
     <div
-      className="lk-control-bar"
+      className="lk-control-bar responsive-control-bar"
       style={{
         justifyContent: "center",
       }}
     >
       {/* Center Group - Media Controls + Leave في النص */}
-      <div className="lk-button-group" style={{ gap: "12px" }}>
+      <div
+        className="lk-button-group"
+        style={{ gap: "8px", flexWrap: "nowrap" }}
+      >
         {/* Microphone Button with Dropdown */}
         <div
           style={{ position: "relative", display: "flex" }}

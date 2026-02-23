@@ -30,49 +30,11 @@ export const SidebarPanel: React.FC<SidebarPanelProps> = ({
       }}
     >
       {/* Sidebar Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 20px",
-          borderBottom: "1px solid var(--lk-border-color)",
-          backgroundColor: "var(--lk-bg2)",
-          flexShrink: 0,
-        }}
-      >
-        <h3
-          style={{
-            color: "var(--lk-fg)",
-            fontWeight: "600",
-            margin: 0,
-            fontSize: "15px",
-          }}
-        >
-          {title}
-        </h3>
+      <div className="sidebar-header">
+        <h3 className="sidebar-title">{title}</h3>
         <button
+          className="sidebar-close-btn"
           onClick={onClose}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "var(--lk-fg2)",
-            cursor: "pointer",
-            padding: "6px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "6px",
-            transition: "all 0.2s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--lk-bg)";
-            e.currentTarget.style.color = "var(--lk-fg)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--lk-fg2)";
-          }}
           title="Close"
         >
           <svg
