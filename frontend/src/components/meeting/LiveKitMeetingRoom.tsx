@@ -113,7 +113,8 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
       </div>
     );
   }
-
+  
+  // Show disconnect message if disconnected
   // Show disconnect message if disconnected
   if (disconnectReason) {
     return <DisconnectMessage reason={disconnectReason} />;
