@@ -127,74 +127,121 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
     );
   }
 
-  // Original floating mode
+  // Panel mode - for embedding in Admin Controls
   return (
-    <>
-      <div className="fixed bottom-24 right-6 z-50">
-        <div className="flex flex-col items-end gap-2">
-          {/* Error message */}
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-2 rounded-lg text-sm max-w-xs">
-              {error}
-            </div>
-          )}
-
-          {/* Status indicator */}
-          {isActive && (
-            <div className="bg-green-500/20 border border-green-500/50 text-green-200 px-4 py-2 rounded-lg text-sm flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              Recording for summary
-            </div>
-          )}
-
-          {/* Toggle button */}
-          <button
-            onClick={handleToggle}
-            disabled={isLoading}
-            className={`
-              group relative flex items-center gap-3 px-5 py-3 rounded-xl font-medium
-              transition-all duration-200 shadow-lg
-              ${
-                isActive
-                  ? "bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
-                  : "bg-linear-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
-              }
-              ${isLoading ? "opacity-50 cursor-not-allowed" : "hover:shadow-xl hover:scale-105"}
-              disabled:opacity-50 disabled:cursor-not-allowed
-            `}
-            title={isActive ? "Stop Listening" : "Listen to Summarize"}
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : isActive ? (
-              <MicOff className="w-5 h-5" />
-            ) : (
-              <Mic className="w-5 h-5" />
-            )}
-            <span className="text-sm font-semibold">
-              {isLoading
-                ? "Processing..."
-                : isActive
-                  ? "Stop Listening"
-                  : "Listen to Summarize"}
-            </span>
-          </button>
-
-          {/* Info tooltip */}
-          {!isActive && !isLoading && (
-            <div className="text-xs text-gray-400 max-w-xs text-right">
-              AI will listen to summarize this meeting
-            </div>
-          )}
-
-          {/* Session info */}
-          {showCapturedMessage && session && session.status === "CAPTURED" && (
-            <div className="bg-blue-500/20 border border-blue-500/50 text-blue-200 px-4 py-2 rounded-lg text-sm">
-              ✓ Recording complete we will notify you when the summary is ready
-            </div>
-          )}
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      {/* Error message */}
+      {error && (
+        <div
+          style={{
+            backgroundColor: "rgba(220, 38, 38, 0.2)",
+            border: "1px solid rgba(220, 38, 38, 0.5)",
+            color: "#fca5a5",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            fontSize: "13px",
+          }}
+        >
+          {error}
         </div>
-      </div>
+      )}
+
+      {/* Status indicator */}
+      {isActive && (
+        <div
+          style={{
+            backgroundColor: "rgba(34, 197, 94, 0.2)",
+            border: "1px solid rgba(34, 197, 94, 0.5)",
+            color: "#86efac",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            fontSize: "13px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <div
+            style={{
+              width: "8px",
+              height: "8px",
+              backgroundColor: "#22c55e",
+              borderRadius: "50%",
+              animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            }}
+          />
+          Recording for summary
+        </div>
+      )}
+
+      {/* Session info */}
+      {showCapturedMessage && session && session.status === "CAPTURED" && (
+        <div
+          style={{
+            backgroundColor: "rgba(59, 130, 246, 0.2)",
+            border: "1px solid rgba(59, 130, 246, 0.5)",
+            color: "#93c5fd",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            fontSize: "13px",
+          }}
+        >
+          ✓ Recording complete - we will notify you when the summary is ready
+        </div>
+      )}
+
+      {/* Toggle button */}
+      <button
+        onClick={handleToggle}
+        disabled={isLoading}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          padding: "10px 16px",
+          borderRadius: "6px",
+          fontWeight: 500,
+          fontSize: "14px",
+          border: "none",
+          cursor: isLoading ? "not-allowed" : "pointer",
+          opacity: isLoading ? 0.5 : 1,
+          backgroundColor: isActive ? "#dc2626" : "#3b82f6",
+          color: "white",
+        }}
+        title={isActive ? "Stop Listening" : "Listen to Summarize"}
+      >
+        {isLoading ? (
+          <Loader2
+            style={{ width: "16px", height: "16px" }}
+            className="animate-spin"
+          />
+        ) : isActive ? (
+          <MicOff style={{ width: "16px", height: "16px" }} />
+        ) : (
+          <Mic style={{ width: "16px", height: "16px" }} />
+        )}
+        <span>
+          {isLoading
+            ? "Processing..."
+            : isActive
+              ? "Stop Listening"
+              : "Listen to Summarize"}
+        </span>
+      </button>
+
+      {/* Info tooltip */}
+      {!isActive && !isLoading && (
+        <div
+          style={{
+            fontSize: "12px",
+            color: "var(--lk-fg2)",
+            textAlign: "center",
+          }}
+        >
+          AI will listen and summarize this meeting
+        </div>
+      )}
 
       {/* Toast Notification */}
       {showToast && (
@@ -205,6 +252,6 @@ export const SummarizerControls: React.FC<SummarizerControlsProps> = ({
           type="success"
         />
       )}
-    </>
+    </div>
   );
 };
