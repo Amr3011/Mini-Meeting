@@ -232,265 +232,262 @@ const MeetingContent: React.FC<
   isAdminPanelOpen,
   setIsAdminPanelOpen,
 }) => {
-  const participants = useParticipants();
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const { chatMessages } = useChat();
-  const [lastReadMessageCount, setLastReadMessageCount] = useState(0);
+    const participants = useParticipants();
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const { chatMessages } = useChat();
+    const [lastReadMessageCount, setLastReadMessageCount] = useState(0);
 
-  // Calculate unread messages
-  const unreadCount = chatMessages.length - lastReadMessageCount;
+    // Calculate unread messages
+    const unreadCount = chatMessages.length - lastReadMessageCount;
 
-  const tracks = useTracks(
-    [
-      { source: Track.Source.Camera, withPlaceholder: true },
-      { source: Track.Source.ScreenShare, withPlaceholder: false },
-    ],
-    { onlySubscribed: false },
-  );
+    const tracks = useTracks(
+      [
+        { source: Track.Source.Camera, withPlaceholder: true },
+        { source: Track.Source.ScreenShare, withPlaceholder: false },
+      ],
+      { onlySubscribed: false },
+    );
 
-  // Mark messages as read when chat is open
-  useEffect(() => {
-    if (isChatOpen) {
-      setLastReadMessageCount(chatMessages.length);
-    }
-  }, [isChatOpen, chatMessages.length]);
+    // Mark messages as read when chat is open
+    useEffect(() => {
+      if (isChatOpen) {
+        setLastReadMessageCount(chatMessages.length);
+      }
+    }, [isChatOpen, chatMessages.length]);
 
-  // Check if there's a screen share active
-  const hasScreenShare = tracks.some(
-    (track) => track.source === Track.Source.ScreenShare,
-  );
+    // Check if there's a screen share active
+    const hasScreenShare = tracks.some(
+      (track) => track.source === Track.Source.ScreenShare,
+    );
 
-  const toggleAdmin = () => {
-    if (isAdminPanelOpen) {
-      setIsAdminPanelOpen(false);
-    } else {
-      setIsChatOpen(false); // إغلاق Chat
-      setIsAdminPanelOpen(true);
-    }
-  };
+    const toggleAdmin = () => {
+      if (isAdminPanelOpen) {
+        setIsAdminPanelOpen(false);
+      } else {
+        setIsChatOpen(false); // إغلاق Chat
+        setIsAdminPanelOpen(true);
+      }
+    };
 
-  const toggleChat = () => {
-    if (isChatOpen) {
-      setIsChatOpen(false);
-    } else {
-      setIsAdminPanelOpen(false);
-      setIsChatOpen(true);
-    }
-  };
+    const toggleChat = () => {
+      if (isChatOpen) {
+        setIsChatOpen(false);
+      } else {
+        setIsAdminPanelOpen(false);
+        setIsChatOpen(true);
+      }
+    };
 
-  return (
-    <>
-      <RoomAudioRenderer />
+    return (
+      <>
+        <RoomAudioRenderer />
 
-      {/* Main Layout - Flex container */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          width: "100%",
-        }}
-      >
-        {/* Top Header Bar */}
-        <MeetingHeader
-          isAdmin={isAdmin}
-          isAdminPanelOpen={isAdminPanelOpen}
-          participants={participants}
-          onAdminToggle={toggleAdmin}
-        />
-
-        {/* Content Area - Video + Sidebars */}
+        {/* Main Layout - Flex container */}
         <div
           style={{
             display: "flex",
-            flex: 1,
-            minHeight: 0,
+            flexDirection: "column",
+            height: "100%",
+            width: "100%",
           }}
         >
-          {/* Video Section */}
+          {/* Top Header Bar */}
+          <MeetingHeader
+            isAdmin={isAdmin}
+            isAdminPanelOpen={isAdminPanelOpen}
+            participants={participants}
+            onAdminToggle={toggleAdmin}
+          />
+
+          {/* Content Area - Video + Sidebars */}
           <div
             style={{
-              flex: 1,
               display: "flex",
-              flexDirection: "column",
-              minWidth: 0,
+              flex: 1,
+              minHeight: 0,
             }}
           >
-            {/* Video Grid + Sidebars Container */}
-            <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-              {/* Video Grid */}
-              <div
-                className="lk-video-conference-inner"
-                style={{ flex: 1, minWidth: 0 }}
-              >
-                <div
-                  className="lk-grid-layout-wrapper"
-                  style={{ height: "100%" }}
-                >
-                  {hasScreenShare ? (
-                    <FocusLayoutContainer>
-                      <CarouselLayout tracks={tracks}>
-                        <CustomParticipantTile />
-                      </CarouselLayout>
-                      <FocusLayout
-                        trackRef={tracks.find(
-                          (t) => t.source === Track.Source.ScreenShare,
-                        )}
-                      />
-                    </FocusLayoutContainer>
-                  ) : (
-                    <GridLayout tracks={tracks}>
-                      <CustomParticipantTile />
-                    </GridLayout>
-                  )}
-                </div>
-              </div>
-
-              {/* Chat Panel - Always mounted to preserve messages */}
-              <div style={{ display: isChatOpen ? "flex" : "none" }}>
-                <SidebarPanel
-                  title="In-call messages"
-                  onClose={() => setIsChatOpen(false)}
-                >
-                  <Chat
-                    style={{
-                      flex: 1,
-                      width: "100%",
-                      height: "100%",
-                      minHeight: 0,
-                      overflow: "hidden",
-                    }}
-                  />
-                </SidebarPanel>
-              </div>
-
-              {/* Admin Panel */}
-              {isAdminPanelOpen && (
-                <SidebarPanel
-                  title="Admin Controls"
-                  onClose={() => setIsAdminPanelOpen(false)}
-                >
-                  <div
-                    style={{
-                      flex: 1,
-                      overflow: "hidden",
-                      display: "flex",
-                      flexDirection: "column",
-                      minHeight: 0,
-                    }}
-                  >
-                    <AdminControls
-                      meetingCode={meetingCode}
-                      isAdmin={isAdmin}
-                      onEndMeeting={() => onDisconnect?.()}
-                      isOpen={true}
-                      onClose={() => {}}
-                      hideHeader={true}
-                    />
-                  </div>
-                </SidebarPanel>
-              )}
-            </div>
-
-            {/* Control Bar - Full Width تحت خالص */}
+            {/* Video Section */}
             <div
-              className="lk-control-bar-wrapper"
               style={{
+                flex: 1,
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
-                padding: "8px 12px",
-                flexWrap: "wrap",
+                flexDirection: "column",
+                minWidth: 0,
               }}
             >
-              {/* Summarizer Controls - أقصى اليسار */}
-              <div style={{ flexShrink: 0, order: 1 }}>
-                {meetingId && (
-                  <SummarizerControls
-                    meetingId={meetingId}
-                    isAdmin={isAdmin}
-                    inline={true}
-                  />
+              {/* Video Grid + Sidebars Container */}
+              <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+                {/* Video Grid */}
+                <div
+                  className="lk-video-conference-inner"
+                  style={{ flex: 1, minWidth: 0 }}
+                >
+                  <div
+                    className="lk-grid-layout-wrapper"
+                    style={{ height: "100%" }}
+                  >
+                    {hasScreenShare ? (
+                      <FocusLayoutContainer>
+                        <CarouselLayout tracks={tracks}>
+                          <CustomParticipantTile />
+                        </CarouselLayout>
+                        <FocusLayout
+                          trackRef={tracks.find(
+                            (t) => t.source === Track.Source.ScreenShare,
+                          )}
+                        />
+                      </FocusLayoutContainer>
+                    ) : (
+                      <GridLayout tracks={tracks}>
+                        <CustomParticipantTile />
+                      </GridLayout>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chat Panel - Always mounted to preserve messages */}
+                <div style={{ display: isChatOpen ? "flex" : "none" }}>
+                  <SidebarPanel
+                    title="In-call messages"
+                    onClose={() => setIsChatOpen(false)}
+                  >
+                    <Chat
+                      style={{
+                        flex: 1,
+                        width: "100%",
+                        height: "100%",
+                        minHeight: 0,
+                        overflow: "hidden",
+                      }}
+                    />
+                  </SidebarPanel>
+                </div>
+
+                {/* Admin Panel */}
+                {isAdminPanelOpen && (
+                  <SidebarPanel
+                    title="Admin Controls"
+                    onClose={() => setIsAdminPanelOpen(false)}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column",
+                        minHeight: 0,
+                      }}
+                    >
+                      <AdminControls
+                        meetingCode={meetingCode}
+                        isAdmin={isAdmin}
+                        onEndMeeting={() => onDisconnect?.()}
+                      />
+                    </div>
+                  </SidebarPanel>
                 )}
               </div>
 
-              {/* Media Controls - في النص */}
+              {/* Control Bar - Full Width تحت خالص */}
               <div
+                className="lk-control-bar-wrapper"
                 style={{
-                  flex: "1 1 auto",
                   display: "flex",
-                  justifyContent: "center",
-                  order: 2,
-                  minWidth: 0,
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                  padding: "8px 12px",
+                  flexWrap: "wrap",
                 }}
               >
-                <CustomControlBar />
-              </div>
+                {/* Summarizer Controls - أقصى اليسار */}
+                <div style={{ flexShrink: 0, order: 1 }}>
+                  {meetingId && (
+                    <SummarizerControls
+                      meetingId={meetingId}
+                      isAdmin={isAdmin}
+                      inline={true}
+                    />
+                  )}
+                </div>
 
-              {/* Chat Button - أقصى اليمين */}
-              <div style={{ flexShrink: 0, order: 3 }}>
-                <button
-                  className="lk-button"
-                  onClick={toggleChat}
-                  title="Toggle Chat"
-                  aria-pressed={isChatOpen}
+                {/* Media Controls - في النص */}
+                <div
                   style={{
-                    backgroundColor: isChatOpen
-                      ? "var(--lk-accent)"
-                      : "var(--lk-bg2)",
-                    border: "1px solid var(--lk-border-color)",
-                    position: "relative",
+                    flex: "1 1 auto",
+                    display: "flex",
+                    justifyContent: "center",
+                    order: 2,
+                    minWidth: 0,
                   }}
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                    style={{ flexShrink: 0 }}
+                  <CustomControlBar />
+                </div>
+
+                {/* Chat Button - أقصى اليمين */}
+                <div style={{ flexShrink: 0, order: 3 }}>
+                  <button
+                    className="lk-button"
+                    onClick={toggleChat}
+                    title="Toggle Chat"
+                    aria-pressed={isChatOpen}
+                    style={{
+                      backgroundColor: isChatOpen
+                        ? "var(--lk-accent)"
+                        : "var(--lk-bg2)",
+                      border: "1px solid var(--lk-border-color)",
+                      position: "relative",
+                    }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  <span className="lk-button-label hidden sm:inline">Chat</span>
-                  {/* Unread message badge */}
-                  {!isChatOpen && unreadCount > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "-3px",
-                        right: "-3px",
-                        backgroundColor: "#dc2626",
-                        color: "white",
-                        fontSize: "10px",
-                        fontWeight: "600",
-                        padding: "2px 6px",
-                        borderRadius: "10px",
-                        minWidth: "20px",
-                        textAlign: "center",
-                        lineHeight: "1.2",
-                      }}
+                    <svg
+                      width="20"
+                      height="20"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2"
+                      style={{ flexShrink: 0 }}
                     >
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </button>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    <span className="lk-button-label hidden sm:inline">Chat</span>
+                    {/* Unread message badge */}
+                    {!isChatOpen && unreadCount > 0 && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "-3px",
+                          right: "-3px",
+                          backgroundColor: "#dc2626",
+                          color: "white",
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          padding: "2px 6px",
+                          borderRadius: "10px",
+                          minWidth: "20px",
+                          textAlign: "center",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Lobby Requests */}
-      <LobbyRequests meetingCode={meetingCode} isAdmin={isAdmin} />
-    </>
-  );
-};
+        {/* Lobby Requests */}
+        <LobbyRequests meetingCode={meetingCode} isAdmin={isAdmin} />
+      </>
+    );
+  };
 
 export default LiveKitMeetingRoom;

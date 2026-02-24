@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   TrackToggle,
-  DisconnectButton,
   useMediaDeviceSelect,
-  useTracks,
   useRoomContext,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
@@ -31,14 +29,6 @@ export const CustomControlBar: React.FC = () => {
     activeDeviceId: activeVideoDevice,
     setActiveMediaDevice: setActiveVideo,
   } = useMediaDeviceSelect({ kind: "videoinput" });
-
-  const audioTracks = useTracks([Track.Source.Microphone]);
-  const videoTracks = useTracks([Track.Source.Camera]);
-
-  const isAudioEnabled =
-    audioTracks.length > 0 && audioTracks[0].publication?.isMuted === false;
-  const isVideoEnabled =
-    videoTracks.length > 0 && videoTracks[0].publication?.isMuted === false;
 
   // Close menus when clicking outside
   useEffect(() => {
