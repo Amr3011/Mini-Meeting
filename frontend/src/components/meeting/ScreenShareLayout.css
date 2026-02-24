@@ -1,0 +1,87 @@
+/* Custom styles for screen share layout */
+
+/* Add rounded corners to all participant tiles */
+.lk-participant-tile {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Make all carousel items (participants) the same size when screen sharing */
+.lk-focus-layout .lk-carousel > * {
+  width: 150px !important;
+  height: 150px !important;
+  min-width: 150px !important;
+  min-height: 150px !important;
+  max-width: 150px !important;
+  max-height: 150px !important;
+  flex-shrink: 0;
+  aspect-ratio: auto !important;
+}
+
+/* Ensure carousel scrolls vertically and shows all participants equally */
+.lk-focus-layout .lk-carousel {
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 8px;
+  padding: 8px;
+  max-height: 100%;
+}
+
+/* Keep the focused track (screen share) large */
+.lk-focus-layout .lk-focused-participant {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+
+/* Adjust focus layout container to give more space to screen share */
+.lk-focus-layout {
+  display: grid !important;
+  grid-template-columns: 170px 1fr !important;
+  gap: 8px !important;
+}
+
+/* On mobile/small screens, stack vertically */
+@media (max-width: 768px) {
+  .lk-focus-layout {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr 150px !important;
+  }
+
+  .lk-focus-layout .lk-carousel {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+  }
+
+  .lk-focus-layout .lk-carousel > * {
+    width: 100px !important;
+    height: 100px !important;
+    min-width: 100px !important;
+    min-height: 100px !important;
+    max-width: 100px !important;
+    max-height: 100px !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .lk-focus-layout {
+    grid-template-rows: 1fr 120px !important;
+  }
+
+  .lk-focus-layout .lk-carousel > * {
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
+    min-height: 80px !important;
+    max-width: 80px !important;
+    max-height: 80px !important;
+  }
+
+  .lk-focus-layout .lk-carousel {
+    gap: 6px !important;
+    padding: 6px !important;
+  }
+}
