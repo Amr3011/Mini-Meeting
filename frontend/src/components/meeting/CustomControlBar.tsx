@@ -384,22 +384,16 @@ export const CustomControlBar: React.FC = () => {
           )}
         </div>
 
-        <div
-          style={{ display: "flex", alignItems: "center" }}
-          title="Share Screen"
-        >
-          <TrackToggle
-            source={Track.Source.ScreenShare}
-            showIcon={true}
-            style={
-              {
-                width: "70px",
-                minHeight: "48px",
-                padding: "8px 12px",
-              } as React.CSSProperties
-            }
-          />
-        </div>
+        <TrackToggle
+          source={Track.Source.ScreenShare}
+          showIcon={true}
+          style={
+            {
+              minWidth: "48px",
+              minHeight: "48px",
+            } as React.CSSProperties
+          }
+        />
 
         {/* Custom Leave Button with Door Icon */}
         <button
@@ -411,8 +405,7 @@ export const CustomControlBar: React.FC = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "8px 12px",
-            minWidth: "60px",
+            minWidth: "48px",
             minHeight: "48px",
           }}
           title="Leave Meeting"
