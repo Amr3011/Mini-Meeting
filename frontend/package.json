@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:features": "pwsh ./test-features.ps1",
+    "test:features:sh": "bash ./test-features.sh",
+    "check:size": "npm run build && du -sh dist/assets/* | sort -h",
+    "analyze": "npm run build -- --mode analyze"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -21,7 +25,8 @@
     "react-hook-form": "^7.71.1",
     "react-router-dom": "^7.13.0",
     "react-use-websocket": "^4.13.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
