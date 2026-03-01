@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
-import { meetingService } from '../services/api/meeting.service';
-import type { SummarizerSession } from '../types/meeting.types';
+import { useState, useCallback } from "react";
+import { meetingService } from "../services/api/meeting.service";
+import type { SummarizerSession } from "../types/meeting.types";
 
 interface UseSummarizerReturn {
   session: SummarizerSession | null;
@@ -25,8 +25,10 @@ export const useSummarizer = (): UseSummarizerReturn => {
     try {
       const newSession = await meetingService.startSummarizer(meetingId);
       setSession(newSession);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to start summarizer';
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      const errorMessage =
+        error.response?.data?.error || "Failed to start summarizer";
       setError(errorMessage);
       throw err;
     } finally {
@@ -40,8 +42,10 @@ export const useSummarizer = (): UseSummarizerReturn => {
     try {
       const updatedSession = await meetingService.stopSummarizer(meetingId);
       setSession(updatedSession);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to stop summarizer';
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
+      const errorMessage =
+        error.response?.data?.error || "Failed to stop summarizer";
       setError(errorMessage);
       throw err;
     } finally {
@@ -49,7 +53,7 @@ export const useSummarizer = (): UseSummarizerReturn => {
     }
   }, []);
 
-  const isActive = session?.status === 'STARTED';
+  const isActive = session?.status === "STARTED";
 
   return {
     session,

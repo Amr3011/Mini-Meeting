@@ -1,6 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { generateToken, type LiveKitTokenResponse } from '../services/api/livekit.service';
-import type { AxiosError } from 'axios';
+import { useState, useEffect, useCallback } from "react";
+import {
+  generateToken,
+  type LiveKitTokenResponse,
+} from "../services/api/livekit";
+import type { AxiosError } from "axios";
 
 interface UseLiveKitOptions {
   meetingCode: string;
@@ -36,7 +39,7 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
 
   const connect = useCallback(async () => {
     if (!meetingCode) {
-      setError('Meeting code is required');
+      setError("Meeting code is required");
       return;
     }
 
@@ -44,7 +47,10 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
     setError(null);
 
     try {
-      const response: LiveKitTokenResponse = await generateToken(meetingCode, userName);
+      const response: LiveKitTokenResponse = await generateToken(
+        meetingCode,
+        userName,
+      );
 
       setToken(response.token);
       setLivekitUrl(response.url);
@@ -52,9 +58,12 @@ export const useLiveKit = (options: UseLiveKitOptions): UseLiveKitReturn => {
       setIdentity(response.identity);
     } catch (err) {
       const axiosError = err as AxiosError<{ error?: string }>;
-      const errorMessage = axiosError.response?.data?.error || axiosError.message || 'Failed to connect to meeting';
+      const errorMessage =
+        axiosError.response?.data?.error ||
+        axiosError.message ||
+        "Failed to connect to meeting";
       setError(errorMessage);
-      console.error('LiveKit connection error:', err);
+      console.error("LiveKit connection error:", err);
     } finally {
       setIsLoading(false);
     }
