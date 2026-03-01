@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MeetingLobby, type DevicePreferences, type TokenData } from "./MeetingLobby";
+import {
+  MeetingLobby,
+  type DevicePreferences,
+  type TokenData,
+} from "./MeetingLobby";
 import { MeetingRoom } from "./MeetingRoom";
 import { useAuth } from "../hooks/useAuth";
 import { meetingService } from "../services/api/meeting.service";
@@ -18,11 +22,11 @@ const Meeting: React.FC = () => {
 
   const [hasJoined, setHasJoined] = useState(false);
   const [userName, setUserName] = useState<string>("");
-  const [devicePreferences, setDevicePreferences] = useState<DevicePreferences | null>(null);
+  const [devicePreferences, setDevicePreferences] =
+    useState<DevicePreferences | null>(null);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [meetingId, setMeetingId] = useState<number | null>(null);
 
-  // Fetch meeting data to get the meeting ID
   useEffect(() => {
     const fetchMeeting = async () => {
       if (meetingCode) {
@@ -30,7 +34,7 @@ const Meeting: React.FC = () => {
           const meeting = await meetingService.getMeetingByCode(meetingCode);
           setMeetingId(meeting.id);
         } catch (error) {
-          console.error('Failed to fetch meeting:', error);
+          console.error("Failed to fetch meeting:", error);
         }
       }
     };
@@ -38,9 +42,10 @@ const Meeting: React.FC = () => {
   }, [meetingCode]);
 
   const handleJoinMeeting = (prefs: DevicePreferences, token: TokenData) => {
-    const name = isAuthenticated && user
-      ? user.name || user.email.split("@")[0]
-      : token.user_name || token.identity;
+    const name =
+      isAuthenticated && user
+        ? user.name || user.email.split("@")[0]
+        : token.user_name || token.identity;
     setUserName(name);
     setDevicePreferences(prefs);
     setTokenData(token);
@@ -77,4 +82,3 @@ const Meeting: React.FC = () => {
 };
 
 export default Meeting;
-

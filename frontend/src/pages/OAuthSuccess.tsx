@@ -22,7 +22,6 @@ const OAuthSuccess = () => {
       }
 
       try {
-        // Store the token and redirect to dashboard
         await setAuthData(token);
         navigate("/dashboard");
       } catch {
@@ -40,7 +39,9 @@ const OAuthSuccess = () => {
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-brand-50 via-white to-accent-50">
         <div className="glass rounded-2xl shadow-xl p-8 max-w-md w-full text-center space-y-4">
           <div className="text-red-600 text-5xl">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900">Authentication Failed</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Authentication Failed
+          </h2>
           <p className="text-gray-600">{error}</p>
           <p className="text-sm text-gray-500">Redirecting to login...</p>
         </div>
@@ -53,8 +54,12 @@ const OAuthSuccess = () => {
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-brand-50 via-white to-accent-50">
         <div className="glass rounded-2xl shadow-xl p-8 max-w-md w-full text-center space-y-4">
           <Loading />
-          <h2 className="text-2xl font-bold text-gray-900">Completing Sign In</h2>
-          <p className="text-gray-600">Please wait while we set up your account...</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Completing Sign In
+          </h2>
+          <p className="text-gray-600">
+            Please wait while we set up your account...
+          </p>
         </div>
       </div>
     );
