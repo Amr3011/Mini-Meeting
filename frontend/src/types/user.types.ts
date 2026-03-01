@@ -1,4 +1,3 @@
-// Summarizer session model
 export interface SummarizerSession {
   id: number;
   status: "STARTED" | "CAPTURED" | "TRANSCRIBED" | "NORMALIZED" | "SUMMARIZED";
@@ -9,7 +8,6 @@ export interface SummarizerSession {
   ended_at: string | null;
 }
 
-// Summarizer sessions list model
 export interface SummarizerSessionList {
   id: number;
   status: "STARTED" | "CAPTURED" | "TRANSCRIBED" | "NORMALIZED" | "SUMMARIZED";
@@ -17,7 +15,6 @@ export interface SummarizerSessionList {
   started_at: string;
 }
 
-// User model matching backend response
 export interface User {
   id: number;
   email: string;
@@ -28,7 +25,6 @@ export interface User {
   created_at: string;
 }
 
-// Request types
 export interface UpdateUserRequest {
   name?: string;
   email?: string;
@@ -41,7 +37,6 @@ export interface CreateUserRequest {
   name: string;
 }
 
-// Response types
 export interface UserResponse {
   data: User;
 }
