@@ -43,11 +43,18 @@ export const createAuthActions = (
   },
 
   setAuthData: async (token: string) => {
-    if (userFetcher.isLocked()) return;
+    if (userFetcher.isLocked()) {
+      console.warn("⚠️ User fetch already in progress");
+      return;
+    }
 
     try {
+      console.log("🔐 Storing token...");
       tokenStorage.set(token);
+
+      console.log("👤 Fetching user data...");
       const userData = await userFetcher.fetchWithLock();
+      console.log("✅ User data fetched:", userData.email);
 
       set({
         user: userData,
@@ -55,8 +62,9 @@ export const createAuthActions = (
         isAuthenticated: true,
         isLoading: false,
       });
+      console.log("✅ Auth state updated successfully");
     } catch (error) {
-      console.error("Failed to fetch user:", error);
+      console.error("❌ Failed to fetch user:", error);
       tokenStorage.remove();
       set({
         user: null,

@@ -12,15 +12,22 @@ export const userFetcher = {
 
   fetchWithLock: async (): Promise<User> => {
     if (isFetchingUser) {
+      console.warn("⚠️ User fetch already in progress");
       throw new Error("User fetch already in progress");
     }
 
     isFetchingUser = true;
+    console.log("🔒 User fetch locked, making API call...");
     try {
       const userData = await userService.getCurrentUser();
+      console.log("✅ User data received from API:", userData.email);
       return userData;
+    } catch (error) {
+      console.error("❌ Failed to fetch user from API:", error);
+      throw error;
     } finally {
       isFetchingUser = false;
+      console.log("🔓 User fetch unlocked");
     }
   },
 };

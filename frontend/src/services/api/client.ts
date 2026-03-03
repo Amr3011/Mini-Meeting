@@ -36,14 +36,20 @@ apiClient.interceptors.response.use(
         currentPath === "/register" ||
         currentPath === "/verify-email" ||
         currentPath === "/forgot-password" ||
-        currentPath === "/reset-password";
+        currentPath === "/reset-password" ||
+        currentPath.startsWith("/auth/oauth");
 
       // Only clear tokens and redirect if not on an auth page
       if (!isAuthPage) {
+        console.warn(
+          "🚫 401 Unauthorized - clearing tokens and redirecting to login",
+        );
         localStorage.removeItem("token");
         sessionStorage.removeItem("token");
         localStorage.removeItem("user");
         window.location.href = "/login";
+      } else {
+        console.warn("🚫 401 Unauthorized on auth page:", currentPath);
       }
     }
 
