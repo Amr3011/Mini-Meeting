@@ -8,11 +8,11 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - Add JWT token to all requests
 apiClient.interceptors.request.use(
   (config) => {
     // Check both localStorage (Remember Me) and sessionStorage (session-only)
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -20,10 +20,9 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
-// Response interceptor - Handle common errors
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -32,16 +31,25 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized - redirect to login (but not if already on login/register pages)
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname;
-      const isAuthPage = currentPath === "/login" || currentPath === "/register" ||
-        currentPath === "/verify-email" || currentPath === "/forgot-password" ||
-        currentPath === "/reset-password";
+      const isAuthPage =
+        currentPath === "/login" ||
+        currentPath === "/register" ||
+        currentPath === "/verify-email" ||
+        currentPath === "/forgot-password" ||
+        currentPath === "/reset-password" ||
+        currentPath.startsWith("/auth/oauth");
 
       // Only clear tokens and redirect if not on an auth page
       if (!isAuthPage) {
+        console.warn(
+          "🚫 401 Unauthorized - clearing tokens and redirecting to login",
+        );
         localStorage.removeItem("token");
         sessionStorage.removeItem("token");
         localStorage.removeItem("user");
         window.location.href = "/login";
+      } else {
+        console.warn("🚫 401 Unauthorized on auth page:", currentPath);
       }
     }
 
@@ -51,7 +59,7 @@ apiClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

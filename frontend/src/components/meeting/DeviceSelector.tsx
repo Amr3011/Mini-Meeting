@@ -68,7 +68,6 @@ const DeviceSelector: React.FC<DeviceSelectorProps> = ({
     </div>
   );
 
-  // In light mode with a label, wrap with label element
   if (variant === "light" && label) {
     return (
       <div className="flex flex-col gap-2">

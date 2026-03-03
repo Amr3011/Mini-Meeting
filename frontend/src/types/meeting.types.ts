@@ -1,4 +1,3 @@
-// Meeting model matching backend response
 export interface Meeting {
   id: number;
   creator_id: number;
@@ -8,7 +7,6 @@ export interface Meeting {
   updated_at: string;
 }
 
-// Response types
 export interface MeetingResponse {
   message?: string;
   data: Meeting;
@@ -22,11 +20,10 @@ export interface MeetingDeleteResponse {
   message: string;
 }
 
-// Summarizer types
 export interface SummarizerSession {
   session_id: number;
   meeting_id: number;
-  status: 'STARTED' | 'CAPTURED' | 'TRANSCRIBED' | 'SUMMARIZED' | 'FAILED';
+  status: "STARTED" | "CAPTURED" | "TRANSCRIBED" | "SUMMARIZED" | "FAILED";
   started_at: string;
   ended_at?: string;
   total_chunks?: number;
@@ -41,4 +38,3 @@ export interface SummarizerStopResponse {
   message: string;
   data: SummarizerSession;
 }
-
