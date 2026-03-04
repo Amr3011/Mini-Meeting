@@ -1,0 +1,37 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+
+jobs:
+  lint-and-build:
+    name: Vet & Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
