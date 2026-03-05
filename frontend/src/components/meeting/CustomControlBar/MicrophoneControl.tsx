@@ -15,7 +15,7 @@ export const MicrophoneControl: React.FC = () => {
     });
 
   return (
-    <div style={{ position: "relative", display: "flex" }} ref={menuRef}>
+    <div className="relative flex" ref={menuRef}>
       <TrackToggle
         source={Track.Source.Microphone}
         showIcon={true}
@@ -31,20 +31,8 @@ export const MicrophoneControl: React.FC = () => {
       />
 
       <button
-        className="lk-button"
+        className="lk-button flex items-center justify-center bg-(--lk-bg2) min-w-5.5 min-h-12 rounded-tl-none rounded-bl-none p-0 -ml-px"
         onClick={() => setShowMenu(!showMenu)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "var(--lk-bg2)",
-          minWidth: "22px",
-          minHeight: "48px",
-          borderTopLeftRadius: "0",
-          borderBottomLeftRadius: "0",
-          padding: "0",
-          marginLeft: "-1px",
-        }}
         title="Select microphone device"
       >
         <ChevronDownIcon />

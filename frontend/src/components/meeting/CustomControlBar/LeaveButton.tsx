@@ -7,17 +7,8 @@ export const LeaveButton: React.FC = () => {
 
   return (
     <button
-      className="lk-button lk-disconnect-button"
+      className="lk-button lk-disconnect-button bg-(--lk-danger-color,#dc2626) text-white flex items-center justify-center min-w-12 min-h-12"
       onClick={() => room?.disconnect()}
-      style={{
-        backgroundColor: "var(--lk-danger-color, #dc2626)",
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: "48px",
-        minHeight: "48px",
-      }}
       title="Leave Meeting"
     >
       <LeaveIcon />

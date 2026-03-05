@@ -19,33 +19,14 @@ export const AdminButton = ({
   onToggle,
 }: AdminButtonProps) => (
   <button
-    className="lk-button admin-button"
+    className={`lk-button flex items-center gap-2 px-3 py-1.5 min-h-8 rounded-2xl border border-(--lk-border-color) shadow-[0_2px_8px_rgba(0,0,0,0.2)] text-sm font-medium text-(--lk-fg) md:gap-1.5 md:px-2.5 md:py-1 md:min-h-7 md:rounded-[14px] md:text-[13px] max-[480px]:gap-1 max-[480px]:px-2 max-[480px]:py-0.5 max-[480px]:min-h-6 max-[480px]:rounded-xl max-[480px]:text-xs ${isOpen ? "bg-(--lk-accent)" : "bg-(--lk-bg2)"}`}
     onClick={onToggle}
     title={`Admin Controls (${participantCount} participants)`}
     aria-pressed={isOpen}
-    style={{
-      backgroundColor: isOpen ? "var(--lk-accent)" : "var(--lk-bg2)",
-      border: "1px solid var(--lk-border-color)",
-      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
-      padding: "4px 10px",
-      minHeight: "28px",
-      borderRadius: "14px",
-    }}
   >
     <AvatarCircles avatars={avatars} />
 
     {/* Participant Count */}
-    <span
-      style={{
-        fontSize: "14px",
-        fontWeight: "500",
-        color: "var(--lk-fg)",
-      }}
-    >
-      {participantCount}
-    </span>
+    <span>{participantCount}</span>
   </button>
 );

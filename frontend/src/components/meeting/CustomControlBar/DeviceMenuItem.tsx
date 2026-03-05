@@ -31,39 +31,11 @@ export const DeviceMenuItem: React.FC<DeviceMenuItemProps> = ({
       onClick={onSelect}
       onMouseEnter={() => !isActive && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        width: "100%",
-        textAlign: "left",
-        padding: "10px 12px",
-        backgroundColor: isActive ? "var(--lk-accent)" : "transparent",
-        color: isActive ? "#fff" : "var(--lk-fg)",
-        border: "none",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: isActive ? "500" : "400",
-        transition: "all 0.2s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        position: "relative",
-        transform: isHovered && !isActive ? "translateX(4px)" : "translateX(0)",
-        ...(isHovered &&
-          !isActive && {
-            backgroundColor: "var(--lk-bg3)",
-          }),
-      }}
+      className={`w-full text-left py-2.5 px-3 border-none rounded-lg cursor-pointer text-sm transition-all duration-200 flex items-center gap-2.5 relative ${isActive ? "bg-(--lk-accent) text-white font-medium" : "bg-transparent text-(--lk-fg) font-normal"} ${isHovered && !isActive ? "bg-(--lk-bg3) translate-x-1" : "translate-x-0"}`}
     >
       <DeviceIconComponent />
 
-      <span
-        style={{
-          flex: 1,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
+      <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
         {device.label || DEVICE_LABELS[deviceType]}
       </span>
 

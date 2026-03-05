@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
-import "../ChatSidebar.css";
-import "../Sidebar.css";
-import "../ScreenShareLayout.css";
 import { DisconnectReason } from "livekit-client";
 import { ErrorMessage } from "../../common/ErrorMessage";
 import { DisconnectMessage } from "../DisconnectMessage";
