@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { TrackToggle, useLocalParticipant } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { MicrophoneControl } from "./MicrophoneControl";
 import { CameraControl } from "./CameraControl";
 import { ScreenShareButton } from "./ScreenShareButton";
 import { LeaveButton } from "./LeaveButton";
-import { useMeetingPreferences } from "../LiveKitMeetingRoom/MeetingPreferencesContext";
+import { useMeetingPreferences } from "../LiveKitMeetingRoom/useMeetingPreferences";
 
 const TOGGLE_STYLE: React.CSSProperties = {
   minWidth: "48px",
@@ -25,16 +25,20 @@ export const CustomControlBar: React.FC = () => {
   const isListener = prefs?.listenerMode === true;
 
   const { localParticipant } = useLocalParticipant();
-  const [micPermGranted, setMicPermGranted] = useState(false);
-  const [camPermGranted, setCamPermGranted] = useState(false);
+  const [micPermGranted, setMicPermGranted] = useState(
+    () => localParticipant.isMicrophoneEnabled,
+  );
+  const [camPermGranted, setCamPermGranted] = useState(
+    () => localParticipant.isCameraEnabled,
+  );
 
-  useEffect(() => {
-    if (localParticipant.isMicrophoneEnabled) setMicPermGranted(true);
-  }, [localParticipant.isMicrophoneEnabled]);
-
-  useEffect(() => {
-    if (localParticipant.isCameraEnabled) setCamPermGranted(true);
-  }, [localParticipant.isCameraEnabled]);
+  // Latch: once permission is granted it stays granted even if the track is
+  // later disabled. setState during render is the React-approved pattern for
+  // deriving state from incoming values (avoids the setState-in-effect issue).
+  if (localParticipant.isMicrophoneEnabled && !micPermGranted)
+    setMicPermGranted(true);
+  if (localParticipant.isCameraEnabled && !camPermGranted)
+    setCamPermGranted(true);
 
   return (
     <div className="lk-control-bar responsive-control-bar justify-center">
