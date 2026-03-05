@@ -35,9 +35,9 @@ export const VideoSection: React.FC<VideoSectionProps> = ({
   onEndMeeting,
 }) => (
   <div
-    style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}
+    style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}
   >
-    <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+    <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
       <div
         className="lk-video-conference-inner"
         style={{ flex: 1, minWidth: 0 }}

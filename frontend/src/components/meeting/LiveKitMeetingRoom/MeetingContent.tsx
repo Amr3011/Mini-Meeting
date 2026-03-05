@@ -61,6 +61,7 @@ export const MeetingContent: React.FC<MeetingContentProps> = ({
           flexDirection: "column",
           height: "100%",
           width: "100%",
+          overflow: "hidden",
         }}
       >
         <MeetingHeader

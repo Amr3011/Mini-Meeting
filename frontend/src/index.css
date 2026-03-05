@@ -273,6 +273,20 @@
     font-family: "Inter", "SF Pro Display", system-ui, sans-serif;
   }
 
+  /* Prevent scrollbar flash when panels/modals open */
+  html,
+  body {
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
