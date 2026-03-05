@@ -34,7 +34,12 @@ export const EndMeetingButton: React.FC<EndMeetingButtonProps> = ({
           <button
             onClick={() => onShowConfirm(false)}
             disabled={isEndingMeeting}
-            className="flex-1 px-3 py-2 bg-gray-700 text-gray-200 border border-gray-600 rounded-md cursor-pointer hover:bg-gray-600 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 px-3 py-2 rounded-md cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            style={{
+              background: "var(--lk-bg3)",
+              color: "var(--lk-fg)",
+              border: "1px solid var(--lk-border-color)",
+            }}
           >
             Cancel
           </button>

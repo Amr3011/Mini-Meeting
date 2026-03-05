@@ -11,7 +11,13 @@ export const ParticipantItem: React.FC<ParticipantItemProps> = ({
   onMuteTrack,
 }) => {
   return (
-    <div className="bg-gray-800 rounded-md p-3 flex flex-col gap-2">
+    <div
+      className="rounded-md p-3 flex flex-col gap-2"
+      style={{
+        background: "var(--lk-bg)",
+        border: "1px solid var(--lk-border-color)",
+      }}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5">
@@ -29,13 +35,15 @@ export const ParticipantItem: React.FC<ParticipantItemProps> = ({
               </span>
             )}
           </div>
-          <p className="text-[11px] text-gray-400 m-0">{role}</p>
+          <p className="text-[11px] m-0" style={{ color: "var(--lk-fg2)" }}>
+            {role}
+          </p>
         </div>
         {!isLocal && (
           <button
             onClick={onKick}
             title="Kick participant"
-            className="p-1.5 text-red-400 bg-transparent rounded hover:bg-gray-700 transition-colors cursor-pointer flex items-center justify-center"
+            className="p-1.5 text-red-400 bg-transparent rounded transition-colors cursor-pointer flex items-center justify-center hover:bg-(--lk-bg3)"
           >
             <KickIcon />
           </button>

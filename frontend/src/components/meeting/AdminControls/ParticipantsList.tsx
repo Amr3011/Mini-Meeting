@@ -9,8 +9,14 @@ export const ParticipantsList: React.FC<ParticipantsListProps> = ({
   onMuteTrack,
 }) => {
   return (
-    <div className="flex-1 overflow-y-auto p-4">
-      <h4 className="text-xs text-gray-400 mb-3 font-medium">
+    <div
+      className="flex-1 overflow-y-auto p-4"
+      style={{ background: "var(--lk-bg2)" }}
+    >
+      <h4
+        className="text-xs mb-3 font-medium"
+        style={{ color: "var(--lk-fg2)" }}
+      >
         Participants ({participants.length})
       </h4>
       <div className="flex flex-col gap-2">

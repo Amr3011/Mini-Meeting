@@ -59,8 +59,14 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <div className="p-4 border-b border-gray-700 shrink-0">
+    <div
+      className="flex flex-col h-full overflow-hidden"
+      style={{ background: "var(--lk-bg2)" }}
+    >
+      <div
+        className="p-4 shrink-0"
+        style={{ borderBottom: "1px solid var(--lk-border-color)" }}
+      >
         <EndMeetingButton
           onEndMeeting={handleEndMeeting}
           isEndingMeeting={isEndingMeeting}
