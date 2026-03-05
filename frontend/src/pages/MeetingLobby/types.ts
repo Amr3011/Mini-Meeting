@@ -4,6 +4,7 @@ export interface DevicePreferences {
   audioOutputDeviceId?: string;
   videoEnabled: boolean;
   audioEnabled: boolean;
+  listenerMode?: boolean;
 }
 
 export interface TokenData {
@@ -41,11 +42,13 @@ export interface DeviceControlsProps {
   micEnabled: boolean;
   cameraEnabled: boolean;
   audioLevel: number;
+  listenerMode?: boolean;
 }
 
 export interface JoinButtonProps {
   isJoining: boolean;
   permissionsGranted: boolean;
+  listenerMode: boolean;
   displayName: string;
   isAuthenticated: boolean;
   onClick: () => void;

@@ -4,7 +4,7 @@ export interface DeviceMenuProps {
   activeDeviceId: string;
   onSelectDevice: (deviceId: string) => void;
   onClose: () => void;
-  deviceType: "microphone" | "camera";
+  deviceType: "microphone" | "camera" | "speaker";
 }
 
 export interface DeviceControlProps {

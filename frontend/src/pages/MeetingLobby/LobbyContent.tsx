@@ -52,6 +52,7 @@ export const LobbyContent: React.FC<LobbyContentProps> = ({
         micEnabled={devices.micEnabled}
         cameraEnabled={devices.cameraEnabled}
         audioLevel={devices.audioLevel}
+        listenerMode={devices.listenerMode}
       />
 
       {!isAuthenticated && (
@@ -65,14 +66,21 @@ export const LobbyContent: React.FC<LobbyContentProps> = ({
       <JoinButton
         isJoining={isJoining}
         permissionsGranted={devices.permissionsGranted}
+        listenerMode={devices.listenerMode}
         displayName={displayName}
         isAuthenticated={isAuthenticated}
         onClick={onJoinClick}
       />
 
-      {!devices.permissionsGranted && (
+      {!devices.permissionsGranted && !devices.listenerMode && (
         <p className="text-xs text-center text-gray-400">
           Please allow camera and microphone access to join
+        </p>
+      )}
+
+      {devices.listenerMode && !devices.permissionsGranted && (
+        <p className="text-xs text-center text-gray-400">
+          Listener mode — you can hear others but won't be heard or seen
         </p>
       )}
 

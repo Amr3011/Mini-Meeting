@@ -57,6 +57,7 @@ export function useLobbyDevices(meetingReady: boolean): LobbyDeviceState {
     meetingReady,
     permissionsGranted: mediaStream.permissionsGranted,
     setupDevicesAndEnumerate,
+    enumerateDevices: deviceEnumeration.enumerateDevices,
     stopStream: mediaStream.stopStream,
     cleanupAnalyzer: audioAnalyzer.cleanup,
   });
@@ -77,6 +78,7 @@ export function useLobbyDevices(meetingReady: boolean): LobbyDeviceState {
     permissionsGranted: mediaStream.permissionsGranted,
     showPermissionButton,
     showPermissionPrompt: deviceLifecycle.showPermissionPrompt,
+    listenerMode: deviceLifecycle.listenerMode,
     audioLevel,
     error: mediaStream.error,
     deviceError: mediaStream.deviceError,

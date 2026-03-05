@@ -1,5 +1,5 @@
 /**
- * Device icon components for microphone and camera
+ * Device icon components for microphone, camera, and speaker
  */
 
 export const MicrophoneIcon = () => (
@@ -28,8 +28,24 @@ export const CameraIcon = () => (
     strokeWidth="2"
     style={{ flexShrink: 0, opacity: 0.7 }}
   >
-    <path d="m22 8-6 4 6 4V8Z" />
-    <rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z" />
+    <circle cx="12" cy="13" r="3" />
+  </svg>
+);
+
+export const SpeakerIcon = () => (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    style={{ flexShrink: 0, opacity: 0.7 }}
+  >
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
   </svg>
 );
 

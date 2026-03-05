@@ -64,26 +64,42 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4 relative">
       {isJoining && <JoiningOverlay />}
 
-      <div className="w-full max-w-2xl">
-        <ErrorDisplay
-          deviceError={devices.deviceError}
-          error={displayError}
-          onClearDeviceError={devices.clearDeviceError}
-          onRetryDeviceAccess={devices.retryDeviceAccess}
-          onClearError={() => {
-            setLobbyError("");
-            setMeetingError("");
-            devices.clearError();
-          }}
+      {/* Fixed modal overlays - rendered outside content wrapper */}
+      <ErrorDisplay
+        deviceError={devices.deviceError}
+        error={displayError}
+        onClearDeviceError={devices.clearDeviceError}
+        onRetryDeviceAccess={async () => {
+          // Browsers require getUserMedia to be called synchronously within the
+          // user gesture (click). Calling it here directly — before any async
+          // state update — guarantees the native permission dialog appears.
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: true,
+            });
+            // Stop tracks immediately — the full setup below will request again
+            stream.getTracks().forEach((t) => t.stop());
+          } catch {
+            // Ignored — retryDeviceAccess below will handle and set the error
+          }
+          devices.retryDeviceAccess();
+        }}
+        onClearError={() => {
+          setLobbyError("");
+          setMeetingError("");
+          devices.clearError();
+        }}
+      />
+
+      {devices.showPermissionPrompt && (
+        <PermissionPrompt
+          onAllow={devices.handleAllowPermissions}
+          onDismiss={devices.handleDismissPrompt}
         />
+      )}
 
-        {devices.showPermissionPrompt && (
-          <PermissionPrompt
-            onAllow={devices.handleAllowPermissions}
-            onDismiss={devices.handleDismissPrompt}
-          />
-        )}
-
+      <div className="w-full max-w-2xl">
         <LobbyContent
           devices={devices}
           displayName={displayName}

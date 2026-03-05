@@ -1,17 +1,23 @@
 import React, { useState } from "react";
-import { MicrophoneIcon, CameraIcon, CheckmarkIcon } from "./deviceIcons";
+import {
+  MicrophoneIcon,
+  CameraIcon,
+  SpeakerIcon,
+  CheckmarkIcon,
+} from "./deviceIcons";
 import { DEVICE_LABELS } from "./deviceConstants";
 
 interface DeviceMenuItemProps {
   device: MediaDeviceInfo;
   isActive: boolean;
-  deviceType: "microphone" | "camera";
+  deviceType: "microphone" | "camera" | "speaker";
   onSelect: () => void;
 }
 
 const DEVICE_ICON_COMPONENTS = {
   microphone: MicrophoneIcon,
   camera: CameraIcon,
+  speaker: SpeakerIcon,
 };
 
 /**
