@@ -12,19 +12,9 @@ export const ControlBarSection: React.FC<ControlBarSectionProps> = ({
   onToggleChat,
 }) => {
   return (
-    <div
-      className="lk-control-bar-wrapper"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "8px",
-        padding: "8px 12px",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="lk-control-bar-wrapper flex items-center justify-between gap-2 p-2 sm:px-3 flex-wrap">
       {/* Summarizer Controls */}
-      <div style={{ flexShrink: 0, order: 1 }}>
+      <div className="shrink-0 order-1">
         {meetingId && (
           <SummarizerControls
             meetingId={meetingId}
@@ -35,20 +25,12 @@ export const ControlBarSection: React.FC<ControlBarSectionProps> = ({
       </div>
 
       {/* Media Controls */}
-      <div
-        style={{
-          flex: "1 1 auto",
-          display: "flex",
-          justifyContent: "center",
-          order: 2,
-          minWidth: 0,
-        }}
-      >
+      <div className="flex-1 flex justify-center order-2 min-w-0">
         <CustomControlBar />
       </div>
 
       {/* Chat Button */}
-      <div style={{ flexShrink: 0, order: 3 }}>
+      <div className="shrink-0 order-3">
         <ChatButton
           isChatOpen={isChatOpen}
           unreadCount={unreadCount}

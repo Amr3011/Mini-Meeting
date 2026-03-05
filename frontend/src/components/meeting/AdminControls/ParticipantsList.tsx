@@ -1,7 +1,6 @@
 import React from "react";
 import type { ParticipantsListProps } from "./types";
 import { ParticipantItem } from "./ParticipantItem";
-import "./AdminControls.styles.css";
 
 export const ParticipantsList: React.FC<ParticipantsListProps> = ({
   participants,
@@ -10,11 +9,17 @@ export const ParticipantsList: React.FC<ParticipantsListProps> = ({
   onMuteTrack,
 }) => {
   return (
-    <div className="participants-section">
-      <h4 className="participants-header">
+    <div
+      className="flex-1 overflow-y-auto p-4"
+      style={{ background: "var(--lk-bg2)" }}
+    >
+      <h4
+        className="text-xs mb-3 font-medium"
+        style={{ color: "var(--lk-fg2)" }}
+      >
         Participants ({participants.length})
       </h4>
-      <div className="participants-list">
+      <div className="flex flex-col gap-2">
         {participants.map((participant) => {
           const isLocal = participant.identity === localParticipantIdentity;
           const metadata = participant.metadata

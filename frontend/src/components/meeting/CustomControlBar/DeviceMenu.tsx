@@ -17,24 +17,7 @@ export const DeviceMenu: React.FC<DeviceMenuProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: "calc(100% + 8px)",
-        left: "0",
-        backgroundColor: "var(--lk-bg2)",
-        border: "1px solid var(--lk-border-color)",
-        borderRadius: "12px",
-        padding: "6px",
-        minWidth: "240px",
-        maxWidth: "320px",
-        boxShadow:
-          "0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2)",
-        zIndex: 1000,
-        animation: "slideUpFade 0.2s ease-out",
-        backdropFilter: "blur(8px)",
-      }}
-    >
+    <div className="absolute bottom-[calc(100%+8px)] left-0 bg-(--lk-bg2) border border-(--lk-border-color) rounded-xl p-1.5 min-w-60 max-w-[320px] shadow-[0_8px_24px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.2)] z-1000 animate-slide-up-fade backdrop-blur-sm">
       {devices.map((device) => (
         <DeviceMenuItem
           key={device.deviceId}

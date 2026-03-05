@@ -16,38 +16,51 @@ export const DeviceControls: React.FC<DeviceControlsProps> = ({
   micEnabled,
   cameraEnabled,
   audioLevel,
+  listenerMode = false,
 }) => {
   return (
     <div className="space-y-4">
       {/* Device selection dropdowns */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <DeviceSelector
-          devices={audioDevices}
-          selectedId={selectedMic}
-          onSelect={setSelectedMic}
-          disabled={!micEnabled}
-          ariaLabel="Select microphone device"
-          fallbackLabel="Microphone"
-        />
-        <DeviceSelector
-          devices={audioOutputDevices}
-          selectedId={selectedSpeaker}
-          onSelect={setSelectedSpeaker}
-          ariaLabel="Select speaker device"
-          fallbackLabel="Speaker"
-        />
-        <DeviceSelector
-          devices={videoDevices}
-          selectedId={selectedCamera}
-          onSelect={setSelectedCamera}
-          disabled={!cameraEnabled}
-          ariaLabel="Select camera device"
-          fallbackLabel="Camera"
-        />
+      <div
+        className={
+          listenerMode
+            ? "flex justify-center"
+            : "grid grid-cols-1 sm:grid-cols-3 gap-3"
+        }
+      >
+        {!listenerMode && (
+          <DeviceSelector
+            devices={audioDevices}
+            selectedId={selectedMic}
+            onSelect={setSelectedMic}
+            disabled={!micEnabled}
+            ariaLabel="Select microphone device"
+            fallbackLabel="Microphone"
+          />
+        )}
+        <div className={listenerMode ? "w-full" : ""}>
+          <DeviceSelector
+            devices={audioOutputDevices}
+            selectedId={selectedSpeaker}
+            onSelect={setSelectedSpeaker}
+            ariaLabel="Select speaker device"
+            fallbackLabel="Speaker"
+          />
+        </div>
+        {!listenerMode && (
+          <DeviceSelector
+            devices={videoDevices}
+            selectedId={selectedCamera}
+            onSelect={setSelectedCamera}
+            disabled={!cameraEnabled}
+            ariaLabel="Select camera device"
+            fallbackLabel="Camera"
+          />
+        )}
       </div>
 
       {/* Microphone level indicator */}
-      {micEnabled && (
+      {!listenerMode && micEnabled && (
         <AudioLevelIndicator level={audioLevel} variant="horizontal" />
       )}
     </div>

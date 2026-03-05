@@ -9,17 +9,11 @@ interface ChatPanelProps {
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
   return (
-    <div style={{ display: isOpen ? "flex" : "none" }}>
+    <div style={{ display: isOpen ? "contents" : "none" }}>
       <SidebarPanel title="In-call messages" onClose={onClose}>
-        <Chat
-          style={{
-            flex: 1,
-            width: "100%",
-            height: "100%",
-            minHeight: 0,
-            overflow: "hidden",
-          }}
-        />
+        <div style={{ height: "100%", width: "100%", overflow: "hidden" }}>
+          <Chat />
+        </div>
       </SidebarPanel>
     </div>
   );

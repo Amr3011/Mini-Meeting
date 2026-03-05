@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { LiveKitRoom } from "@livekit/components-react";
 import "@livekit/components-styles";
-import "../ChatSidebar.css";
-import "../Sidebar.css";
-import "../ScreenShareLayout.css";
 import { DisconnectReason } from "livekit-client";
 import { ErrorMessage } from "../../common/ErrorMessage";
 import { DisconnectMessage } from "../DisconnectMessage";
@@ -11,6 +8,7 @@ import { meetingService } from "../../../services/api/meeting.service";
 import { MeetingView } from "./MeetingView";
 import { LIVEKIT_OPTIONS } from "./config";
 import { parseTokenMetadata, getDisconnectMessage } from "./utils";
+import { MeetingPreferencesProvider } from "./MeetingPreferencesContext";
 import type { LiveKitMeetingRoomProps } from "./types";
 
 const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
@@ -62,24 +60,26 @@ const LiveKitMeetingRoom: React.FC<LiveKitMeetingRoomProps> = ({
 
   return (
     <div className="h-screen w-screen bg-[#0f1219]">
-      <LiveKitRoom
-        token={token}
-        serverUrl={livekitUrl}
-        connect={true}
-        audio={devicePreferences.audioEnabled}
-        video={devicePreferences.videoEnabled}
-        onDisconnected={handleDisconnect}
-        data-lk-theme="default"
-        style={{ height: "100%" }}
-        options={LIVEKIT_OPTIONS}
-      >
-        <MeetingView
-          meetingCode={meetingCode}
-          isAdmin={isAdmin}
-          meetingId={meetingId}
-          onDisconnect={onDisconnect}
-        />
-      </LiveKitRoom>
+      <MeetingPreferencesProvider value={devicePreferences}>
+        <LiveKitRoom
+          token={token}
+          serverUrl={livekitUrl}
+          connect={true}
+          audio={devicePreferences.audioEnabled}
+          video={devicePreferences.videoEnabled}
+          onDisconnected={handleDisconnect}
+          data-lk-theme="default"
+          style={{ height: "100%" }}
+          options={LIVEKIT_OPTIONS}
+        >
+          <MeetingView
+            meetingCode={meetingCode}
+            isAdmin={isAdmin}
+            meetingId={meetingId}
+            onDisconnect={onDisconnect}
+          />
+        </LiveKitRoom>
+      </MeetingPreferencesProvider>
     </div>
   );
 };

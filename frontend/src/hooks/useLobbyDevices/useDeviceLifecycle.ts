@@ -5,12 +5,14 @@ interface UseDeviceLifecycleProps {
   meetingReady: boolean;
   permissionsGranted: boolean;
   setupDevicesAndEnumerate: () => void;
+  enumerateDevices: () => Promise<unknown>;
   stopStream: () => void;
   cleanupAnalyzer: () => void;
 }
 
 export interface DeviceLifecycleReturn {
   showPermissionPrompt: boolean;
+  listenerMode: boolean;
   handleAllowPermissions: () => void;
   handleDismissPrompt: () => void;
 }
@@ -23,12 +25,14 @@ export function useDeviceLifecycle({
   meetingReady,
   permissionsGranted,
   setupDevicesAndEnumerate,
+  enumerateDevices,
   stopStream,
   cleanupAnalyzer,
 }: UseDeviceLifecycleProps): DeviceLifecycleReturn {
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [promptDismissed, setPromptDismissed] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
+  const [listenerMode, setListenerMode] = useState(false);
 
   useEffect(() => {
     if (
@@ -52,6 +56,10 @@ export function useDeviceLifecycle({
   const handleDismissPrompt = () => {
     setShowPermissionPrompt(false);
     setPromptDismissed(true);
+    setListenerMode(true);
+    // Enumerate devices without a stream so audioOutputDevices is populated
+    // (audiooutput enumeration doesn't require mic/camera permission)
+    enumerateDevices().catch(() => {});
   };
 
   useEffect(() => {
@@ -64,6 +72,7 @@ export function useDeviceLifecycle({
 
   return {
     showPermissionPrompt,
+    listenerMode,
     handleAllowPermissions,
     handleDismissPrompt,
   };

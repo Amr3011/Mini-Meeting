@@ -2,7 +2,6 @@ import React from "react";
 import type { ParticipantItemProps } from "./types";
 import { TrackControls } from "./TrackControls";
 import { KickIcon } from "./icons";
-import "./AdminControls.styles.css";
 
 export const ParticipantItem: React.FC<ParticipantItemProps> = ({
   participant,
@@ -12,20 +11,40 @@ export const ParticipantItem: React.FC<ParticipantItemProps> = ({
   onMuteTrack,
 }) => {
   return (
-    <div className="participant-item">
-      <div className="participant-header">
-        <div className="participant-info">
-          <div className="participant-name-row">
-            <p className="participant-name">
+    <div
+      className="rounded-md p-3 flex flex-col gap-2"
+      style={{
+        background: "var(--lk-bg)",
+        border: "1px solid var(--lk-border-color)",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-white text-sm font-medium overflow-hidden text-ellipsis whitespace-nowrap m-0">
               {participant.name || participant.identity}
             </p>
-            {isLocal && <span className="badge badge-you">You</span>}
-            {role === "admin" && <span className="badge badge-admin">Admin</span>}
+            {isLocal && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded text-green-400 bg-green-400/20 font-medium">
+                You
+              </span>
+            )}
+            {role === "admin" && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded text-blue-400 bg-blue-400/20 font-medium">
+                Admin
+              </span>
+            )}
           </div>
-          <p className="participant-role">{role}</p>
+          <p className="text-[11px] m-0" style={{ color: "var(--lk-fg2)" }}>
+            {role}
+          </p>
         </div>
         {!isLocal && (
-          <button onClick={onKick} title="Kick participant" className="kick-btn">
+          <button
+            onClick={onKick}
+            title="Kick participant"
+            className="p-1.5 text-red-400 bg-transparent rounded transition-colors cursor-pointer flex items-center justify-center hover:bg-(--lk-bg3)"
+          >
             <KickIcon />
           </button>
         )}

@@ -12,6 +12,7 @@ export interface LobbyDeviceState {
   micEnabled: boolean;
   stream: MediaStream | null;
   permissionsGranted: boolean;
+  listenerMode: boolean;
   showPermissionButton: boolean;
   showPermissionPrompt: boolean;
   audioLevel: number;

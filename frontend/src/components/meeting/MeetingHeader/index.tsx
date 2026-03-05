@@ -2,7 +2,6 @@ import React from "react";
 import { Participant } from "livekit-client";
 import { useParticipantAvatars } from "./useParticipantAvatars";
 import { AdminButton } from "./AdminButton";
-import "./MeetingHeader.css";
 
 interface MeetingHeaderProps {
   isAdmin: boolean;
@@ -25,19 +24,7 @@ export const MeetingHeader: React.FC<MeetingHeaderProps> = ({
   const participantCount = participants.length;
 
   return (
-    <div
-      className="meeting-header"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        padding: "4px 8px",
-        backgroundColor: "var(--lk-bg2)",
-        borderBottom: "1px solid var(--lk-border-color)",
-        gap: "8px",
-        minHeight: "32px",
-      }}
-    >
+    <div className="flex items-center justify-end px-2 py-1 bg-(--lk-bg2) border-b border-(--lk-border-color) gap-2 min-h-8 shrink-0 md:py-0.5 max-[480px]:px-1.5 max-[480px]:py-0.5 max-[480px]:min-h-7">
       {/* Admin Button - Google Meet Style */}
       {isAdmin && (
         <AdminButton

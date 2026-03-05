@@ -1,7 +1,6 @@
 import React from "react";
 import type { EndMeetingButtonProps } from "./types";
 import { EndMeetingIcon } from "./icons";
-import "./AdminControls.styles.css";
 
 export const EndMeetingButton: React.FC<EndMeetingButtonProps> = ({
   onEndMeeting,
@@ -19,15 +18,15 @@ export const EndMeetingButton: React.FC<EndMeetingButtonProps> = ({
 
   if (showConfirm) {
     return (
-      <div className="confirm-container">
-        <p className="confirm-text">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-yellow-400 m-0">
           Are you sure? This will disconnect all participants.
         </p>
-        <div className="confirm-buttons">
+        <div className="flex gap-2">
           <button
             onClick={handleClick}
             disabled={isEndingMeeting}
-            className="end-meeting-btn"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-md cursor-pointer text-sm font-medium hover:bg-red-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
             <EndMeetingIcon />
             <span>{isEndingMeeting ? "Ending..." : "Confirm End"}</span>
@@ -35,7 +34,12 @@ export const EndMeetingButton: React.FC<EndMeetingButtonProps> = ({
           <button
             onClick={() => onShowConfirm(false)}
             disabled={isEndingMeeting}
-            className="cancel-btn"
+            className="flex-1 px-3 py-2 rounded-md cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            style={{
+              background: "var(--lk-bg3)",
+              color: "var(--lk-fg)",
+              border: "1px solid var(--lk-border-color)",
+            }}
           >
             Cancel
           </button>
@@ -47,7 +51,7 @@ export const EndMeetingButton: React.FC<EndMeetingButtonProps> = ({
   return (
     <button
       onClick={handleClick}
-      className="end-meeting-btn end-meeting-btn-full"
+      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-red-600 text-white rounded-md cursor-pointer text-sm font-medium hover:bg-red-700 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
     >
       <EndMeetingIcon />
       <span>End Meeting for All</span>

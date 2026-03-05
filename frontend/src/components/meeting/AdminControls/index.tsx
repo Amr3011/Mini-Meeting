@@ -11,7 +11,6 @@ import {
 import type { AdminControlsProps } from "./types";
 import { EndMeetingButton } from "./EndMeetingButton";
 import { ParticipantsList } from "./ParticipantsList";
-import "./AdminControls.styles.css";
 
 export const AdminControls: React.FC<AdminControlsProps> = ({
   meetingCode,
@@ -60,8 +59,14 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
   };
 
   return (
-    <div className="admin-controls-container">
-      <div className="end-meeting-section">
+    <div
+      className="flex flex-col h-full overflow-hidden"
+      style={{ background: "var(--lk-bg2)" }}
+    >
+      <div
+        className="p-4 shrink-0"
+        style={{ borderBottom: "1px solid var(--lk-border-color)" }}
+      >
         <EndMeetingButton
           onEndMeeting={handleEndMeeting}
           isEndingMeeting={isEndingMeeting}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 @import "tailwindcss";
 
@@ -64,8 +64,8 @@
   --color-purple-900: #5b21b6;
 
   /* Font Families */
-  --font-sans: 'Inter', 'SF Pro Display', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: "Inter", "SF Pro Display", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   /* Animations */
   --animate-fade-in: fadeIn 0.3s ease-in-out;
@@ -92,60 +92,127 @@
 }
 
 @keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideDown {
-  0% { transform: translateY(-20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInRight {
-  0% { transform: translateX(100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
-  0% { transform: translateX(-100%); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleUp {
-  0% { transform: scale(0.95); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes bounceGentle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
 }
 
 @keyframes checkMark {
-  0% { stroke-dashoffset: 100; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-  20%, 40%, 60%, 80% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 @keyframes skeleton {
-  0% { background-color: rgba(229, 231, 235, 0.4); }
-  50% { background-color: rgba(229, 231, 235, 0.8); }
-  100% { background-color: rgba(229, 231, 235, 0.4); }
+  0% {
+    background-color: rgba(229, 231, 235, 0.4);
+  }
+  50% {
+    background-color: rgba(229, 231, 235, 0.8);
+  }
+  100% {
+    background-color: rgba(229, 231, 235, 0.4);
+  }
 }
 
 /* CSS Variables for Theming */
@@ -159,24 +226,24 @@
   --text-tertiary: #9ca3af;
   --border-color: #e5e7eb;
   --border-focus: #2563eb;
-  
+
   /* Brand Colors */
   --brand-primary: #2563eb;
   --brand-dark: #1e40af;
   --brand-light: #60a5fa;
-  
+
   /* Semantic Colors */
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
   --info: #3b82f6;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  
+
   /* Transitions */
   --transition-fast: 150ms ease-in-out;
   --transition-base: 250ms ease-in-out;
@@ -200,40 +267,54 @@
   * {
     @apply antialiased;
   }
-  
+
   body {
     @apply bg-gray-50 text-gray-900;
-    font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
+    font-family: "Inter", "SF Pro Display", system-ui, sans-serif;
   }
-  
+
+  /* Prevent scrollbar flash when panels/modals open */
+  html,
+  body {
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
-  
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
-  
+
   ::-webkit-scrollbar-track {
     @apply bg-gray-100;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     @apply bg-gray-300 rounded-full;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
   }
-  
+
   /* Focus visible for better accessibility */
   *:focus-visible {
     @apply outline-2 outline-offset-2 outline-blue-600;
   }
-  
+
   /* Screen reader only content */
   .sr-only {
     position: absolute;
@@ -246,7 +327,7 @@
     white-space: nowrap;
     border-width: 0;
   }
-  
+
   /* Reduced motion support */
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -258,5 +339,378 @@
       scroll-behavior: auto !important;
     }
   }
-}
 
+  /* ===================================
+   * LiveKit Control Bar Overrides
+   * ================================= */
+
+  /* Ensure all control bar buttons have the same size, except share screen */
+  .lk-button-group .lk-button:not([data-lk-source="screen_share"]),
+  .lk-button-group button {
+    @apply min-w-12 min-h-12 flex items-center justify-center;
+  }
+
+  /* Allow share screen button to be wider */
+  .lk-button-group .lk-button[data-lk-source="screen_share"] {
+    @apply min-h-12 flex items-center justify-center;
+  }
+
+  /* Responsive Design for Mobile */
+  @media (max-width: 768px) {
+    /* Smaller buttons on mobile */
+    .lk-button-group .lk-button:not([data-lk-source="screen_share"]),
+    .lk-button-group button {
+      @apply min-w-10 min-h-10 p-1.5;
+    }
+
+    .lk-button-group .lk-button[data-lk-source="screen_share"] {
+      @apply min-h-10 w-14 px-2 py-1.5;
+    }
+
+    /* Reduce gap between buttons on mobile */
+    .lk-button-group {
+      @apply gap-1.5;
+    }
+
+    /* Hide button labels on small screens */
+    .lk-button-label {
+      @apply hidden;
+    }
+
+    /* Adjust control bar wrapper padding */
+    .lk-control-bar-wrapper {
+      @apply p-2 gap-1.5;
+    }
+
+    /* Adjust split button arrow */
+    .lk-button-group > div > button[style*="minWidth: 22px"] {
+      @apply min-w-4.5 min-h-10;
+    }
+
+    /* Adjust main toggle buttons in split buttons */
+    .lk-button-group > div > .lk-button {
+      @apply min-w-9 min-h-10;
+    }
+  }
+
+  @media (max-width: 480px) {
+    /* Extra small screens - even smaller buttons */
+    .lk-button-group .lk-button:not([data-lk-source="screen_share"]),
+    .lk-button-group button {
+      @apply min-w-9 min-h-9 p-1;
+    }
+
+    .lk-button-group .lk-button[data-lk-source="screen_share"] {
+      @apply min-h-9 w-12 px-1.5 py-1;
+    }
+
+    .lk-button-group {
+      @apply gap-1;
+    }
+
+    .lk-control-bar-wrapper {
+      @apply p-1.5 gap-1;
+    }
+
+    /* Adjust split button components for extra small screens */
+    .lk-button-group > div > button[style*="minWidth: 22px"] {
+      @apply min-w-4 min-h-9;
+    }
+
+    .lk-button-group > div > .lk-button {
+      @apply min-w-8 min-h-9;
+    }
+
+    /* Smaller SVG icons on extra small screens */
+    .lk-button svg {
+      @apply w-4 h-4;
+    }
+  }
+
+  /* ===================================
+   * LiveKit Chat Sidebar Overrides
+   * ================================= */
+
+  /* Chat container */
+  .lk-chat {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: transparent !important;
+    border: none !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Hide default LiveKit header */
+  .lk-chat-header {
+    display: none !important;
+  }
+
+  /* Hide unread badge */
+  .lk-chat .lk-unread-indicator,
+  .lk-chat .lk-notification-badge {
+    display: none !important;
+  }
+
+  /* Reset list styles that LiveKit uses for messages */
+  .lk-chat-messages ol,
+  .lk-chat-messages ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Chat messages area */
+  .lk-chat-messages {
+    flex: 1 1 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 12px !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: var(--lk-bg2) !important;
+    scroll-behavior: smooth !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Empty state - centered */
+  .lk-chat-messages:empty {
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .lk-chat-messages:empty::before {
+    content: "💬 No messages yet" !important;
+    color: var(--lk-fg2) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    opacity: 0.7 !important;
+    text-align: center !important;
+  }
+
+  /* Scrollbar */
+  .lk-chat-messages::-webkit-scrollbar {
+    width: 6px !important;
+  }
+
+  .lk-chat-messages::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  .lk-chat-messages::-webkit-scrollbar-thumb {
+    background: var(--lk-border-color) !important;
+    border-radius: 6px !important;
+  }
+
+  .lk-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: var(--lk-fg2) !important;
+  }
+
+  /* Chat entry */
+  .lk-chat-entry {
+    margin-bottom: 8px !important;
+    padding: 8px 10px !important;
+    background: var(--lk-bg) !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .lk-chat-entry:hover {
+    background: var(--lk-bg3) !important;
+    border-color: var(--lk-accent) !important;
+  }
+
+  .lk-chat-entry .lk-chat-entry-author {
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    color: var(--lk-accent) !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  .lk-chat-entry .lk-chat-entry-message {
+    font-size: 13px !important;
+    color: var(--lk-fg) !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: pre-wrap !important;
+  }
+
+  .lk-chat-entry .lk-chat-entry-timestamp {
+    font-size: 10px !important;
+    color: var(--lk-fg2) !important;
+    margin-top: 4px !important;
+    opacity: 0.6 !important;
+  }
+
+  /* Chat form */
+  .lk-chat-form {
+    flex-shrink: 0 !important;
+    padding: 10px 12px !important;
+    border-top: 1px solid var(--lk-border-color) !important;
+    background: var(--lk-bg2) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .lk-chat-form-input,
+  .lk-chat-form input[type="text"] {
+    flex: 1 !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    background: var(--lk-bg) !important;
+    border: 1.5px solid var(--lk-border-color) !important;
+    color: var(--lk-fg) !important;
+    padding: 9px 12px !important;
+    border-radius: 10px !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+    transition: border-color 0.2s ease !important;
+    line-height: 1.4 !important;
+  }
+
+  .lk-chat-form-input:focus,
+  .lk-chat-form input[type="text"]:focus {
+    outline: none !important;
+    border-color: var(--lk-accent) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
+  }
+
+  .lk-chat-form-input::placeholder,
+  .lk-chat-form input[type="text"]::placeholder {
+    color: var(--lk-fg2) !important;
+    opacity: 0.7 !important;
+  }
+
+  /* Send Button */
+  .lk-chat-form button[type="submit"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    background: var(--lk-accent) !important;
+    color: transparent !important;
+    border: none !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    font-size: 0 !important;
+    transition:
+      background 0.2s ease,
+      transform 0.15s ease,
+      box-shadow 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+    overflow: hidden !important;
+  }
+
+  .lk-chat-form button[type="submit"]:hover:not(:disabled) {
+    background: #2563eb !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.45) !important;
+  }
+
+  .lk-chat-form button[type="submit"]:active:not(:disabled) {
+    transform: scale(0.96) !important;
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  .lk-chat-form button[type="submit"]:disabled {
+    opacity: 0.35 !important;
+    cursor: not-allowed !important;
+  }
+
+  .lk-chat-form button[type="submit"]::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 18px !important;
+    height: 18px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='white' viewBox='0 0 24 24' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z'/%3E%3C/svg%3E") !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    pointer-events: none !important;
+  }
+
+  /* ===================================
+   * Screen Share Layout Overrides
+   * ================================= */
+
+  /* Add rounded corners to all participant tiles */
+  .lk-participant-tile {
+    @apply rounded-xl overflow-hidden;
+  }
+
+  /* Make all carousel items (participants) the same size when screen sharing */
+  .lk-focus-layout .lk-carousel > * {
+    @apply w-37.5 h-37.5 min-w-37.5 min-h-37.5 max-w-37.5 max-h-37.5 shrink-0;
+    aspect-ratio: auto !important;
+  }
+
+  /* Ensure carousel scrolls vertically and shows all participants equally */
+  .lk-focus-layout .lk-carousel {
+    @apply flex-col overflow-y-auto overflow-x-hidden gap-2 p-2 max-h-full;
+  }
+
+  /* Keep the focused track (screen share) large */
+  .lk-focus-layout .lk-focused-participant {
+    @apply flex-1 w-full h-full;
+  }
+
+  /* Adjust focus layout container to give more space to screen share */
+  .lk-focus-layout {
+    display: grid !important;
+    grid-template-columns: 170px 1fr !important;
+    @apply gap-2;
+  }
+
+  /* On mobile/small screens, stack vertically */
+  @media (max-width: 768px) {
+    .lk-focus-layout {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: 1fr 150px !important;
+    }
+
+    .lk-focus-layout .lk-carousel {
+      @apply flex-row overflow-x-auto overflow-y-hidden;
+    }
+
+    .lk-focus-layout .lk-carousel > * {
+      @apply w-25 h-25 min-w-25 min-h-25 max-w-25 max-h-25;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 480px) {
+    .lk-focus-layout {
+      grid-template-rows: 1fr 120px !important;
+    }
+
+    .lk-focus-layout .lk-carousel > * {
+      @apply w-20 h-20 min-w-20 min-h-20 max-w-20 max-h-20;
+    }
+
+    .lk-focus-layout .lk-carousel {
+      @apply gap-1.5 p-1.5;
+    }
+  }
+}

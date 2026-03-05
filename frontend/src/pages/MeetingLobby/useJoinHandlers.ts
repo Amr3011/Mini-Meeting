@@ -38,8 +38,11 @@ export function useJoinHandlers(
         videoDeviceId: devices.selectedCamera,
         audioDeviceId: devices.selectedMic,
         audioOutputDeviceId: devices.selectedSpeaker,
-        videoEnabled: devices.cameraEnabled,
-        audioEnabled: devices.micEnabled,
+        videoEnabled: devices.permissionsGranted
+          ? devices.cameraEnabled
+          : false,
+        audioEnabled: devices.permissionsGranted ? devices.micEnabled : false,
+        listenerMode: devices.listenerMode && !devices.permissionsGranted,
       };
 
       const response = await requestToJoin(
