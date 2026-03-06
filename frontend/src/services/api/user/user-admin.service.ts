@@ -3,9 +3,6 @@ import type {
   User,
   UserResponse,
   PaginatedUsersResponse,
-  UpdateUserRequest,
-  UserUpdateResponse,
-  CreateUserRequest,
   UserDeleteResponse,
 } from "../../../types/user.types";
 
@@ -33,25 +30,6 @@ export const userAdminService = {
    */
   getUserById: async (id: number): Promise<User> => {
     const response = await apiClient.get<UserResponse>(`/users/${id}`);
-    return response.data.data;
-  },
-
-  /**
-   * Create new user (Admin only)
-   */
-  createUser: async (data: CreateUserRequest): Promise<User> => {
-    const response = await apiClient.post<UserUpdateResponse>("/users", data);
-    return response.data.data;
-  },
-
-  /**
-   * Update user by ID (Admin only)
-   */
-  updateUser: async (id: number, data: UpdateUserRequest): Promise<User> => {
-    const response = await apiClient.patch<UserUpdateResponse>(
-      `/users/${id}`,
-      data,
-    );
     return response.data.data;
   },
 

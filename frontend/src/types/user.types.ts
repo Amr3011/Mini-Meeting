@@ -24,25 +24,8 @@ export interface User {
   avatar_url?: string;
   created_at: string;
 }
-
-export interface UpdateUserRequest {
-  name?: string;
-  email?: string;
-  password?: string;
-}
-
-export interface CreateUserRequest {
-  email: string;
-  password: string;
-  name: string;
-}
-
 export interface UserResponse {
   data: User;
-}
-
-export interface UsersResponse {
-  data: User[];
 }
 
 export interface PaginatedUsersResponse {
@@ -53,10 +36,6 @@ export interface PaginatedUsersResponse {
   total_pages: number;
 }
 
-export interface UserUpdateResponse {
-  message: string;
-  data: User;
-}
 
 export interface PaginatedSessionsResponse {
   data: SummarizerSessionList[];

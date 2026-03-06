@@ -18,10 +18,3 @@ type LobbyJoinResponse struct {
 	Identity string `json:"identity,omitempty"`
 	UserName string `json:"user_name,omitempty"`
 }
-
-// LobbyRespondRequest is sent by admin to approve/reject a request (HTTP fallback)
-type LobbyRespondRequest struct {
-	MeetingCode string `json:"meeting_code" validate:"required"`
-	RequestID   string `json:"request_id" validate:"required"`
-	Action      string `json:"action" validate:"required"` // "approve" or "reject"
-}
