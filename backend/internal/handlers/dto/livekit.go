@@ -1,4 +1,4 @@
-package types
+package dto
 
 // GenerateTokenRequest represents the request to generate a LiveKit token
 type GenerateTokenRequest struct {

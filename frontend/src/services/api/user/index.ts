@@ -11,8 +11,6 @@ export const userService = {
   updateCurrentUser: userProfileService.updateCurrentUser,
   getAllUsers: userAdminService.getAllUsers,
   getUserById: userAdminService.getUserById,
-  createUser: userAdminService.createUser,
-  updateUser: userAdminService.updateUser,
   deleteUser: userAdminService.deleteUser,
   getSessions: sessionService.getSessions,
   getSession: sessionService.getSession,

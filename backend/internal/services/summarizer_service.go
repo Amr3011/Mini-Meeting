@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"mini-meeting/internal/config"
+	"mini-meeting/internal/handlers/dto"
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
-	"mini-meeting/internal/types"
 	"os"
 	"path/filepath"
 	"sync"
@@ -19,9 +19,10 @@ import (
 )
 
 type SummarizerService struct {
-	repo                 *repositories.SummarizerRepository
-	meetingRepo          *repositories.MeetingRepository
-	userRepo             *repositories.UserRepository
+	sessionRepo          *repositories.SummarizerSessionRepository
+	chunkRepo            *repositories.AudioChunkRepository
+	transcriptRepo       *repositories.TranscriptRepository
+	meetingService       *MeetingService
 	livekitService       *LiveKitService
 	transcriptionService *TranscriptionService
 	cfg                  *config.Config
@@ -35,17 +36,19 @@ type SummarizerService struct {
 }
 
 func NewSummarizerService(
-	repo *repositories.SummarizerRepository,
-	meetingRepo *repositories.MeetingRepository,
-	userRepo *repositories.UserRepository,
+	sessionRepo *repositories.SummarizerSessionRepository,
+	chunkRepo *repositories.AudioChunkRepository,
+	transcriptRepo *repositories.TranscriptRepository,
+	meetingService *MeetingService,
 	livekitService *LiveKitService,
 	transcriptionService *TranscriptionService,
 	cfg *config.Config,
 ) *SummarizerService {
 	return &SummarizerService{
-		repo:                 repo,
-		meetingRepo:          meetingRepo,
-		userRepo:             userRepo,
+		sessionRepo:          sessionRepo,
+		chunkRepo:            chunkRepo,
+		transcriptRepo:       transcriptRepo,
+		meetingService:       meetingService,
 		livekitService:       livekitService,
 		transcriptionService: transcriptionService,
 		cfg:                  cfg,
@@ -56,7 +59,7 @@ func NewSummarizerService(
 // StartSummarizer starts a new summarizer session for a meeting
 func (s *SummarizerService) StartSummarizer(meetingID uint, userID uint) (*models.SummarizerSession, error) {
 	// Validate meeting exists and user is the creator
-	meeting, err := s.meetingRepo.FindByID(meetingID)
+	meeting, err := s.meetingService.GetMeetingByID(meetingID)
 	if err != nil {
 		return nil, fmt.Errorf("meeting not found: %w", err)
 	}
@@ -66,7 +69,7 @@ func (s *SummarizerService) StartSummarizer(meetingID uint, userID uint) (*model
 	}
 
 	// Check if there's already an active session
-	existingSession, err := s.repo.FindActiveSessionByMeetingID(meetingID)
+	existingSession, err := s.sessionRepo.FindActiveByMeetingID(meetingID)
 	if err == nil && existingSession != nil {
 		return nil, fmt.Errorf("summarizer already running for this meeting")
 	}
@@ -79,7 +82,7 @@ func (s *SummarizerService) StartSummarizer(meetingID uint, userID uint) (*model
 		StartedAt: time.Now(),
 	}
 
-	if err := s.repo.CreateSession(session); err != nil {
+	if err := s.sessionRepo.Create(session); err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
@@ -89,7 +92,7 @@ func (s *SummarizerService) StartSummarizer(meetingID uint, userID uint) (*model
 			// Update session status with error
 			now := time.Now()
 			errMsg := fmt.Sprintf("Failed to join LiveKit room: %v", err)
-			s.repo.UpdateSessionStatus(session.ID, models.StatusStarted, &errMsg, &now)
+			s.sessionRepo.UpdateStatus(session.ID, models.StatusStarted, &errMsg, &now)
 			fmt.Printf("%s\n", errMsg)
 		}
 	}()
@@ -100,13 +103,13 @@ func (s *SummarizerService) StartSummarizer(meetingID uint, userID uint) (*model
 // StopSummarizer stops an active summarizer session
 func (s *SummarizerService) StopSummarizer(sessionID uint, userID uint) (int64, error) {
 	// Get session
-	session, err := s.repo.FindSessionByID(sessionID)
+	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return 0, fmt.Errorf("session not found: %w", err)
 	}
 
 	// Validate user is meeting creator
-	meeting, err := s.meetingRepo.FindByID(session.MeetingID)
+	meeting, err := s.meetingService.GetMeetingByID(session.MeetingID)
 	if err != nil {
 		return 0, fmt.Errorf("meeting not found: %w", err)
 	}
@@ -133,12 +136,12 @@ func (s *SummarizerService) StopSummarizer(sessionID uint, userID uint) (int64, 
 
 	// Update session status to CAPTURED
 	now := time.Now()
-	if err := s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, nil, &now); err != nil {
+	if err := s.sessionRepo.UpdateStatus(sessionID, models.StatusCaptured, nil, &now); err != nil {
 		return 0, fmt.Errorf("failed to update session status: %w", err)
 	}
 
 	// Count total chunks
-	totalChunks, err := s.repo.CountChunksBySessionID(sessionID)
+	totalChunks, err := s.chunkRepo.CountBySessionID(sessionID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to count chunks: %w", err)
 	}
@@ -326,7 +329,7 @@ func (s *SummarizerService) createChunkMetadata(sessionID uint, userIdentity str
 		DurationSeconds: duration,
 	}
 
-	if err := s.repo.CreateAudioChunk(chunk); err != nil {
+	if err := s.chunkRepo.Create(chunk); err != nil {
 		return fmt.Errorf("failed to create audio chunk metadata: %w", err)
 	}
 
@@ -336,7 +339,7 @@ func (s *SummarizerService) createChunkMetadata(sessionID uint, userIdentity str
 
 // GetActiveSession returns the active summarizer session for a meeting
 func (s *SummarizerService) GetActiveSession(meetingID uint) (*models.SummarizerSession, error) {
-	session, err := s.repo.FindActiveSessionByMeetingID(meetingID)
+	session, err := s.sessionRepo.FindActiveByMeetingID(meetingID)
 	if err != nil {
 		return nil, fmt.Errorf("no active summarizer session found")
 	}
@@ -345,11 +348,11 @@ func (s *SummarizerService) GetActiveSession(meetingID uint) (*models.Summarizer
 
 // GetSessionByID returns a session by its ID
 func (s *SummarizerService) GetSessionByID(sessionID uint) (*models.SummarizerSession, error) {
-	return s.repo.FindSessionByID(sessionID)
+	return s.sessionRepo.FindByID(sessionID)
 }
 
 // GetSessions returns a paginated list of sessions for a user
-func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types.PaginatedSessionsResponse, error) {
+func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*dto.PaginatedSessionsResponse, error) {
 	// Set default values
 	if page < 1 {
 		page = 1
@@ -358,15 +361,15 @@ func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types
 		pageSize = 10
 	}
 
-	sessions, total, err := s.repo.FindAllByUserIDPaginated(userID, page, pageSize)
+	sessions, total, err := s.sessionRepo.FindAllByUserIDPaginated(userID, page, pageSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch sessions: %w", err)
 	}
 
 	// Map models to response type
-	sessionList := make([]types.SessionsList, len(sessions))
+	sessionList := make([]dto.SessionsList, len(sessions))
 	for i, session := range sessions {
-		sessionList[i] = types.SessionsList{
+		sessionList[i] = dto.SessionsList{
 			ID:        session.ID,
 			Status:    session.Status,
 			Error:     session.Error,
@@ -380,7 +383,7 @@ func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types
 		totalPages++
 	}
 
-	return &types.PaginatedSessionsResponse{
+	return &dto.PaginatedSessionsResponse{
 		Data:       sessionList,
 		Total:      total,
 		Page:       page,
@@ -390,8 +393,8 @@ func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types
 }
 
 // GetSession retrieves a specific session for a user (verifying ownership)
-func (s *SummarizerService) GetSession(sessionID, userID uint) (*types.SessionResponse, error) {
-	session, err := s.repo.FindSessionByID(sessionID)
+func (s *SummarizerService) GetSession(sessionID, userID uint) (*dto.SessionResponse, error) {
+	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %w", err)
 	}
@@ -400,7 +403,7 @@ func (s *SummarizerService) GetSession(sessionID, userID uint) (*types.SessionRe
 		return nil, errors.New("unauthorized: session does not belong to user")
 	}
 
-	return &types.SessionResponse{
+	return &dto.SessionResponse{
 		ID:         session.ID,
 		Status:     session.Status,
 		Error:      session.Error,
@@ -413,7 +416,7 @@ func (s *SummarizerService) GetSession(sessionID, userID uint) (*types.SessionRe
 
 // DeleteSession deletes a session (verifying ownership)
 func (s *SummarizerService) DeleteSession(sessionID, userID uint) error {
-	session, err := s.repo.FindSessionByID(sessionID)
+	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("session not found: %w", err)
 	}
@@ -429,17 +432,17 @@ func (s *SummarizerService) DeleteSession(sessionID, userID uint) error {
 	}
 
 	// 2. Delete chunks for this session in database
-	if err := s.repo.DeleteChunksBySessionID(sessionID); err != nil {
+	if err := s.chunkRepo.DeleteBySessionID(sessionID); err != nil {
 		return fmt.Errorf("failed to delete chunks: %w", err)
 	}
 
 	// 3. Delete transcripts for this session in database
-	if err := s.repo.DeleteTranscriptsBySessionID(sessionID); err != nil {
+	if err := s.transcriptRepo.DeleteBySessionID(sessionID); err != nil {
 		return fmt.Errorf("failed to delete transcripts: %w", err)
 	}
 
 	// 4. Finally delete the session record itself
-	if err := s.repo.DeleteSession(sessionID); err != nil {
+	if err := s.sessionRepo.Delete(sessionID); err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
 

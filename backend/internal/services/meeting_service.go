@@ -125,3 +125,7 @@ func (s *MeetingService) DeleteMeeting(id uint, userID uint) error {
 
 	return s.repo.Delete(id)
 }
+
+func (s *MeetingService) DeleteByCreatorID(creatorID uint) error {
+	return s.repo.DeleteByCreatorID(creatorID)
+}

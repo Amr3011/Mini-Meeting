@@ -9,13 +9,15 @@ import (
 )
 
 type NormalizationService struct {
-	repo                 *repositories.SummarizerRepository
+	sessionRepo          *repositories.SummarizerSessionRepository
+	transcriptRepo       *repositories.TranscriptRepository
 	summarizationService *SummarizationService
 }
 
-func NewNormalizationService(repo *repositories.SummarizerRepository, summarizationService *SummarizationService) *NormalizationService {
+func NewNormalizationService(sessionRepo *repositories.SummarizerSessionRepository, transcriptRepo *repositories.TranscriptRepository, summarizationService *SummarizationService) *NormalizationService {
 	return &NormalizationService{
-		repo:                 repo,
+		sessionRepo:          sessionRepo,
+		transcriptRepo:       transcriptRepo,
 		summarizationService: summarizationService,
 	}
 }
@@ -31,7 +33,7 @@ type MergedSegment struct {
 // ProcessSession normalizes all transcripts for a given session
 func (s *NormalizationService) ProcessSession(sessionID uint) error {
 	// 1. Get session and validate status
-	session, err := s.repo.FindSessionByID(sessionID)
+	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
@@ -45,7 +47,7 @@ func (s *NormalizationService) ProcessSession(sessionID uint) error {
 	}
 
 	// 2. Get all transcripts for this session
-	transcripts, err := s.repo.FindTranscriptsBySessionID(sessionID)
+	transcripts, err := s.transcriptRepo.FindBySessionID(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get transcripts: %w", err)
 	}
@@ -64,17 +66,17 @@ func (s *NormalizationService) ProcessSession(sessionID uint) error {
 
 	// 5. Update session status to NORMALIZED
 	now := time.Now()
-	if err := s.repo.UpdateSessionStatus(sessionID, models.StatusNormalized, nil, &now); err != nil {
+	if err := s.sessionRepo.UpdateStatus(sessionID, models.StatusNormalized, nil, &now); err != nil {
 		return fmt.Errorf("failed to update session status: %w", err)
 	}
 
 	// 6. Save to session
-	if err := s.repo.UpdateSessionTranscript(sessionID, normalizedText); err != nil {
+	if err := s.sessionRepo.UpdateTranscript(sessionID, normalizedText); err != nil {
 		return fmt.Errorf("failed to update session transcript: %w", err)
 	}
 
 	// 7. Delete individual transcript records
-	if err := s.repo.DeleteTranscriptsBySessionID(sessionID); err != nil {
+	if err := s.transcriptRepo.DeleteBySessionID(sessionID); err != nil {
 		fmt.Printf("Warning: Failed to cleanup transcripts for session %d: %v\n", sessionID, err)
 	} else {
 		fmt.Printf("Cleaned up %d transcript records for session %d\n", len(transcripts), sessionID)
