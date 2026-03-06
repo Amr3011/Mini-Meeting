@@ -9,14 +9,14 @@ import (
 )
 
 type TranscriptionWorker struct {
-	repo                 *repositories.SummarizerRepository
+	repo                 *repositories.SummarizerSessionRepository
 	transcriptionService *services.TranscriptionService
 	interval             time.Duration
 	stuckThreshold       time.Duration
 }
 
 func NewTranscriptionWorker(
-	repo *repositories.SummarizerRepository,
+	repo *repositories.SummarizerSessionRepository,
 	transcriptionService *services.TranscriptionService,
 	interval time.Duration,
 	stuckThreshold time.Duration,
@@ -47,7 +47,7 @@ func (w *TranscriptionWorker) Start() {
 func (w *TranscriptionWorker) processStuckSessions() {
 	cutoffTime := time.Now().Add(-w.stuckThreshold)
 
-	sessions, err := w.repo.FindStuckSessions(models.StatusCaptured, cutoffTime)
+	sessions, err := w.repo.FindStuck(models.StatusCaptured, cutoffTime)
 	if err != nil {
 		log.Printf("Worker: Failed to fetch stuck sessions: %v", err)
 		return

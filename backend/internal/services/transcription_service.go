@@ -16,14 +16,18 @@ import (
 )
 
 type TranscriptionService struct {
-	repo                 *repositories.SummarizerRepository
+	sessionRepo          *repositories.SummarizerSessionRepository
+	chunkRepo            *repositories.AudioChunkRepository
+	transcriptRepo       *repositories.TranscriptRepository
 	normalizationService *NormalizationService
 	cfg                  *config.Config
 }
 
-func NewTranscriptionService(repo *repositories.SummarizerRepository, normalizationService *NormalizationService, cfg *config.Config) *TranscriptionService {
+func NewTranscriptionService(sessionRepo *repositories.SummarizerSessionRepository, chunkRepo *repositories.AudioChunkRepository, transcriptRepo *repositories.TranscriptRepository, normalizationService *NormalizationService, cfg *config.Config) *TranscriptionService {
 	return &TranscriptionService{
-		repo:                 repo,
+		sessionRepo:          sessionRepo,
+		chunkRepo:            chunkRepo,
+		transcriptRepo:       transcriptRepo,
 		normalizationService: normalizationService,
 		cfg:                  cfg,
 	}
@@ -101,7 +105,7 @@ func (s *TranscriptionService) TranscribeChunk(filePath string) (string, error) 
 // ProcessSession transcribes all chunks for a given session
 func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	// 1. Get session and validate status
-	session, err := s.repo.FindSessionByID(sessionID)
+	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
@@ -115,7 +119,7 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	}
 
 	// 2. Get all audio chunks
-	chunks, err := s.repo.FindChunksBySessionID(sessionID)
+	chunks, err := s.chunkRepo.FindBySessionID(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get chunks: %w", err)
 	}
@@ -123,14 +127,14 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	if len(chunks) == 0 {
 		errMsg := "Session stopped immediately — no audio chunks were captured"
 		now := time.Now()
-		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, &now)
+		s.sessionRepo.UpdateStatus(sessionID, models.StatusCaptured, &errMsg, &now)
 		return fmt.Errorf("%s", errMsg)
 	}
 
 	if len(chunks) <= 2 {
 		errMsg := fmt.Sprintf("Session stopped too quickly — only %d audio chunk(s) captured, not enough speech to transcribe", len(chunks))
 		now := time.Now()
-		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, &now)
+		s.sessionRepo.UpdateStatus(sessionID, models.StatusCaptured, &errMsg, &now)
 		return fmt.Errorf("%s", errMsg)
 	}
 
@@ -164,7 +168,7 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 			EndTime:      chunk.DurationSeconds * float64(chunk.ChunkIndex+1),
 		}
 
-		if err := s.repo.CreateTranscript(transcript); err != nil {
+		if err := s.transcriptRepo.Create(transcript); err != nil {
 			fmt.Printf("Failed to save transcript for chunk %d: %v\n", chunk.ID, err)
 			continue
 		}
@@ -176,12 +180,12 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 	if successCount == 0 {
 		errMsg := "Failed to transcribe any chunks — all audio segments were empty or unreadable"
 		now := time.Now()
-		s.repo.UpdateSessionStatus(sessionID, models.StatusCaptured, &errMsg, &now)
+		s.sessionRepo.UpdateStatus(sessionID, models.StatusCaptured, &errMsg, &now)
 		return fmt.Errorf("%s", errMsg)
 	}
 
 	now := time.Now()
-	if err := s.repo.UpdateSessionStatus(sessionID, models.StatusTranscribed, nil, &now); err != nil {
+	if err := s.sessionRepo.UpdateStatus(sessionID, models.StatusTranscribed, nil, &now); err != nil {
 		return fmt.Errorf("failed to update session status: %w", err)
 	}
 
@@ -195,7 +199,7 @@ func (s *TranscriptionService) ProcessSession(sessionID uint) error {
 		fmt.Printf("Cleaned up audio files for session %d\n", sessionID)
 	}
 
-	if err := s.repo.DeleteChunksBySessionID(sessionID); err != nil {
+	if err := s.chunkRepo.DeleteBySessionID(sessionID); err != nil {
 		fmt.Printf("Warning: Failed to cleanup session chunks from database %d: %v\n", sessionID, err)
 	} else {
 		fmt.Printf("Cleaned up audio chunks records from database for session %d\n", sessionID)

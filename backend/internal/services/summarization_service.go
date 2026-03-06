@@ -25,23 +25,23 @@ type SummarizationResponse struct {
 }
 
 type SummarizationService struct {
-	repo              *repositories.SummarizerRepository
-	userRepo          *repositories.UserRepository
+	sessionRepo       *repositories.SummarizerSessionRepository
+	userService       *UserService
 	openRouterService *OpenRouterService
 	emailService      *EmailService
 	cfg               *config.Config
 }
 
 func NewSummarizationService(
-	repo *repositories.SummarizerRepository,
-	userRepo *repositories.UserRepository,
+	sessionRepo *repositories.SummarizerSessionRepository,
+	userService *UserService,
 	openRouterService *OpenRouterService,
 	emailService *EmailService,
 	cfg *config.Config,
 ) *SummarizationService {
 	return &SummarizationService{
-		repo:              repo,
-		userRepo:          userRepo,
+		sessionRepo:       sessionRepo,
+		userService:       userService,
 		openRouterService: openRouterService,
 		emailService:      emailService,
 		cfg:               cfg,
@@ -51,7 +51,7 @@ func NewSummarizationService(
 // ProcessSummarization generates an AI-powered summary from a normalized transcript
 func (s *SummarizationService) ProcessSummarization(sessionID uint) error {
 	// 1. Get session and validate status
-	session, err := s.repo.FindSessionByID(sessionID)
+	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
@@ -84,7 +84,7 @@ func (s *SummarizationService) ProcessSummarization(sessionID uint) error {
 	if err != nil {
 		// Update session with error
 		errMsg := fmt.Sprintf("Failed to generate summary: %v", err)
-		s.repo.UpdateSessionStatus(sessionID, models.StatusNormalized, &errMsg, nil)
+		s.sessionRepo.UpdateStatus(sessionID, models.StatusNormalized, &errMsg, nil)
 		return fmt.Errorf("failed to generate summary: %w", err)
 	}
 
@@ -93,12 +93,12 @@ func (s *SummarizationService) ProcessSummarization(sessionID uint) error {
 
 	// 4. Update session status to SUMMARIZED
 	now := time.Now()
-	if err := s.repo.UpdateSessionStatus(sessionID, models.StatusSummarized, nil, &now); err != nil {
+	if err := s.sessionRepo.UpdateStatus(sessionID, models.StatusSummarized, nil, &now); err != nil {
 		return fmt.Errorf("failed to update session status: %w", err)
 	}
 
 	// 5. Save the summary to the session
-	if err := s.repo.UpdateSessionSummary(sessionID, resp.Summary); err != nil {
+	if err := s.sessionRepo.UpdateSummary(sessionID, resp.Summary); err != nil {
 		return fmt.Errorf("failed to update session summary: %w", err)
 	}
 
@@ -107,7 +107,7 @@ func (s *SummarizationService) ProcessSummarization(sessionID uint) error {
 
 	// 6. Fire email notification (non-blocking)
 	go func() {
-		user, err := s.userRepo.FindByID(session.UserID)
+		user, err := s.userService.GetUserByID(session.UserID)
 		if err != nil {
 			fmt.Printf("EmailNotification: failed to fetch user for session %d: %v\n", sessionID, err)
 			return

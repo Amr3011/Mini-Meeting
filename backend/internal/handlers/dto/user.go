@@ -1,4 +1,4 @@
-package types
+package dto
 
 import "mini-meeting/internal/models"
 

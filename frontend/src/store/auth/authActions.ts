@@ -43,11 +43,6 @@ export const createAuthActions = (
   },
 
   setAuthData: async (token: string) => {
-    if (userFetcher.isLocked()) {
-      console.warn("⚠️ User fetch already in progress");
-      return;
-    }
-
     try {
       console.log("🔐 Storing token...");
       tokenStorage.set(token);
@@ -88,7 +83,7 @@ export const createAuthActions = (
   initialize: async () => {
     const token = get().token;
 
-    if (!token || userFetcher.isLocked()) {
+    if (!token) {
       set({ isLoading: false });
       return;
     }
