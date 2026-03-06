@@ -48,3 +48,11 @@ export interface PaginatedSessionsResponse {
 export interface UserDeleteResponse {
   message: string;
 }
+
+export interface UpdateUserRequest {
+  name?: string;
+}
+
+export interface UserUpdateResponse {
+  data: User;
+}
