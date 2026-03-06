@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"mini-meeting/internal/config"
+	"mini-meeting/internal/handlers/dto"
 	"mini-meeting/internal/services"
-	"mini-meeting/internal/types"
 	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -56,7 +56,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		}
 	}
 
-	var req types.GenerateTokenRequest
+	var req dto.GenerateTokenRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -131,7 +131,7 @@ func (h *LiveKitHandler) GenerateToken(c *fiber.Ctx) error {
 		})
 	}
 
-	response := types.GenerateTokenResponse{
+	response := dto.GenerateTokenResponse{
 		Token:    token,
 		URL:      h.livekitService.GetURL(),
 		RoomCode: req.MeetingCode,
@@ -151,7 +151,7 @@ func (h *LiveKitHandler) RemoveParticipant(c *fiber.Ctx) error {
 		})
 	}
 
-	var req types.RemoveParticipantRequest
+	var req dto.RemoveParticipantRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -210,9 +210,9 @@ func (h *LiveKitHandler) ListParticipants(c *fiber.Ctx) error {
 	}
 
 	// Convert to response format
-	participantInfos := make([]types.ParticipantInfo, 0, len(participants))
+	participantInfos := make([]dto.ParticipantInfo, 0, len(participants))
 	for _, p := range participants {
-		participantInfos = append(participantInfos, types.ParticipantInfo{
+		participantInfos = append(participantInfos, dto.ParticipantInfo{
 			Identity: p.Identity,
 			Name:     p.Name,
 			State:    p.State.String(),
@@ -221,7 +221,7 @@ func (h *LiveKitHandler) ListParticipants(c *fiber.Ctx) error {
 		})
 	}
 
-	response := types.ListParticipantsResponse{
+	response := dto.ListParticipantsResponse{
 		Participants: participantInfos,
 	}
 
@@ -266,7 +266,7 @@ func (h *LiveKitHandler) MuteParticipant(c *fiber.Ctx) error {
 		})
 	}
 
-	var req types.MuteParticipantRequest
+	var req dto.MuteParticipantRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -308,7 +308,7 @@ func (h *LiveKitHandler) EndMeeting(c *fiber.Ctx) error {
 		})
 	}
 
-	var req types.EndMeetingRequest
+	var req dto.EndMeetingRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",

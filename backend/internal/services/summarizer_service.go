@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"mini-meeting/internal/config"
+	"mini-meeting/internal/handlers/dto"
 	"mini-meeting/internal/models"
 	"mini-meeting/internal/repositories"
-	"mini-meeting/internal/types"
 	"os"
 	"path/filepath"
 	"sync"
@@ -352,7 +352,7 @@ func (s *SummarizerService) GetSessionByID(sessionID uint) (*models.SummarizerSe
 }
 
 // GetSessions returns a paginated list of sessions for a user
-func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types.PaginatedSessionsResponse, error) {
+func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*dto.PaginatedSessionsResponse, error) {
 	// Set default values
 	if page < 1 {
 		page = 1
@@ -367,9 +367,9 @@ func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types
 	}
 
 	// Map models to response type
-	sessionList := make([]types.SessionsList, len(sessions))
+	sessionList := make([]dto.SessionsList, len(sessions))
 	for i, session := range sessions {
-		sessionList[i] = types.SessionsList{
+		sessionList[i] = dto.SessionsList{
 			ID:        session.ID,
 			Status:    session.Status,
 			Error:     session.Error,
@@ -383,7 +383,7 @@ func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types
 		totalPages++
 	}
 
-	return &types.PaginatedSessionsResponse{
+	return &dto.PaginatedSessionsResponse{
 		Data:       sessionList,
 		Total:      total,
 		Page:       page,
@@ -393,7 +393,7 @@ func (s *SummarizerService) GetSessions(userID uint, page, pageSize int) (*types
 }
 
 // GetSession retrieves a specific session for a user (verifying ownership)
-func (s *SummarizerService) GetSession(sessionID, userID uint) (*types.SessionResponse, error) {
+func (s *SummarizerService) GetSession(sessionID, userID uint) (*dto.SessionResponse, error) {
 	session, err := s.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %w", err)
@@ -403,7 +403,7 @@ func (s *SummarizerService) GetSession(sessionID, userID uint) (*types.SessionRe
 		return nil, errors.New("unauthorized: session does not belong to user")
 	}
 
-	return &types.SessionResponse{
+	return &dto.SessionResponse{
 		ID:         session.ID,
 		Status:     session.Status,
 		Error:      session.Error,

@@ -7,8 +7,8 @@ import (
 
 	"mini-meeting/internal/cache"
 	"mini-meeting/internal/config"
+	"mini-meeting/internal/handlers/dto"
 	"mini-meeting/internal/services"
-	"mini-meeting/internal/types"
 	"mini-meeting/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -41,7 +41,7 @@ func NewLobbyHandler(
 // Otherwise, a pending request is created in the lobby cache.
 // POST /api/v1/lobby/request
 func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
-	var req types.LobbyJoinRequest
+	var req dto.LobbyJoinRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -123,7 +123,7 @@ func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
 			})
 		}
 
-		return c.JSON(types.LobbyJoinResponse{
+		return c.JSON(dto.LobbyJoinResponse{
 			RequestID: "",
 			Status:    "auto_approved",
 			Token:     token,
@@ -158,7 +158,7 @@ func (h *LobbyHandler) RequestToJoin(c *fiber.Ctx) error {
 	// Notify admins via WebSocket
 	NotifyAdminsOfNewRequest(lobbyReq)
 
-	return c.JSON(types.LobbyJoinResponse{
+	return c.JSON(dto.LobbyJoinResponse{
 		RequestID: requestID,
 		Status:    "pending",
 	})
@@ -206,7 +206,7 @@ func (h *LobbyHandler) RespondToRequest(c *fiber.Ctx) error {
 		})
 	}
 
-	var req types.LobbyRespondRequest
+	var req dto.LobbyRespondRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",

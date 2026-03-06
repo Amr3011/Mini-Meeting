@@ -1,4 +1,4 @@
-package types
+package dto
 
 // LobbyJoinRequest represents a request to join a meeting lobby
 type LobbyJoinRequest struct {
@@ -25,4 +25,3 @@ type LobbyRespondRequest struct {
 	RequestID   string `json:"request_id" validate:"required"`
 	Action      string `json:"action" validate:"required"` // "approve" or "reject"
 }
-
