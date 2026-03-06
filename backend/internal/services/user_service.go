@@ -11,14 +11,14 @@ import (
 )
 
 type UserService struct {
-	repo        *repositories.UserRepository
-	meetingRepo *repositories.MeetingRepository
+	repo           *repositories.UserRepository
+	meetingService *MeetingService
 }
 
-func NewUserService(repo *repositories.UserRepository, meetingRepo *repositories.MeetingRepository) *UserService {
+func NewUserService(repo *repositories.UserRepository, meetingService *MeetingService) *UserService {
 	return &UserService{
-		repo:        repo,
-		meetingRepo: meetingRepo,
+		repo:           repo,
+		meetingService: meetingService,
 	}
 }
 
@@ -117,7 +117,7 @@ func (s *UserService) DeleteUser(id uint) error {
 	}
 
 	// Delete all meetings created by this user
-	if err := s.meetingRepo.DeleteByCreatorID(id); err != nil {
+	if err := s.meetingService.DeleteByCreatorID(id); err != nil {
 		return err
 	}
 

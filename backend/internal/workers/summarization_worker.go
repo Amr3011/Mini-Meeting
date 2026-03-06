@@ -9,14 +9,14 @@ import (
 )
 
 type SummarizationWorker struct {
-	repo                 *repositories.SummarizerRepository
+	repo                 *repositories.SummarizerSessionRepository
 	summarizationService *services.SummarizationService
 	interval             time.Duration
 	stuckThreshold       time.Duration
 }
 
 func NewSummarizationWorker(
-	repo *repositories.SummarizerRepository,
+	repo *repositories.SummarizerSessionRepository,
 	summarizationService *services.SummarizationService,
 	interval time.Duration,
 	stuckThreshold time.Duration,
@@ -44,7 +44,7 @@ func (w *SummarizationWorker) processStuckSessions() {
 	cutoffTime := time.Now().Add(-w.stuckThreshold)
 
 	// Find sessions that are NORMALIZED but haven't been updated recently
-	sessions, err := w.repo.FindStuckSessions(models.StatusNormalized, cutoffTime)
+	sessions, err := w.repo.FindStuck(models.StatusNormalized, cutoffTime)
 	if err != nil {
 		fmt.Printf("SummarizationWorker: Error finding stuck sessions: %v\n", err)
 		return

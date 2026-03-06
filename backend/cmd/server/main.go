@@ -64,20 +64,22 @@ func main() {
 	// Initialize repositories
 	userRepo := repositories.NewUserRepository(database.GetDB())
 	meetingRepo := repositories.NewMeetingRepository(database.GetDB())
-	summarizerRepo := repositories.NewSummarizerRepository(database.GetDB())
+	sessionRepo := repositories.NewSummarizerSessionRepository(database.GetDB())
+	chunkRepo := repositories.NewAudioChunkRepository(database.GetDB())
+	transcriptRepo := repositories.NewTranscriptRepository(database.GetDB())
 
 	// Initialize services
-	userService := services.NewUserService(userRepo, meetingRepo)
 	meetingService := services.NewMeetingService(meetingRepo)
+	userService := services.NewUserService(userRepo, meetingService)
 	livekitService := services.NewLiveKitService(cfg)
 	openRouterService := services.NewOpenRouterService(cfg)
 	emailService := services.NewEmailService(cfg)
 
 	// Dependency chain: SummarizationService <- NormalizationService <- TranscriptionService <- SummarizerService
-	summarizationService := services.NewSummarizationService(summarizerRepo, userRepo, openRouterService, emailService, cfg)
-	normalizationService := services.NewNormalizationService(summarizerRepo, summarizationService)
-	transcriptionService := services.NewTranscriptionService(summarizerRepo, normalizationService, cfg)
-	summarizerService := services.NewSummarizerService(summarizerRepo, meetingRepo, userRepo, livekitService, transcriptionService, cfg)
+	summarizationService := services.NewSummarizationService(sessionRepo, userService, openRouterService, emailService, cfg)
+	normalizationService := services.NewNormalizationService(sessionRepo, transcriptRepo, summarizationService)
+	transcriptionService := services.NewTranscriptionService(sessionRepo, chunkRepo, transcriptRepo, normalizationService, cfg)
+	summarizerService := services.NewSummarizerService(sessionRepo, chunkRepo, transcriptRepo, meetingService, livekitService, transcriptionService, cfg)
 
 	// Initialize handlers
 	userHandler := handlers.NewUserHandler(userService)
@@ -90,13 +92,13 @@ func main() {
 
 	// Initialize workers
 	// Transcription worker: Run every 60 minutes, process sessions stuck for > 15 minutes
-	transcriptionWorker := workers.NewTranscriptionWorker(summarizerRepo, transcriptionService, 60*time.Minute, 15*time.Minute)
+	transcriptionWorker := workers.NewTranscriptionWorker(sessionRepo, transcriptionService, 60*time.Minute, 15*time.Minute)
 	go transcriptionWorker.Start()
 	// Normalization worker: Run every 60 minutes, process sessions stuck for > 15 minutes
-	normalizationWorker := workers.NewNormalizationWorker(summarizerRepo, normalizationService, 60*time.Minute, 15*time.Minute)
+	normalizationWorker := workers.NewNormalizationWorker(sessionRepo, normalizationService, 60*time.Minute, 15*time.Minute)
 	go normalizationWorker.Start()
 	// Summarization worker: Run every 60 minutes, process sessions stuck for > 15 minutes
-	summarizationWorker := workers.NewSummarizationWorker(summarizerRepo, summarizationService, 60*time.Minute, 15*time.Minute)
+	summarizationWorker := workers.NewSummarizationWorker(sessionRepo, summarizationService, 60*time.Minute, 15*time.Minute)
 	go summarizationWorker.Start()
 
 	// Setup routes

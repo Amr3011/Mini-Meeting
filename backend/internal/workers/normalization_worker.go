@@ -9,14 +9,14 @@ import (
 )
 
 type NormalizationWorker struct {
-	repo                 *repositories.SummarizerRepository
+	repo                 *repositories.SummarizerSessionRepository
 	normalizationService *services.NormalizationService
 	interval             time.Duration
 	stuckThreshold       time.Duration
 }
 
 func NewNormalizationWorker(
-	repo *repositories.SummarizerRepository,
+	repo *repositories.SummarizerSessionRepository,
 	normalizationService *services.NormalizationService,
 	interval time.Duration,
 	stuckThreshold time.Duration,
@@ -44,7 +44,7 @@ func (w *NormalizationWorker) processStuckSessions() {
 	cutoffTime := time.Now().Add(-w.stuckThreshold)
 
 	// Find sessions that are TRANSCRIBED but haven't been updated recently
-	sessions, err := w.repo.FindStuckSessions(models.StatusTranscribed, cutoffTime)
+	sessions, err := w.repo.FindStuck(models.StatusTranscribed, cutoffTime)
 	if err != nil {
 		fmt.Printf("NormalizationWorker: Error finding stuck sessions: %v\n", err)
 		return
